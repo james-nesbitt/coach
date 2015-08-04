@@ -23,9 +23,9 @@ Docker:  # Override Docker configuration
 # Files volume container
 files:
   Type: volume
-  Build: .rodo/docker/files
 
   Config:
+		Image: "jamesnesbitt/wunder-base"
     Volumes:
       "/app/tmp": {}               # /app/tmp is a volatile container folder
   Host:
@@ -36,7 +36,9 @@ files:
 # Source volume container
 source:
   Type: volume
-  Build: .rodo/docker/source
+
+  Config:
+		Image: "jamesnesbitt/wunder-base"
 
   Host:
     Binds:
@@ -151,6 +153,24 @@ Assets folder being the writeable.
  <div>HELLO WORLD</div>
 </body>
 </html> `,
+	".coach/docker/db/Dockerfile": `
+	FROM        jamesnesbitt/wunder-mariadb
+	MAINTAINER  james.nesbitt@wunderkraut.com
+
+	### ProjectDB --------------------------------------------------------------------
+
+	# Create our project DB
+	RUN (/usr/bin/mysqld_safe &) && sleep 5 && \
+			mysql -uroot -e "UPDATE mysql.user SET Password=PASSWORD('RESETME') WHERE User='root'" && \
+			mysql -uroot -e "DELETE FROM mysql.user WHERE User=''" && \
+			mysql -uroot -e "DROP DATABASE test" && \
+			mysql -uroot -e "UPDATE mysql.user SET Password=PASSWORD('RESETME') WHERE User='root'" && \
+			mysql -uroot -e "CREATE DATABASE project" && \
+			mysql -uroot -e "GRANT ALL ON project.* to project@'10.0.%' IDENTIFIED BY 'project'" && \
+			mysql -uroot -e "FLUSH PRIVILEGES"
+
+	### /ProjectDB -------------------------------------------------------------------
+`,
 
 	}
 }
