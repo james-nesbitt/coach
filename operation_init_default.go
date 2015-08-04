@@ -3,15 +3,21 @@ package main
 func (operation *Operation_Init) Init_Default_Files() map[string]string {
 	return map[string]string{
 
-		".coach/conf.yml":  `
-Name: example
+		".coach/conf.yml":  `Project: Coach
+#Author: Used for docker commits
 
-Paths:
-  test: /example/test/path
+Paths:  # a map of paths and path overrides (see conf.go)
+  test: "/test/path"
 
-Vars:
-  CONTAINER_DOMAIN:coach.local
-  `,
+Tokens: # a map of string tokens, used for token replacement in the nodes.yml
+  CONTAINER_DOMAIN: "local.wunder.io"
+  TEST: TESTTOKENVALUE
+
+Settings:
+  UseEnvVariablesAsTokens: "yes"
+
+Docker:  # Override Docker configuration
+  #Host: "tcp://10.0.42.1"`,
 
 		".coach/nodes.yml":  `
 # Files volume container
