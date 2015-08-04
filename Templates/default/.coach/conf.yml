@@ -1,8 +1,0 @@
-
-Name: example
-
-Paths:
-  test: /test/path
-
-Vars:
-  CONTAINER_DOMAIN:rodo.local
