@@ -1,0 +1,68 @@
+# Example RODO Project
+
+This is the root path for an example RODO project, that is a PHP web-delivered project
+
+## File structure
+
+\.rodo
+	|- secrets : a file that may hold user specific credentials, and can be added to .gitignore, ACL etc.
+	| \- secrets.yml : a secret list of tokens
+	|- docker : location to put Docker builds, as pointed to in the nodes.yml file
+	|-conf.yml : project configuration
+  \-nodes.yml : project nodes list (like docker-compose)
+\ app
+	|- assets : mapped in volume for application data
+	|- backup : mapped in volume for application archives
+	\- www : application source
+
+## Nodes
+
+### files
+
+This disposable volume container is used to container all non-architecture application assets.  Typically
+in production environments, assets are kept separate from production code, which is what this container does.
+
+This volume container runs off of a custom image, which means that it can be commited, exported and recreated,
+to keep a project specific image
+
+Advantages:
+  - this container/node could be kept in a different place
+  - this partition needs RW, but the actual source can be RO
+  - You could export/commit this image for sharing, snapshotting
+
+### source
+
+This container is an application source container.  This container can be created using any method (like git
+clone) but in this environment is created using a host bing.  This approach means that a production implementation
+of the nodes could swap out the host bind for a different approach, and the rest of the nodes would still
+work as expected.
+
+This cvolume container runs off of a custom image, which means that it can be commited, exported and recreated,
+to keep a project specific image.
+
+Advantages:
+	- can be similar to production
+	- can be made RO for access from other containers (security)
+	- can be exported/committed for sharing/snapshotting
+
+### db
+
+This is a custom built image for the database.  The db server is that standard db image, but the custom
+build allows us to create/override the users/passwords and available database with project specific
+values.
+
+This is a service node that will run in the background.
+
+### fpm
+
+The PHP processing service container that will run in the background.
+
+This container access directly the source via the source volume container
+
+Advantages:
+	- can be easily swapped out for a different PHP parser: like the php7fpm, of hhvm equivalents.
+
+### www
+
+The https request handling container service, that will run in the background
+

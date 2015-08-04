@@ -1,0 +1,234 @@
+##
+# Master Docker Node definition file
+#
+# This file contains a map (keyed list) of "nodes"
+#
+# NODE
+#
+# A node is can be though of as a service definition, which can produce a set of container
+# instances for that service; although a node can also produce only a docker build, or a
+# volume container, neither of which produce running containers.
+#
+# NODE TYPES:
+#
+#   - build : this node produces only a docker image build, which can be used as a parent build for other nodes
+#   - volume : this node produces a volume container, which can be built and created, but which does not get started
+#   - service : this node produces a startable image, which can be used to start a number of instances of a container, in the background
+#   - command : this node produces a runnable image, which can be used like a command, runnable in the foreground, which runs using temporary containers
+#
+# NODE FORMAT:
+#
+# The format used for a node, combines a small number of paramters for rodo, with the two major
+# configuration components from the fsouza docker api, which contains an extensive list of options
+# for complete control over builds and execution.
+# Originally, we started with a duplication of the docker-compose format, but that would have
+# required extensive transformations, and would have limited options.  This was much simpler.
+# If you are used to the docker-compose format, then it is recommended that you quickly read up
+# on this new format, as it is much more clear about some common uses such as binds and volumes.
+#
+# {name}:
+#   Type: [build|volume|command|service]  // determines if this node should be built/created-destroyed/started-stopped
+#   [Optional] Build: path/to/Docker/build  // path to a Dockerfile, if this node needs to be built (not needed if the image needs to be pulled
+#
+#   [Optional] Requires: // explicitly declare that other nodes is needed by this one
+#     - {name}
+#     - {name}
+#
+#     * Currently the Requires concept is kind of abstract.  Each operation takes it's own interpretation.
+#         - build assumes that a dependent image must exist (if it is buildable/pullable)
+#         - create assumes that a dependent container instance must exist (if it is createable)
+#         - start assumes that a dependent container instance must be started (if it is starteable)
+#
+#   [Optional] Config:  // Docker API config       --> https://github.com/fsouza/go-dockerclient/blob/master/container.go#L177
+#   [Optional] Host:    // Docker API host config  --> https://github.com/fsouza/go-dockerclient/blob/master/container.go#L424
+#
+# TOKENS
+#
+#  Tokens are string values which are subject to string substitution, before the YAML is marshalled/parsed.
+#  The system adds some standard tokens, but mainly they come from:
+#     - User ENV variables (from golang os.EnvVariables
+#     - #Project# and #Author# are created by the system, and can be overriden in conf.yml
+#     - Any Path (like from conf.yml) are converted ::  mycustompath => #PATH_MYCUSTOMPATH#
+#     - Custom Tokens from conf.yml:Tokens.  For example mycustomtoken => #mycustomtoken#
+#     - Secret tokens from secrets/secrets.yml
+#
+# In case it isn't clear, the string substitution looks for the token, wrapped in ## characters.  This syntax
+# means that failed substitutions don't invalidate the YML, so they don't break the parsing.
+#
+# DEPENDENCIES
+#
+# Typically, one node should be able to rely on another node as a dependency.  This can occur for a number
+# of reasons:
+#   - a node needs the image of it's dependency for it's build
+#   - a node links to it's dependency
+#   - a node uses a volume from it's dependency
+#   - you have decided that it is a dependency (something that we did not think of)
+# You can mark a node as a dependency manually, and the code will try to sort out some additional dependencies on
+# it's own by looking at links, volumesfrom etc.
+#
+##
+
+##
+# Master Docker Node definition file
+##
+
+# Files volume container
+files:
+  Type: volume
+  Build: .rodo/docker/files
+
+  Config:
+    Volumes:
+      "/app/tmp": {}               # /app/tmp is a volatile container folder
+  Host:
+    Binds:
+      - app/assets:/app/assets     # host based assets folder
+      - app/backup:/app/backup     # host based archive folder
+
+# Source volume container
+source:
+  Type: volume
+  Build: .rodo/docker/source
+
+  Host:
+    Binds:
+      - app/www:/app/www          # host based webroots folder (needs /active subroot for nginx conf)
+      - app/src:/app/src          # probably, the build source is not needed
+
+# Database service
+db:
+  Type: service
+  Build: .rodo/docker/db          # DB has a docker build so that we can create databases and set custom passwords.
+                                  # It will also give us the ability to commit changes to our container, back to an image
+                                  # which could allow us to snapshot/export the DB
+
+  Config:
+    RestartPolicy: on-failure
+
+    ExposedPorts:
+      3306/tcp: {}
+
+  Host:
+    VolumesFrom:
+      - files                     # I am not sure if this is needed
+
+# FPM service
+fpm:
+  Type: service
+
+  Config:
+    #Image: jamesnesbitt/wunder-hhvm      # The HHVM works, but doesn't integrate blackfire/xdebug
+    Image: jamesnesbitt/wunder-php6fpm     # The FPM works, and should have blackfire/sdebug working
+    #Image: jamesnesbitt/wunder-php7fpm     # The FPM works, but doesn't have blackfire/xdebug
+    RestartPolicy: on-failure
+
+    ExposedPorts:
+      9000/tcp: {}
+
+  Host:
+    Links:
+      - db:database.app
+      - blackfire:blackfire.app
+    VolumesFrom:
+      - files
+      - source
+
+# Blackfire command
+blackfire:
+  Type: service
+
+  Config:
+    Image: jamesnesbitt/wunder-blackfire
+    RestartPolicy: on-failure
+
+    Env:
+      - PORT=8707
+      - BLACKFIRE_SERVER_ID=#BLACKFIRE_SERVER_ID#       # Token for your blackfire server id
+      - BLACKFIRE_SERVER_TOKEN=#BLACKFIRE_SERVER_TOKEN# # Token for your blackfire server
+
+    ExposedPorts:
+      8707/tcp: {}
+
+# WWW service
+www:
+  Type: service
+
+  Config:
+    Image: jamesnesbitt/wunder-nginx
+    RestartPolicy: on-failure
+
+    Hostname: #PROJECT#                                 # This token is a default token that comes from conf.yml:Name
+    Domainname: #CONTAINER_DOMAIN#                      # This token is a custom token set in conf.yml
+    Env:
+      - DNSDOCK_ALIAS=#PROJECT#.#CONTAINER_DOMAIN#      # If you have DNSDOCK running, this will set a DNS entry in it.
+
+    ExposedPorts:
+      80/tcp: {}                                        # Espose these ports to other containers (it is probably already in your build)
+      443/tcp: {}
+
+  Host:
+    Binds:
+      - app/www:/app/www                                # Map the relative path app/www into /app/www in the container
+    Links:
+      - fpm:fpm.app
+    VolumesFrom:
+      - files
+      - source
+    PortBindings:
+      80/tcp:
+        - HostPort: 8080            # www Port 80 is mapped to 8080 on the Host
+
+####
+## Developer tools
+#
+
+####
+# Drush command container
+#
+# A utility command container that you can use to run drush commands
+##
+drush:
+  disabled: false
+  Type: command
+
+  Config:                                           # dockerclient struct : https://github.com/fsouza/go-dockerclient/blob/master/container.go#L177
+    Image: jamesnesbitt/wunder-drush
+    OpenStdin: true
+
+  Host:                                             # dockerclient struct : https://github.com/fsouza/go-dockerclient/blob/master/container.go#L424
+    Binds:
+      - ~/.ssh:/app/.ssh                            # use the host ssh keys
+      - .rodo/.drush:/app/.drush                    # drush aliases and caching are kept in .rodo/.drush
+      - app/src:/app/src                            # keep the src folder as well so that we can do drush make
+    Links:
+      - db:database.app                             # drush needs access to the DB
+    VolumesFrom:
+      - source                                      # get the webroot from the source container
+      - files                                       # get files from the files container
+
+####
+# PlatformSH command container
+#
+# A utility command container that you can use to run platformsh commands
+#
+# @NOTE This container doesn't handle TTY output well for some reason.
+#
+platform:
+  Type: command
+
+  Config:
+    Image: jamesnesbitt/wunder-platformsh
+    OpenStdin: true
+
+  Host:
+    VolumesFrom:
+      - files
+      - source
+    Env:
+      - PLATFORMSH_CLI_API_TOKEN:#PLATFORMSH_CLI_API_TOKEN#          # an API token to use for all requests
+      #- PLATFORMSH_CLI_DEBUG:1                     # set to 1 to enable cURL debugging
+      #- PLATFORMSH_CLI_DISABLE_CACHE:1             # set to 1 to disable caching
+      #- PLATFORMSH_CLI_ENVIRONMENTS_TTL:           # the cache TTL for environments, in seconds (default 600)
+      #- PLATFORMSH_CLI_PROJECTS_TTL:               # the cache TTL for projects, in seconds (default 3600)
+      #- PLATFORMSH_CLI_SESSION_ID:default          # change user (default 'default')
+      #- http_proxy or https_proxy:                 # specify a proxy for connecting to Platform.sh
