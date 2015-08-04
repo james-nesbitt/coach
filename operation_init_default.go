@@ -9,7 +9,7 @@ func (operation *Operation_Init) Init_Default_Files() map[string]string {
 Paths:  # a map of paths and path overrides (see conf.go)
   test: "/test/path"
 
-Tokens: # a map of string tokens, used for token replacement in the nodes.yml
+Tokens: 1# a map of string tokens, used for token replacement in the nodes.yml
   CONTAINER_DOMAIN: "local.wunder.io"
   TEST: TESTTOKENVALUE
 
@@ -25,7 +25,7 @@ files:
   Type: volume
 
   Config:
-		Image: "jamesnesbitt/wunder-base"
+    Image: "jamesnesbitt/wunder-base"
     Volumes:
       "/app/tmp": {}               # /app/tmp is a volatile container folder
   Host:
@@ -38,7 +38,7 @@ source:
   Type: volume
 
   Config:
-		Image: "jamesnesbitt/wunder-base"
+    Image: "jamesnesbitt/wunder-base"
 
   Host:
     Binds:
@@ -47,7 +47,7 @@ source:
 # Database service
 db:
   Type: service
-  Build: .rodo/docker/db          # DB has a docker build so that we can create databases and set custom passwords.
+  Build: docker/db               # DB has a docker build so that we can create databases and set custom passwords.
 
   Config:
     RestartPolicy: on-failure
