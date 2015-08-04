@@ -1,9 +1,9 @@
 package main
 
-function operation_init_default_files() map[string]string {
+func (operation *Operation_Init) Init_Default_Files() map[string]string {
 	return map[string]string{
 
-		".coach/conf.yml": '
+		".coach/conf.yml":  `
 Name: example
 
 Paths:
@@ -11,9 +11,9 @@ Paths:
 
 Vars:
   CONTAINER_DOMAIN:coach.local
-',
+  `,
 
-		".coach/nodes.yml": '
+		".coach/nodes.yml":  `
 # Files volume container
 files:
   Type: volume
@@ -98,11 +98,13 @@ www:
       80/tcp:
         - HostPort: 8080            # Port 8080 applies to all Host IPs
 
-',
-		".coach/secrets/secrets.yml": '# SECRET TOKENS THAT CAN BE KEPT OUT OF GIT
+`,
+
+		".coach/secrets/secrets.yml":  `# SECRET TOKENS THAT CAN BE KEPT OUT OF GIT
 SECRET: VALUE
-		'
-		"app/README.md": '
+`,
+
+		"app/README.md":  `
 # The coach app folder
 
 The purpose of this folder is to keep all of the project elements that in a single location,
@@ -125,25 +127,24 @@ Assets folder being the writeable.
 
 ## Backups
 
-',
-		"app/assets/README.md": '
+`,
+		"app/assets/README.md":  `
 
-',
-		"app/backup/README.md": '
+`,
+		"app/backup/README.md":  `
 The assets folder is meant to be a non-versioned folder that contains elements needed to
 run the application, but which should not be a part of the project source code.  This includes
 file assets, and cache elements and temprorary elements.
 The real goal of this folder is to separate filespace into Read-Only and Writeable, with the
 Assets folder being the writeable.
-',
-		"app/www/index.html": '
+`,
+		"app/www/index.html":  `
 <html>
 <head></head>
 <body>
  <div>HELLO WORLD</div>
 </body>
-</html>',
+</html> `,
 
 	}
 }
-

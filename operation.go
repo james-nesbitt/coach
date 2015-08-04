@@ -7,6 +7,9 @@ import (
 func GetOperation(name string, nodes Nodes, targets []string, client *docker.Client, conf *Conf, log Log) Operation {
 
 	switch name {
+		case "init":
+			return Operation(&Operation_Init{log:log.ChildLog("INIT"), conf: conf, Targets: targets})
+
 		case "info":
 			return Operation(&Operation_Info{log:log.ChildLog("INFO"), Nodes:nodes, Targets:targets})
 
