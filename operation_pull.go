@@ -13,11 +13,9 @@ type Operation_Pull struct {
 	Targets []string
 
 	Registry string
-
 }
 func (operation *Operation_Pull) Flags(flags []string) {
-	operation.Registry = "registry.hub.docker.com"
-
+	operation.Registry = "https://index.docker.io/v1/"
 }
 func (operation *Operation_Pull) Run() {
 	operation.log.Message("running pull operation")
@@ -46,15 +44,29 @@ func (node *Node) Pull(registry string) bool {
 			OutputStream: os.Stdout,
 			RawJSONStream:false,
 		}
-		if registry!="" {
-			options.Registry = registry
-		}
 
 		var auth docker.AuthConfiguration
 		auths, _ := docker.NewAuthConfigurationsFromDockerCfg()
-		for _, auth = range auths.Configs { break }
+		if auths==nil {
+			node.log.Warning("You have no local login credentials for any repo")
+			auth = docker.AuthConfiguration{}
+			#options.Registry = "https://index.docker.io/v1/"
+		} else {
+			if registry!="" {
+				auth, _ = auths.Configs[registry]
+				options.Registry = registry
+			}
+			if auth.Username=="" {
+				for registry, regauth := range auths.Configs {
+					options.Registry = registry
+					auth = regauth
+					break
+				}
+			}
+		}
 
-		node.log.Message("PULLING NODE IMAGE ["+node.Name+"] : "+image)
+		node.log.Message("PULLING NODE IMAGE ["+node.Name+"] FROM SERVER ["+options.Registry+"] USING AUTH ["+auth.Username+"] : "+image)
+		node.log.DebugObject( LOG_SEVERITY_DEBUG_LOTS, "AUTH USED: ", map[string]string{"Username":auth.Username, "Email":auth.Email, "ServerAdddress":auth.ServerAddress})
 
 		// ask the docker client to build the image
 		err := node.client.PullImage(options, auth)
