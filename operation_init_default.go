@@ -108,8 +108,11 @@ www:
 
 `,
 
-		".coach/secrets/secrets.yml":  `# SECRET TOKENS THAT CAN BE KEPT OUT OF GIT
-#SECRET: VALUE
+		".coach/secrets/secrets.example.yml":  `# SECRET TOKENS THAT CAN BE KEPT OUT OF GIT
+# Move this file to secrets.yml for it to be used
+SECRET: VALUE
+SECONDSECRET: "OTHER VALUE"
+THIRDSECRET: "%PROJECT.SOMETHING"
 `,
 
 		"app/README.md":  `
