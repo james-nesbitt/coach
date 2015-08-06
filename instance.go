@@ -126,6 +126,19 @@ func (node *Node) FilterInstances(filters []string, onlyActive bool) []*Instance
 	}
 	return instances
 }
+func (node *Node) GetRandomInstance(onlyActive bool) *Instance {
+	for name, _ := range node.InstanceMap {
+		instance := node.GetInstance(name)
+
+		if onlyActive && !instance.active {
+			continue
+		}
+
+		return instance
+	}
+	return nil
+}
+
 func (node *Node) GetInstance(name string) *Instance {
 
 	// shortcut to get any random instance
@@ -224,103 +237,15 @@ func (node Node) instanceHostConfig(name string) docker.HostConfig {
 	}
 	// convert all links from Nodes index name to container name
 	if config.Links!=nil {
-		for index, link := range config.Links {
-			links := strings.SplitN(link, ":", 2)
-			if name, ok := node.GetDependencyInstanceContainerName(links[0], name, false); ok {
-				links[0] = name
-				config.Links[index] = strings.Join(links,":")
-			}
-		}
+		node.log.DebugObject( LOG_SEVERITY_DEBUG_STAAAP, "TRANSFORMING LINKS FOR INSTANCE ["+name+"]: ", config)
+		config.Links = node.DependencyInstanceMatches(config.Links, name)
+		node.log.DebugObject( LOG_SEVERITY_DEBUG_STAAAP, "TRANSFORMED LINKS FOR INSTANCE ["+name+"]: ", config)
 	}
 	// convert all volumes from from Nodes index name to container name
 	if config.VolumesFrom!=nil {
-		for index, volumesFrom := range config.VolumesFrom {
-			split := strings.SplitN(volumesFrom, ":", 2)
-			if name, ok := node.GetDependencyInstanceContainerName(split[0], name, false); ok {
-				split[0] = name
-				config.VolumesFrom[index] = strings.Join(split, ":")
-			}
-		}
+		config.VolumesFrom = node.DependencyInstanceMatches(config.VolumesFrom, name)
 	}
 
 	node.log.DebugObject( LOG_SEVERITY_DEBUG_LOTS, "TRANSFORMED HOSTCONFIG FOR INSTANCE ["+name+"]: ", config)
 	return config
 }
-
-/**
- * Interpret the instance dependency format, for a node instance identifier
- *
- * This format interpreter allows nodes to use node instance identifiers in their
- * Docker settings for values such as --links, and --volumes-from.  the format
- * allows a simple synax from one node, that defines a particular target instance.
- *
- * This gets used by the node processors various times to convert syntax into
- * container name
- *
- * {node}, {instance} 							: get {instance} of {node}
- * {node}@{instance}, {fallback}		: get {instance} of {node}, fallback to the {fallback} of {node}
- *
- * if strict==false, then the first instance of a node is returned if no match can be made
- *
- * @returns Container Name as a string, and success boolean
- */
-func (node *Node) GetDependencyInstanceContainerName(identifier string, fallback string, strict bool) (string, bool) {
-	node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"]["+fallback+"] => START")
-	split := strings.SplitN(identifier, "@", 2)
-	var targetNodeName, targetInstance string
-	if len(split)>1 {
-		targetNodeName = split[0]
-		targetInstance = split[1]
-	} else {
-		targetNodeName = split[0]
-		targetInstance = fallback
-	}
-
-	var targetNode *Node
-	var instance *Instance
-	var ok bool
-
-	if targetNode, ok = node.Dependencies[targetNodeName]; !ok {
-		node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"] => NO NODE FOUND")
-		return "", false
-	}
-	node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY NODE FOUND ["+identifier+"]["+fallback+"]["+targetNode.InstanceType+"] => "+targetNode.Name)
-
-	// look for the particular instance
-	instance = targetNode.GetInstance(targetInstance)
-	if instance!=nil {
-		node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"] => TARGET INSTANCE FOUND : "+instance.Name+":"+instance.GetContainerName())
-		return instance.GetContainerName(), true
-	}
-
-	if targetNode.InstanceType=="single" {
-		instance := targetNode.GetInstance("single")
-		if instance!=nil {
-			node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"] => SINGLE INSTANCE FOUND : "+instance.Name+":"+instance.GetContainerName())
-			return instance.GetContainerName(), true
-		}
-	}
-
-	// look for the fallback instance
-	if (targetInstance!=fallback && fallback!="") {
-		instance := targetNode.GetInstance(fallback)
-		if instance!=nil {
-			node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"] => FALLBACK INSTANCE FOUND : "+instance.Name+":"+instance.GetContainerName())
-			return instance.GetContainerName(), true
-		}
-	}
-
-	// use a random instance if we couldn't find a match, and we are not in strict mode
-	if !strict {
-		instance := targetNode.GetInstance("*random*")
-		if instance!=nil {
-			node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"] => RANDOM INSTANCE FOUND : "+instance.Name+":"+instance.GetContainerName())
-			return instance.GetContainerName(), true
-		}
-	}
-
-	node.log.Debug( LOG_SEVERITY_DEBUG_STAAAP, "DEPENDENCY CONTAINER SEARCH ["+identifier+"]["+fallback+"] => NOT FOUND")
-	return "", false
-}
-
-
