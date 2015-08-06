@@ -88,7 +88,7 @@ www:
     Hostname: "%PROJECT_%INSTANCE"                  # Token : project name (can be set in conf.yml)
     Domainname: "%DOMAIN"                           # Token : can be set in conf.yml:Tokens
     Env:
-      - DNSDOCK_ALIAS="%PROJECT.%CONTAINER_DOMAIN"  # If you are using DNSDOCK, this will create a DNS Entry.
+      - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN"  # If you are using DNSDOCK, this will create a DNS Entry.
 
     ExposedPorts:
       80/tcp: {}
