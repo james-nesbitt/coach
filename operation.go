@@ -13,6 +13,8 @@ func GetOperation(name string, nodes Nodes, targets []string, client *docker.Cli
 		case "info":
 			return Operation(&Operation_Info{log:log.ChildLog("INFO"), Nodes:nodes, Targets:targets})
 
+		case "pull":
+			return Operation(&Operation_Pull{log:log.ChildLog("PULL"), Nodes:nodes, Targets:targets})
 		case "build":
 			return Operation(&Operation_Build{log:log.ChildLog("BUILD"), Nodes:nodes, Targets:targets})
 		case "destroy":
