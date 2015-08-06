@@ -87,8 +87,10 @@ func (node *Node) DependencyInstanceMatches(targets []string, fallbackInstance s
 				if len(targetSplit)>1 {
 					if strings.Contains(targetSplit[1], "%TARGET") {
 						newTarget += ":"+strings.Replace(targetSplit[1], "%TARGET", target.Name, -1)
-					} else {
+					} else if len(targetInstances)>1 {
 						newTarget += ":"+target.Name+"_"+targetSplit[1]
+					} else {
+						newTarget += ":"+targetSplit[1]
 					}
 				}
 				newTargets = append(newTargets, newTarget)
