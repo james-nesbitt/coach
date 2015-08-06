@@ -12,12 +12,11 @@ type Operation_Pull struct {
 	Nodes Nodes
 	Targets []string
 
-	Repository string
 	Registry string
 
 }
 func (operation *Operation_Pull) Flags(flags []string) {
-	operation.Repository = "registry.hub.docker.com"
+	operation.Registry = "registry.hub.docker.com"
 
 }
 func (operation *Operation_Pull) Run() {
@@ -25,28 +24,27 @@ func (operation *Operation_Pull) Run() {
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:BUILD")
-	operation.Nodes.Pull(operation.Targets, operation.Repository, operation.Registry)
+	operation.Nodes.Pull(operation.Targets, operation.Registry)
 }
 
-func (nodes *Nodes) Pull(targets []string, repository string, registry string) {
+func (nodes *Nodes) Pull(targets []string, registry string) {
 	for _, target := range nodes.GetTargets(targets) {
 		target.log = nodes.log.ChildLog("NODE:"+target.Name)
-		target.Pull(repository, registry)
+		target.Pull(registry)
 	}
 }
 
-func (node *Node) Pull(repository string, registry string) bool {
+func (node *Node) Pull(registry string) bool {
 	if node.Do("pull") {
 
-		image := node.Config.Image
+		image := node.GetImageName()
+		tag := node.GetImageTag()
 
 		options := docker.PullImageOptions {
-			Tag: image,
+			Repository: image,
+			Tag: tag,
 			OutputStream: os.Stdout,
 			RawJSONStream:false,
-		}
-		if repository!="" {
-			options.Repository = repository
 		}
 		if registry!="" {
 			options.Registry = registry
