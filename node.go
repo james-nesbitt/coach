@@ -96,7 +96,16 @@ func (node *Node) GetImageName() string {
 	if node.Config.Image=="" {
 		return strings.ToLower(node.MachineName)
 	}
+	if strings.Contains(node.Config.Image, ":") {
+		return strings.SplitN(node.Config.Image, ":", 2)[0]
+	}
 	return node.Config.Image
+}
+func (node *Node) GetImageTag() string {
+	if strings.Contains(node.Config.Image, ":") {
+		return strings.SplitN(node.Config.Image, ":", 2)[1]
+	}
+	return "latest"
 }
 
 // check if a node should do an action (if it is permitted)
