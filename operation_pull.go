@@ -46,27 +46,20 @@ func (node *Node) Pull(registry string) bool {
 		}
 
 		var auth docker.AuthConfiguration
-		auths, _ := docker.NewAuthConfigurationsFromDockerCfg()
-		if auths==nil {
-			node.log.Warning("You have no local login credentials for any repo")
-			auth = docker.AuthConfiguration{}
-			#options.Registry = "https://index.docker.io/v1/"
-		} else {
-			if registry!="" {
-				auth, _ = auths.Configs[registry]
-				options.Registry = registry
-			}
-			if auth.Username=="" {
-				for registry, regauth := range auths.Configs {
-					options.Registry = registry
-					auth = regauth
-					break
-				}
-			}
-		}
+// 		var ok bool
+		//options.Registry = "https://index.docker.io/v1/"
 
-		node.log.Message("PULLING NODE IMAGE ["+node.Name+"] FROM SERVER ["+options.Registry+"] USING AUTH ["+auth.Username+"] : "+image)
-		node.log.DebugObject( LOG_SEVERITY_DEBUG_LOTS, "AUTH USED: ", map[string]string{"Username":auth.Username, "Email":auth.Email, "ServerAdddress":auth.ServerAddress})
+// 		auths, _ := docker.NewAuthConfigurationsFromDockerCfg()
+// 		if auth, ok = auths.Configs[registry]; ok {
+// 			options.Registry = registry
+// 		} else {
+// 			node.log.Warning("You have no local login credentials for any repo. Defaulting to no login.")
+			auth = docker.AuthConfiguration{}
+			options.Registry = "https://index.docker.io/v1/"
+// 		}
+
+		node.log.Message("PULLING NODE IMAGE ["+node.Name+"] FROM SERVER ["+options.Registry+"] USING AUTH ["+auth.Username+"] : "+image+":"+tag)
+		node.log.DebugObject( LOG_SEVERITY_DEBUG_LOTS, "AUTH USED: ", map[string]string{"Username":auth.Username, "Password":auth.Password, "Email":auth.Email, "ServerAdddress":auth.ServerAddress})
 
 		// ask the docker client to build the image
 		err := node.client.PullImage(options, auth)
@@ -82,4 +75,3 @@ func (node *Node) Pull(registry string) bool {
 	}
 	return true
 }
-
