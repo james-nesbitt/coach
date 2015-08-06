@@ -9,15 +9,15 @@ func (operation *Operation_Init) Init_Default_Files() map[string]string {
 Paths:  # a map of paths and path overrides (see conf.go)
   test: "/test/path"
 
-Tokens: 1# a map of string tokens, used for token replacement in the nodes.yml
-  CONTAINER_DOMAIN: "local.wunder.io"
-  TEST: TESTTOKENVALUE
+Tokens: # a map of string tokens, used for token replacement in the nodes.yml
+  CONTAINER_DOMAIN: "docker"
 
 Settings:
-  UseEnvVariablesAsTokens: "yes"
+  UseEnvVariablesAsTokens: "yes"   # include all of the user's ENV variables as possible tokens
 
 Docker:  # Override Docker configuration
-  #Host: "tcp://10.0.42.1"`,
+#  Host: "tcp://10.0.42.1"         # point to a remote docker server
+`,
 
 		".coach/nodes.yml":  `
 # Files volume container
@@ -57,7 +57,7 @@ db:
 
   Host:
     VolumesFrom:
-      - files                     # I am not sure if this is needed
+      - files                              # I am not sure if this is needed
 
 # FPM service
 fpm:
@@ -85,10 +85,10 @@ www:
     Image: jamesnesbitt/wunder-nginx
     RestartPolicy: on-failure
 
-    Hostname: #PROJECT#                 # Token : project name (can be set in conf.yml)
-    Domainname: #DOMAIN#                # Token : can be set in conf.yml:Tokens
+    Hostname: "%PROJECT_%INSTANCE"                  # Token : project name (can be set in conf.yml)
+    Domainname: "%DOMAIN"                           # Token : can be set in conf.yml:Tokens
     Env:
-      - DNSDOCK_ALIAS=#PROJECT#.#CONTAINER_DOMAIN#  # If you are using DNSDOCK, this will create a DNS Entry.
+      - DNSDOCK_ALIAS="%PROJECT.%CONTAINER_DOMAIN"  # If you are using DNSDOCK, this will create a DNS Entry.
 
     ExposedPorts:
       80/tcp: {}
@@ -109,7 +109,7 @@ www:
 `,
 
 		".coach/secrets/secrets.yml":  `# SECRET TOKENS THAT CAN BE KEPT OUT OF GIT
-SECRET: VALUE
+#SECRET: VALUE
 `,
 
 		"app/README.md":  `
