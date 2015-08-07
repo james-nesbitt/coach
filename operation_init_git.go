@@ -26,7 +26,7 @@ func (operation *Operation_Init) Init_Git_Run(flags []string) (bool, map[string]
 	if err!=nil {
 		operation.log.Error("Failed to clone the remote repository ["+target+"] => "+err.Error())
 	} else {
-		operation.log.Message("Clone remote repository to local project folder")
+		operation.log.Message("Cloned remote repository to local project folder")
 	}
 
 	return true, map[string]string{
