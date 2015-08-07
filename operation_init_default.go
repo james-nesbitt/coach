@@ -1,7 +1,7 @@
 package main
 
-func (operation *Operation_Init) Init_Default_Files() map[string]string {
-	return map[string]string{
+func (operation *Operation_Init) Init_Default_Run(flags []string) (bool, map[string]string) {
+	return true, map[string]string{
 
 		".coach/conf.yml":  `Project: Coach
 #Author: Used for docker commits

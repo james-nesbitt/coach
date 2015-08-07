@@ -7,25 +7,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const confsource_projectyaml_filename string = "conf.yml"
-
 /**
- * Retrive conf settings from the coach file, which is usually .coach/conf.yml"
+ * Retrive conf settings from a coach conf yaml file
+ *
+ * Configuration tells us which of the existing conf "paths" should container the file
  */
-func (conf *Conf) from_YamlConf(log Log) {
+func (conf *Conf) from_YamlConf(log Log, confPathKey string) bool {
 	log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Updating Conf from YAML")
 
-	if confPath, ok := conf.Path("projectcoach"); ok {
+	if confPath, ok := conf.Path(confPathKey); ok {
 		// get the path to where the config file should be
-		confPath = path.Join(confPath, confsource_projectyaml_filename)
+		confPath = path.Join(confPath, "conf.yml")
 
 		log.Debug(LOG_SEVERITY_DEBUG_WOAH,"Project coach file:"+confPath)
 
 		// read the config file
 		yamlFile, err := ioutil.ReadFile(confPath)
 		if err!=nil {
-			log.Error("Could not read the YAML file: "+err.Error())
-			return
+			log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Could not read the YAML file ["+confPath+"]: "+err.Error())
+			return false
 		}
 
 		// replace tokens in the yamlFile
@@ -35,15 +35,18 @@ func (conf *Conf) from_YamlConf(log Log) {
 		// parse the config file contents as a ConfSource_projectyaml object
 		source := new(Conf_Yaml)
 		if err := yaml.Unmarshal(yamlFile, source); err!=nil {
-			log.Error("YAML marshalling of the YAML conf file failed: "+err.Error())
-			return
+			log.Warning("YAML marshalling of the YAML conf file failed ["+confPath+"]: "+err.Error())
+			return false
 		}
 		log.DebugObject(LOG_SEVERITY_DEBUG_STAAAP,"YAML source:", *source)
 
 		conf.Merge( source.toConf(log) )
 
+		return true
+
 	} else {
 		log.Debug(LOG_SEVERITY_DEBUG_LOTS,"YAML file not found, no project coach folder:"+confPath)
+		return false
 	}
 
 }
