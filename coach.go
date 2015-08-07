@@ -36,6 +36,7 @@ func main() {
 	log := GetLog(os.Stdout, verbosity)
 
 	log.DebugObject(LOG_SEVERITY_DEBUG, "Global Flags:", globalFlags)
+	log.DebugObject(LOG_SEVERITY_MESSAGE, "Operation Flags:", operationFlags)
 	log.DebugObject(LOG_SEVERITY_DEBUG, "Initial Targets:", targets)
 
 	/**
@@ -97,7 +98,8 @@ func parseGlobalFlags(flags []string) (operation string, targets []string, globa
 	targets = []string{}
 
 	global := true // start of assuming everything is a global arg
-	for index, arg := range flags[1:] {
+	for index:=1; index<len(flags); index++ {
+		arg := flags[index]
 
 		switch(arg) {
 			case "-v":
@@ -113,7 +115,6 @@ func parseGlobalFlags(flags []string) (operation string, targets []string, globa
 			case "--staaap":
 				globalFlags["verbosity"] = "staaap"
 				fallthrough
-
 
 			case "--all": // this is default anyway
 				targets = append(targets, "$all")

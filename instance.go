@@ -8,7 +8,6 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-
 func (node *Node) ConfigureInstances_Single() bool {
 	node.InstanceType = "single"
 	node.AddInstance("single", true)

@@ -26,11 +26,17 @@ func GetConf(log Log) Conf {
 	}
 
 	conf.from_Default(false, log.ChildLog("DEFAULT"))
-	conf.from_YamlConf(log.ChildLog("YAML"))
 
-	log.DebugObject(LOG_SEVERITY_DEBUG_WOAH,"Docker client conf: ",conf)
+	conf.from_YamlConf(log.ChildLog("USER"), "usercoach")
+	if !conf.from_YamlConf(log.ChildLog("PROJECT"), "projectcoach") {
+		log.Warning("This project contains no CONF Yaml file")
+	}
 
-	conf.from_SecretsYaml(log.ChildLog("SECRETS") )
+	log.DebugObject(LOG_SEVERITY_DEBUG_LOTS,"Docker client conf: ",conf)
+
+	conf.from_SecretsYaml(log.ChildLog("SECRETS"), "usersecrets")
+	conf.from_SecretsYaml(log.ChildLog("SECRETS"), "projectsecrets")
+
 	conf.from_DefaultDockerClient(log.ChildLog("DEFAULTDOCKERCLIENT") )
 
 	conf.Tokens["PROJECT"] = conf.Project
@@ -111,8 +117,7 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 	for err!=nil {
 		wd = path.Dir(wd)
 		if (wd==currentUser.HomeDir || wd==".") {
-			log.Error("Could not find a project folder")
-			return
+			log.Warning("Could not find a project folder, coach will assume that this project is not initialized.")
 		}
 		_, err = os.Stat(path.Join(wd, coachConfigFolder) )
 	}
@@ -120,8 +125,10 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 	/**
 	 * 1. First we start off with a default Conf
 	 */
-
 	conf.Paths["userhome"] = currentUser.HomeDir
+	conf.Paths["usercoach"] = path.Join(conf.Paths["userhome"],coachConfigFolder)
+	conf.Paths["usertemplates"] = path.Join(conf.Paths["usercoach"],"templates")
+	conf.Paths["usersecrets"] = path.Join(conf.Paths["usercoach"],"secrets")
 	conf.Paths["project"] = wd
 	conf.Paths["projectcoach"] = path.Join(wd,coachConfigFolder)
 	conf.Paths["secrets"] = path.Join(conf.Paths["projectcoach"],"secrets") // keep secret things in one place for gitignore
