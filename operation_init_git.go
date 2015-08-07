@@ -1,7 +1,8 @@
 package main
 
 import (
- 	git "github.com/libgit2/git2go"
+	"os"
+ 	"os/exec"
 )
 
 func (operation *Operation_Init) Init_Git_Run(flags []string) (bool, map[string]string) {
@@ -11,20 +12,17 @@ func (operation *Operation_Init) Init_Git_Run(flags []string) (bool, map[string]
 		return false, map[string]string{}
 	}
 
-	target := flags[0]
+	url := flags[0]
+	path := operation.root
 
-	options := git.CloneOptions{
-		Bare: false,
-	}
+	cmd := exec.Command("git", "clone", url, path)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
 
-	if len(flags)>1 {
-		options.CheckoutBranch = flags[1]
-	}
-
-	operation.log.Message("Clone remote repository to local project folder ["+target+"]")
-	_, err := git.Clone(target, operation.root, &options)
+	operation.log.Message("Clone remote repository to local project folder ["+url+"]")
+	err := cmd.Run()
 	if err!=nil {
-		operation.log.Error("Failed to clone the remote repository ["+target+"] => "+err.Error())
+		operation.log.Error("Failed to clone the remote repository ["+url+"] => "+err.Error())
 	} else {
 		operation.log.Message("Cloned remote repository to local project folder")
 	}
