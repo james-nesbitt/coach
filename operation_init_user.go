@@ -9,6 +9,11 @@ import (
 func (operation *Operation_Init) Init_User_Run(flags []string) (bool, map[string]string) {
 operation.log.DebugObject( LOG_SEVERITY_MESSAGE, "FLAGS:", flags)
 
+	if len(flags)==0 {
+		operation.log.Error("You have not provided a template name  $/> coach init user {template}")
+		return false, map[string]string{}
+	}
+
 	template := flags[0]
 	flags = flags[1:]
 

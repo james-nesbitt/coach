@@ -25,7 +25,7 @@ func (nodes *Nodes) from_Yaml(log Log, conf *Conf) {
 		// read the config file
 		yamlFile, err := ioutil.ReadFile(nodesPath)
 		if err!=nil {
-			log.Error("Could not read the YAML file: "+err.Error())
+			log.Warning("Could not read the YAML file: "+err.Error())
 			return
 		}
 
