@@ -71,4 +71,3 @@ func (source *Conf_SecretsYaml) toConf() Conf {
 
 	return conf
 }
-
