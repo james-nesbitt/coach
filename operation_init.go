@@ -34,8 +34,10 @@ func (operation *Operation_Init) Flags(flags []string) {
 		}
 	}
 
-	if variant := remainingFlags[0]; variant!="" {
-		operation.variant = variant
+	if len(remainingFlags)>0 {
+		if variant := remainingFlags[0]; variant!="" {
+			operation.variant = variant
+		}
 	}
 
 	operation.root, _ = os.Getwd()
