@@ -7,25 +7,23 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const confsource_secrettokenyaml_filename string = "secrets.yml"
-
 /**
  * Get more conf tokens from the secrets file, which is usually at .coach/secrets/secrets.yaml
  */
-func (conf *Conf) from_SecretsYaml(log Log) {
+func (conf *Conf) from_SecretsYaml(log Log, confPathKey string) bool {
 	log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Updating Conf from secrets")
 
-	if confPath, ok := conf.Path("secrets"); ok {
+	if confPath, ok := conf.Path(confPathKey); ok {
 		// get the path to where the config file should be
-		confPath = path.Join(confPath, confsource_secrettokenyaml_filename)
+		confPath = path.Join(confPath, "secrets.yml")
 
-		log.Debug(LOG_SEVERITY_DEBUG_WOAH,"Project secrets file:"+confPath)
+		log.Debug(LOG_SEVERITY_DEBUG_WOAH,"Secrets file:"+confPath)
 
 		// read the config file
 		yamlFile, err := ioutil.ReadFile(confPath)
 		if err!=nil {
-			log.Error("Could not read the YAML secrets file: "+err.Error())
-			return
+			log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Could not read the YAML file ["+confPath+"]: "+err.Error())
+			return false
 		}
 
 		// replace tokens in the yamlFile
@@ -35,17 +33,20 @@ func (conf *Conf) from_SecretsYaml(log Log) {
 		// parse the config file contents as a ConfSource_secrettokensyaml object
 		source := new(Conf_SecretsYaml)
 		if err := yaml.Unmarshal([]byte(yamlFile), source); err!=nil {
-			log.Error("YAML marshalling of the YAML secrets file failed: "+err.Error())
-			return
+			log.Warning("YAML marshalling of the YAML conf file failed ["+confPath+"]: "+err.Error())
+			return false
 		}
 		log.DebugObject(LOG_SEVERITY_DEBUG_STAAAP,"secrets source:", *source)
 
 		conf.Merge( source.toConf() )
 
+		return true
+
 	} else {
 		log.Debug(LOG_SEVERITY_DEBUG_LOTS,"YAML secrets file not found, no project coach folder:"+confPath)
 	}
 
+	return false
 }
 
 /**
@@ -70,4 +71,3 @@ func (source *Conf_SecretsYaml) toConf() Conf {
 
 	return conf
 }
-

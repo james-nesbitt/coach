@@ -3,44 +3,65 @@ package main
 import (
 	"os"
 	"path"
+	"strings"
 )
 
 type Operation_Init struct {
 	conf *Conf
 	log Log
 
-	root string
-	variant string
+	root string							// Path to root
+	variant string					// which method to use to initialize
+	handlerFlags []string 	// flags to pass to the variant handler
+
 	force bool
 
-	Targets []string
+	Targets []string				// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
 }
+
 func (operation *Operation_Init) Flags(flags []string) {
 
+	operation.root, _ = os.Getwd()
 	operation.variant = "default"
-	operation.force = false
 
 	remainingFlags := []string{}
-	for index, flag := range flags {
-		switch flag {
-			case "-f":
-				fallthrough
-			case "--force":
-				operation.force = true
 
-			default:
-				remainingFlags = flags[index:]
-				break;
+  flagLoop:
+		for index:=0; index<len(flags); index++ {
+			flag:= flags[index]
+
+			switch flag {
+				case "-d":
+					fallthrough
+				case "--in-directory":
+					if !strings.HasPrefix(flags[index+1], "-") {
+						operation.root = flags[index+1]
+						index++
+					}
+				case "-f":
+					fallthrough
+				case "--force":
+					operation.force = true
+
+				default:
+					remainingFlags = flags[index:]
+					break flagLoop
+			}
 		}
-	}
 
+<<<<<<< HEAD
 	if len(remainingFlags)>0 {
 		if variant := remainingFlags[0]; variant!="" {
 			operation.variant = variant
 		}
+=======
+	if variant := remainingFlags[0]; variant!="" {
+		operation.variant = variant
+		remainingFlags = remainingFlags[1:]
+>>>>>>> origin/master
 	}
 
-	operation.root, _ = os.Getwd()
+	operation.handlerFlags = remainingFlags
 }
 func (operation *Operation_Init) Run() {
 	var err error
@@ -74,13 +95,19 @@ func (operation *Operation_Init) Run() {
 
 	operation.log.Message("Preparing INIT operation in path : "+targetPath)
 
-	// get a list of files to create
-	files := map[string]string{}
+	// a list of files to create, optionally passed as a return by the init methods
+	var files map[string]string
+
+	operation.log = operation.log.ChildLog(strings.ToUpper(operation.variant))
 	switch operation.variant {
+		case "user":
+			_, files = operation.Init_User_Run(operation.handlerFlags)
+		case "git":
+			_, files = operation.Init_Git_Run(operation.handlerFlags)
 		case "default":
 			fallthrough
 		default:
-			files = operation.Init_Default_Files()
+			_, files = operation.Init_Default_Run(operation.handlerFlags)
 	}
 
 	for filePath, fileContents := range files {
@@ -88,6 +115,8 @@ func (operation *Operation_Init) Run() {
 		operation.MakeFile(filePath, fileContents)
 	}
 }
+
+
 func (operation *Operation_Init) MakeFile(filePath string, fileContents string) bool {
 
 	initPath := operation.root
