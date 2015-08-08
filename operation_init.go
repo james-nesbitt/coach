@@ -49,9 +49,11 @@ func (operation *Operation_Init) Flags(flags []string) {
 			}
 		}
 
-	if variant := remainingFlags[0]; variant!="" {
-		operation.variant = variant
-		remainingFlags = remainingFlags[1:]
+	if len(remainingFlags)>0 {
+		if variant := remainingFlags[0]; variant!="" {
+			operation.variant = variant
+			remainingFlags = remainingFlags[1:]
+		}
 	}
 
 	operation.handlerFlags = remainingFlags
