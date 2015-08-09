@@ -3,7 +3,7 @@ package main
 func (operation *Operation_Init) Init_Default_Run(flags []string) (bool, map[string]string) {
 	return true, map[string]string{
 
-		".coach/conf.yml":  `Project: Coach
+		".coach/conf.yml":  `Project: coach
 #Author: Used for docker commits
 
 Paths:  # a map of paths and path overrides (see conf.go)
@@ -64,7 +64,7 @@ fpm:
   Type: service
 
   Config:
-    Image: jamesnesbitt/wunder-php6fpm     # The FPM works, and should have blackfire working
+    Image: jamesnesbitt/wunder-php5fpm     # The FPM works, and should have blackfire working
     RestartPolicy: on-failure
 
     ExposedPorts:
@@ -149,13 +149,7 @@ file assets, and cache elements and temprorary elements.
 The real goal of this folder is to separate filespace into Read-Only and Writeable, with the
 Assets folder being the writeable.
 `,
-		"app/www/index.html":  `
-<html>
-<head></head>
-<body>
- <div>HELLO WORLD</div>
-</body>
-</html> `,
+		"app/www/active/index.php":  `<?php phpinfo();`,
 	".coach/docker/db/Dockerfile": `
 	FROM        jamesnesbitt/wunder-mariadb
 	MAINTAINER  james.nesbitt@wunderkraut.com
