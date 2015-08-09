@@ -36,13 +36,19 @@ func (node *Node) Pull(registry string) bool {
 	if node.Do("pull") {
 
 		image := node.GetImageName()
-		tag := node.GetImageTag()
+		if tag := node.GetImageTag(); tag!="" && tag!="latest" {
+			image +=":"+tag
+		}
 
 		options := docker.PullImageOptions {
 			Repository: image,
-			Tag: tag,
 			OutputStream: os.Stdout,
 			RawJSONStream:false,
+		}
+
+		tag:=node.GetImageTag();
+		if tag!="" {
+			options.Tag = tag
 		}
 
 		var auth docker.AuthConfiguration
