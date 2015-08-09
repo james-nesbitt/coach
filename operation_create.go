@@ -72,7 +72,11 @@ func (instance *Instance) Create(overrideCmd []string, force bool) bool {
 		Config := instance.Config
 		HostConfig := instance.HostConfig
 
-		Config.Image = node.GetImageName()
+		image := node.GetImageName()
+		if tag := node.GetImageTag(); tag!="" && tag!="latest" {
+			image +=":"+tag
+		}
+		node.Config.Image = image
 
 		if len(overrideCmd)>0 {
 			Config.Cmd = overrideCmd
