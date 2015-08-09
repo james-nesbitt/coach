@@ -47,6 +47,9 @@ func (node *Node) Destroy(force bool) bool {
 
 		// Get the image name
 		image := node.GetImageName()
+		if tag := node.GetImageTag(); tag!="" && tag!="latest" {
+			image +=":"+tag
+		}
 
 		options := docker.RemoveImageOptions{
 			Force: force,
