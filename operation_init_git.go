@@ -20,14 +20,21 @@ func (operation *Operation_Init) Init_Git_Run(flags []string) (bool, map[string]
 	cmd.Stdout = operation.log
 	cmd.Stderr = operation.log
 
+
+	err := cmd.Start()
+
+	if err!=nil {
+		operation.log.Error("Failed to clone the remote repository ["+url+"] => "+err.Error())
+		return false, map[string]string{}
+	}
+
 	operation.log.Message("Clone remote repository to local project folder ["+url+"]")
-	err := cmd.Run()
+	err = cmd.Wait()
 
 	if err!=nil {
 		operation.log.Error("Failed to clone the remote repository ["+url+"] => "+err.Error())
 		return false, map[string]string{}
 	} else {
-
 		operation.log.Message("Cloned remote repository to local project folder")
 		return true, map[string]string{
 			".coach/CREATEDFROM.md":  `THIS PROJECT WAS CREATED FROM GIT`,
