@@ -3,7 +3,6 @@ package main
 import (
 	"path"
 	"os"
-	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
 )
@@ -54,9 +53,12 @@ func (node *Node) Build(force bool) bool {
 		buildPath = path.Join(buildPath, node.BuildPath)
 
 		image := node.GetImageName()
+		if tag := node.GetImageTag(); tag!="" {
+			image +=":"+tag
+		}
 
 		options := docker.BuildImageOptions{
-			Name: strings.ToLower(image),
+			Name: image,
 			ContextDir: buildPath,
 			RmTmpContainer: true,
 			OutputStream: os.Stdout,
