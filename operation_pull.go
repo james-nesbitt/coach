@@ -36,9 +36,7 @@ func (node *Node) Pull(registry string) bool {
 	if node.Do("pull") {
 
 		image := node.GetImageName()
-		if tag := node.GetImageTag(); tag!="" && tag!="latest" {
-			image +=":"+tag
-		}
+		tag := node.GetImageTag()
 
 		options := docker.PullImageOptions {
 			Repository: image,
@@ -46,7 +44,6 @@ func (node *Node) Pull(registry string) bool {
 			RawJSONStream:false,
 		}
 
-		tag:=node.GetImageTag();
 		if tag!="" {
 			options.Tag = tag
 		}
