@@ -20,6 +20,9 @@ func GetOperation(name string, nodes Nodes, targets []string, client *docker.Cli
 		case "destroy":
 			return Operation(&Operation_Destroy{log:log.ChildLog("DESTROY"), Nodes:nodes, Targets:targets})
 
+		case "run":
+			return Operation(&Operation_Run{log:log.ChildLog("RUN"), Nodes:nodes, Targets:targets})
+
 		case "create":
 			return Operation(&Operation_Create{log:log.ChildLog("CREATE"), Nodes:nodes, Targets:targets})
 		case "remove":
