@@ -51,9 +51,12 @@ func (node *Node) Run(cmd []string) bool {
 				instance.Attach()
 				return true
 			} else {
+				node.log.Error("Could not start RUN container")
 				return false
 			}
 
+		} else {
+			node.log.Error("Could not create RUN container")
 		}
 
 	}
