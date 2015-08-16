@@ -76,7 +76,7 @@ func (instance *Instance) Create(overrideCmd []string, force bool) bool {
 		if tag := node.GetImageTag(); tag!="" && tag!="latest" {
 			image +=":"+tag
 		}
-		node.Config.Image = image
+		Config.Image = image
 
 		if len(overrideCmd)>0 {
 			Config.Cmd = overrideCmd
