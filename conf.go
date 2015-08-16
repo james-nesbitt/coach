@@ -5,7 +5,6 @@ import (
 	"os/user"
 
 	"strings"
-
 	"path"
 )
 
@@ -110,22 +109,29 @@ func (conf *Conf) Path(name string) (string, bool) {
 func (conf *Conf) from_Default(includeEnv bool, log Log) {
 	log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Creating default Conf")
 
-	currentUser,  _ := user.Current()
-
-	wd, err := os.Getwd()
-	_, err = os.Stat( path.Join(wd, coachConfigFolder) )
-	for err!=nil {
-		wd = path.Dir(wd)
-		if (wd==currentUser.HomeDir || wd==".") {
-			log.Warning("Could not find a project folder, coach will assume that this project is not initialized.")
-		}
-		_, err = os.Stat(path.Join(wd, coachConfigFolder) )
+	homeDir := "."
+	if currentUser,  err := user.Current(); err==nil {
+		homeDir = currentUser.HomeDir
+	} else {
+		homeDir = os.Getenv("HOME")
 	}
+
+	wd, _ := os.Getwd()
+	_, err := os.Stat( path.Join(wd, coachConfigFolder) )
+	RootSearch:
+		for err!=nil {
+			wd = path.Dir(wd)
+			if (wd==homeDir || wd=="." || wd=="/") {
+				log.Warning("Could not find a project folder, coach will assume that this project is not initialized.")
+				break RootSearch
+			}
+			_, err = os.Stat(path.Join(wd, coachConfigFolder) )
+		}
 
 	/**
 	 * 1. First we start off with a default Conf
 	 */
-	conf.Paths["userhome"] = currentUser.HomeDir
+	conf.Paths["userhome"] = homeDir
 	conf.Paths["usercoach"] = path.Join(conf.Paths["userhome"],coachConfigFolder)
 	conf.Paths["usertemplates"] = path.Join(conf.Paths["usercoach"],"templates")
 	conf.Paths["usersecrets"] = path.Join(conf.Paths["usercoach"],"secrets")
