@@ -22,6 +22,11 @@ func (operation *Operation_Remove) Flags(flags []string) {
 		}
 	}
 }
+
+func (operation *Operation_Remove) Help() {
+
+}
+
 func (operation *Operation_Remove) Run() {
 	force := false
 	if operation.force == true {

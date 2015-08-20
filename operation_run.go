@@ -26,6 +26,11 @@ func (operation *Operation_Run) Flags(flags []string) {
 
 	operation.cmd = flags
 }
+
+func (operation *Operation_Run) Help() {
+
+}
+
 func (operation *Operation_Run) Run() {
 	operation.log.Message("running run operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)

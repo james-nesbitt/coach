@@ -22,6 +22,11 @@ func (operation *Operation_Destroy) Flags(flags []string) {
 		}
 	}
 }
+
+func (operation *Operation_Destroy) Help() {
+
+}
+
 func (operation *Operation_Destroy) Run() {
 	force := false
 	if operation.force == true {

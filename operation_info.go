@@ -19,6 +19,11 @@ func (operation *Operation_Info) Flags(flags []string) {
 		}
 	}
 }
+
+func (operation *Operation_Info) Help() {
+
+}
+
 func (operation *Operation_Info) Run() {
 
 	operation.log.Message("running info operation")

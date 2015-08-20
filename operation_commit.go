@@ -13,6 +13,11 @@ type Operation_Commit struct {
 func (operation *Operation_Commit) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Commit) Help() {
+
+}
+
 func (operation *Operation_Commit) Run() {
 	operation.Nodes.Commit(operation.Targets, "/", map[string]string{"single":"latest"}, "")
 }

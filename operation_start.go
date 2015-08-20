@@ -11,6 +11,11 @@ type Operation_Start struct {
 func (operation *Operation_Start) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Start) Help() {
+
+}
+
 func (operation *Operation_Start) Run() {
 	operation.Nodes.Start(operation.Targets)
 }

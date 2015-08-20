@@ -56,6 +56,8 @@ func GetOperation(name string, nodes Nodes, targets []string, client *docker.Cli
 type Operation interface {
 	Flags(flags []string)
 	Run()
+
+	Help()
 }
 
 
@@ -74,4 +76,7 @@ func (operation *EmptyOperation) Flags(flags []string) {
 }
 func (operation *EmptyOperation) Run() {
 	operation.log.Message("No matching operation found :"+operation.name)
+}
+func (operation *EmptyOperation) Help() {
+
 }

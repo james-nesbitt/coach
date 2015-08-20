@@ -17,6 +17,11 @@ type Operation_Pull struct {
 func (operation *Operation_Pull) Flags(flags []string) {
 	operation.Registry = "https://index.docker.io/v1/"
 }
+
+func (operation *Operation_Pull) Help() {
+
+}
+
 func (operation *Operation_Pull) Run() {
 	operation.log.Message("running pull operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)

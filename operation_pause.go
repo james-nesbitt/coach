@@ -11,6 +11,11 @@ type Operation_Pause struct {
 func (operation *Operation_Pause) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Pause) Help() {
+
+}
+
 func (operation *Operation_Pause) Run() {
 	operation.Nodes.Pause(operation.Targets)
 }

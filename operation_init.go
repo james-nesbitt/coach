@@ -58,6 +58,11 @@ func (operation *Operation_Init) Flags(flags []string) {
 
 	operation.handlerFlags = remainingFlags
 }
+
+func (operation *Operation_Init) Help() {
+
+}
+
 func (operation *Operation_Init) Run() {
 	var err error
 	var ok bool

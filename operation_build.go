@@ -25,6 +25,12 @@ func (operation *Operation_Build) Flags(flags []string) {
 		}
 	}
 }
+
+
+func (operation *Operation_Build) Help() {
+
+}
+
 func (operation *Operation_Build) Run() {
 	force := false
 	if operation.force == true {

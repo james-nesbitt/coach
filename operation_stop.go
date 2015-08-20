@@ -12,6 +12,11 @@ type Operation_Stop struct {
 func (operation *Operation_Stop) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Stop) Help() {
+
+}
+
 func (operation *Operation_Stop) Run() {
 	operation.Nodes.Stop(operation.Targets, operation.force, operation.timeout)
 }

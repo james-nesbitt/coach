@@ -16,6 +16,11 @@ type Operation_Attach struct {
 func (operation *Operation_Attach) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Attach) Help() {
+
+}
+
 func (operation *Operation_Attach) Run() {
 	operation.Nodes.Attach(operation.Targets)
 }
