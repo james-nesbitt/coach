@@ -107,14 +107,17 @@ func (item *Node_Yaml) toNode(name string, log Log, conf *Conf) (*Node, error) {
 	// interpret the Instances value
 	if item.Instances=="" {
 		if item.Type=="command" {
-			item.Instances="temporary"
+			item.Instances="temporary" // command nodes default to temporary
 		} else {
-			item.Instances="single"
+			item.Instances="single" // all other nodes default to single
 		}
 	}
 
+	// convert the instances string to proper node instances, using the first value as an optional instance type
 	split := strings.Split(item.Instances, " ")
 	switch split[0] {
+		case "scaled":
+			fallthrough
 		case "scale":
 			var min, max int64
 			if len(split)<2 {
@@ -129,10 +132,14 @@ func (item *Node_Yaml) toNode(name string, log Log, conf *Conf) (*Node, error) {
 			}
 			node.ConfigureInstances_Scaled( int(min), int(max))
 
+		case "temp":
+			fallthrough
 		case "temporary":
 			node.ConfigureInstances_Temporary()
+
 		case "single":
 			node.ConfigureInstances_Single()
+
 		case "fixed":
 			if len(split)<2 {
 				split = []string{"unnamed"} // this was not properly configured, so just give a single instance name
@@ -140,7 +147,7 @@ func (item *Node_Yaml) toNode(name string, log Log, conf *Conf) (*Node, error) {
 				split = split[1:] // remove the "fixed" and assume that the rest are instance names
 			}
 			fallthrough
-		default:
+		default: // default is a fixed type, space delimited list of instances
 			node.ConfigureInstances_Fixed( split )
 	}
 

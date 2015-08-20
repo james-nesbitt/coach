@@ -18,13 +18,9 @@ func (node *Node) ConfigureInstances_Temporary() bool {
 	return true
 }
 func (node *Node) ConfigureInstances_Fixed(instances []string) bool {
-	if node.Do("start") {
-		node.InstanceType = "fixed"
-		node.AddInstances(instances, true)
-		return true
-	} else {
-		return false
-	}
+	node.InstanceType = "fixed"
+	node.AddInstances(instances, true)
+	return true
 }
 func (node *Node) ConfigureInstances_Scaled(min int, max int) bool {
 	if node.Do("start") {
@@ -134,7 +130,7 @@ func (node *Node) GetRandomInstance(onlyActive bool) *Instance {
 			continue
 		}
 
-		return instance
+		return node.GetInstance(name)
 	}
 	return nil
 }
@@ -145,7 +141,9 @@ func (node *Node) GetInstance(name string) *Instance {
 	if name=="" {
 		for _, instance := range node.InstanceMap {
 			if instance.active {
-				return instance
+				if instance.Process() {
+					return instance
+				}
 			}
 		}
 		// there are no instances
