@@ -78,6 +78,8 @@ func (node *Node) DependencyInstanceMatches(targets []string, fallbackInstance s
 				if randomTarget := targetNode.GetRandomInstance(true); randomTarget!=nil {
 					targetInstances = []*Instance{ randomTarget }
 				}
+			} else if targetNode.InstanceType=="single" && ( targetInstanceName=="" || targetInstanceName=="single" || fallbackInstance=="single" ) {
+				targetInstances = targetNode.FilterInstances([]string{"single"}, true)
 			} else {
 				targetInstances = targetNode.FilterInstances([]string{targetInstanceName, fallbackInstance}, true)
 			}

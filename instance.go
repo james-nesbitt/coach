@@ -109,6 +109,7 @@ func (node *Node) GetInstances(onlyActive bool) []*Instance {
 }
 func (node *Node) FilterInstances(filters []string, onlyActive bool) []*Instance {
 	instances := []*Instance{}
+
 	for name, _ := range node.InstanceMap {
 		instance := node.GetInstance(name)
 
