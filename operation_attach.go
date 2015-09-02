@@ -16,6 +16,14 @@ type Operation_Attach struct {
 func (operation *Operation_Attach) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Attach) Help(topics []string) {
+	operation.log.Note(`Operation: ATTACH
+
+Coach will attempt to attach to an existing container.
+`)
+}
+
 func (operation *Operation_Attach) Run() {
 	operation.Nodes.Attach(operation.Targets)
 }

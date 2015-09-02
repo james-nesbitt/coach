@@ -22,6 +22,14 @@ func (operation *Operation_Remove) Flags(flags []string) {
 		}
 	}
 }
+
+func (operation *Operation_Remove) Help(topics []string) {
+	operation.log.Note(`Operation: REMOVE
+
+Coach will attempt to remove all target node containers.
+`)
+}
+
 func (operation *Operation_Remove) Run() {
 	force := false
 	if operation.force == true {

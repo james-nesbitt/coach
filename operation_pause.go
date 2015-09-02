@@ -11,6 +11,14 @@ type Operation_Pause struct {
 func (operation *Operation_Pause) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Pause) Help(topics []string) {
+	operation.log.Note(`Operation: PAUSE
+
+Coach will attempt to pause any target containers.
+`)
+}
+
 func (operation *Operation_Pause) Run() {
 	operation.Nodes.Pause(operation.Targets)
 }

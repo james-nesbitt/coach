@@ -25,6 +25,15 @@ func (operation *Operation_Build) Flags(flags []string) {
 		}
 	}
 }
+
+
+func (operation *Operation_Build) Help(topics []string) {
+	operation.log.Note(`Operation: BUILD
+
+Coach will attempt to build a new docker image, for each target node that has a build setting.
+`)
+}
+
 func (operation *Operation_Build) Run() {
 	force := false
 	if operation.force == true {

@@ -11,6 +11,14 @@ type Operation_Unpause struct {
 func (operation *Operation_Unpause) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Unpause) Help(topics []string) {
+	operation.log.Note(`Operation: UNPAUSE
+
+Coach will attempt to unpause target node containers.
+`)
+}
+
 func (operation *Operation_Unpause) Run() {
 	operation.Nodes.Unpause(operation.Targets)
 }

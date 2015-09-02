@@ -58,6 +58,14 @@ func (operation *Operation_Init) Flags(flags []string) {
 
 	operation.handlerFlags = remainingFlags
 }
+
+func (operation *Operation_Init) Help(topics []string) {
+	operation.log.Note(`Operation: INIT
+
+Coach will attempt to initialize a new coach project in the current folder.
+`)
+}
+
 func (operation *Operation_Init) Run() {
 	var err error
 	var ok bool

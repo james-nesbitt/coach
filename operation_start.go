@@ -11,6 +11,14 @@ type Operation_Start struct {
 func (operation *Operation_Start) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Start) Help(topics []string) {
+	operation.log.Note(`Operation: START
+
+Coach will attempt to start target node containers.
+`)
+}
+
 func (operation *Operation_Start) Run() {
 	operation.Nodes.Start(operation.Targets)
 }

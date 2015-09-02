@@ -22,6 +22,14 @@ func (operation *Operation_Create) Flags(flags []string) {
 		}
 	}
 }
+
+func (operation *Operation_Create) Help(topics []string) {
+	operation.log.Note(`Operation: CREATE
+
+Coach will attempt to create any node containers that should be active.
+`)
+}
+
 func (operation *Operation_Create) Run() {
 	force := false
 	if operation.force == true {

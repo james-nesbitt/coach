@@ -17,6 +17,16 @@ type Operation_Pull struct {
 func (operation *Operation_Pull) Flags(flags []string) {
 	operation.Registry = "https://index.docker.io/v1/"
 }
+
+func (operation *Operation_Pull) Help(topics []string) {
+	operation.log.Note(`Operation: PULL
+
+Coach will attempt to pull any node images, for nodes that have no build settings.
+
+Nodes that have build settings will not attempt to pull any images, as it is expected that those images will be created using the build operation.
+`)
+}
+
 func (operation *Operation_Pull) Run() {
 	operation.log.Message("running pull operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
