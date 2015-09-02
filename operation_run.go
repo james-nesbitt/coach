@@ -27,8 +27,20 @@ func (operation *Operation_Run) Flags(flags []string) {
 	operation.cmd = flags
 }
 
-func (operation *Operation_Run) Help() {
+func (operation *Operation_Run) Help(topics []string) {
+	operation.log.Note(`Operation: RUN
 
+Coach will attempt a single command run on a node container.
+
+The run operation follows the following steps:
+- creates a new container using a new command (read from command line)
+- starts that container, output stdout and stderr
+- removes the started container
+
+The process is ideal for running single commands in volatile containers, which can disappear after execution.
+
+Containers can be persistant, but such containers are not as usefull, as the command cannot be changed.  In most cases, volatility can still work, as long as persistant file and folder maps are used to keep volatile information.
+`)
 }
 
 func (operation *Operation_Run) Run() {

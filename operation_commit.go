@@ -14,8 +14,11 @@ func (operation *Operation_Commit) Flags(flags []string) {
 
 }
 
-func (operation *Operation_Commit) Help() {
+func (operation *Operation_Commit) Help(topics []string) {
+	operation.log.Note(`Operation: COMMIT
 
+Coach will attempt to commit a container to it's image.
+`)
 }
 
 func (operation *Operation_Commit) Run() {

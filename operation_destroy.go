@@ -23,8 +23,13 @@ func (operation *Operation_Destroy) Flags(flags []string) {
 	}
 }
 
-func (operation *Operation_Destroy) Help() {
+func (operation *Operation_Destroy) Help(topics []string) {
+	operation.log.Note(`Operation: DESTROY
 
+Coach will attempt to remove any built images for target nodes.
+
+Coach will not remove an image for a node that does not build, which is the common case for nodes with an image, but no build setting.  This prevents deleting shared images that are not build targets.
+`)
 }
 
 func (operation *Operation_Destroy) Run() {

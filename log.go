@@ -49,6 +49,15 @@ func (log *Log) Message(message string) {
 		)
 	}
 }
+func (log *Log) Note(message string) {
+	if (log.severity>=LOG_SEVERITY_MESSAGE) {
+		log.write(
+			LOG_SEVERITY_MESSAGE,
+			message,
+		)
+	}
+}
+
 func (log *Log) Warning(message string) {
 	if (log.severity>=LOG_SEVERITY_WARNING) {
 		log.write(

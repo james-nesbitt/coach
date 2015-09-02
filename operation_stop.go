@@ -13,8 +13,11 @@ func (operation *Operation_Stop) Flags(flags []string) {
 
 }
 
-func (operation *Operation_Stop) Help() {
+func (operation *Operation_Stop) Help(topics []string) {
+	operation.log.Note(`Operation: STOP
 
+Coach will attempt to stop target node containers.
+`)
 }
 
 func (operation *Operation_Stop) Run() {

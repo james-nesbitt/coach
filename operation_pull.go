@@ -18,8 +18,13 @@ func (operation *Operation_Pull) Flags(flags []string) {
 	operation.Registry = "https://index.docker.io/v1/"
 }
 
-func (operation *Operation_Pull) Help() {
+func (operation *Operation_Pull) Help(topics []string) {
+	operation.log.Note(`Operation: PULL
 
+Coach will attempt to pull any node images, for nodes that have no build settings.
+
+Nodes that have build settings will not attempt to pull any images, as it is expected that those images will be created using the build operation.
+`)
 }
 
 func (operation *Operation_Pull) Run() {

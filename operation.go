@@ -1,17 +1,17 @@
 package main
 
-import (
-	docker "github.com/fsouza/go-dockerclient"
-)
-
-func GetOperation(name string, nodes Nodes, targets []string, client *docker.Client, conf *Conf, log Log) Operation {
+func GetOperation(name string, nodes Nodes, targets []string, conf *Conf, log Log) Operation {
 
 	switch name {
-		case "init":
-			return Operation(&Operation_Init{log:log.ChildLog("INIT"), conf: conf, Targets: targets})
+		case "help":
+			return Operation(&Operation_Help{log:log.ChildLog("HELP"), conf: conf, Targets: targets})
 
 		case "info":
 			return Operation(&Operation_Info{log:log.ChildLog("INFO"), Nodes:nodes, Targets:targets})
+		// case "status":
+
+		case "init":
+			return Operation(&Operation_Init{log:log.ChildLog("INIT"), conf: conf, Targets: targets})
 
 		case "pull":
 			return Operation(&Operation_Pull{log:log.ChildLog("PULL"), Nodes:nodes, Targets:targets})
@@ -57,7 +57,7 @@ type Operation interface {
 	Flags(flags []string)
 	Run()
 
-	Help()
+	Help(topics []string)
 }
 
 
@@ -77,6 +77,9 @@ func (operation *EmptyOperation) Flags(flags []string) {
 func (operation *EmptyOperation) Run() {
 	operation.log.Message("No matching operation found :"+operation.name)
 }
-func (operation *EmptyOperation) Help() {
+func (operation *EmptyOperation) Help(topics []string) {
+	operation.log.Note(`Operation: MissingOperation
 
+	No related operation was found.
+`)
 }
