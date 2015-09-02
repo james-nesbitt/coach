@@ -137,7 +137,7 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 	conf.Paths["usersecrets"] = path.Join(conf.Paths["usercoach"],"secrets")
 	conf.Paths["project"] = wd
 	conf.Paths["projectcoach"] = path.Join(wd,coachConfigFolder)
-	conf.Paths["secrets"] = path.Join(conf.Paths["projectcoach"],"secrets") // keep secret things in one place for gitignore
+	conf.Paths["projectsecrets"] = path.Join(conf.Paths["projectcoach"],"secrets") // keep secret things in one place for gitignore
 	conf.Paths["build"] = conf.Paths["projectcoach"] // maybe for remote builds, this should be different?
 
 	// add all environment variables for the user to the env list
