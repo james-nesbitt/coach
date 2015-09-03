@@ -91,6 +91,19 @@ func (node *Node) Run(instanceid string, cmd []string) bool {
 
 func (instance *Instance) Run(cmd []string, persistant bool) bool {
 
+	// Set up some additional settings for TTY commands
+	if instance.Config.Tty==true {
+
+		// set a default hostname to make a prettier prompt
+		if instance.Config.Hostname=="" {
+			instance.Config.Hostname = instance.GetContainerName()
+		}
+
+		// make sure that all tty runs have openstdin
+		instance.Config.OpenStdin=true
+
+	}
+
 	instance.Config.AttachStdin = true
 	instance.Config.AttachStdout = true
 	instance.Config.AttachStderr = true

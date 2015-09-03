@@ -73,9 +73,8 @@ func (instance *Instance) Attach() bool {
 
 		//Success chan struct{}
 
-		RawTerminal: false, // Use raw terminal? Usually true when the container contains a TTY.
+		RawTerminal: instance.Config.Tty, // Use raw terminal? Usually true when the container contains a TTY.
 	}
-
 
 	instance.Node.log.Message("ATTACHING TO INSTANCE CONTAINER ["+id+"]")
 	err := instance.Node.client.AttachToContainer( options )
