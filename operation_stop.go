@@ -17,6 +17,15 @@ func (operation *Operation_Stop) Help(topics []string) {
 	operation.log.Note(`Operation: STOP
 
 Coach will attempt to stop target node containers.
+
+SYNTAX:
+    $/> coach {targets} stop
+
+	{targets} what target node instances the operation should process ($/> coach help targets)
+
+ACCESS:
+  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+
 `)
 }
 

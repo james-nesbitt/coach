@@ -63,6 +63,22 @@ func (operation *Operation_Init) Help(topics []string) {
 	operation.log.Note(`Operation: INIT
 
 Coach will attempt to initialize a new coach project in the current folder.
+
+SYNTAX:
+    $/> coach init [ {type} {type flags} ]
+
+EXAMPLES:
+
+    $/> coach init
+    $/> coach init default
+    Populate the current path with default settings
+
+    $/> coach init user {template}
+    Uses the contents of ~/.coach/templates to populate the current folder
+
+    $/> coach init git https://github.com/aleksijohansson/docker-drupal-coach.git
+    Clones the target git URL to the current path
+
 `)
 }
 

@@ -78,8 +78,8 @@ func (operation *EmptyOperation) Run() {
 	operation.log.Message("No matching operation found :"+operation.name)
 }
 func (operation *EmptyOperation) Help(topics []string) {
-	operation.log.Note(`Operation: MissingOperation
+	operation.log.Note(`Topic: Missing
 
-	No related operation was found.
+	No related help topic could be found.
 `)
 }
