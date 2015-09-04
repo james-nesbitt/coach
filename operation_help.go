@@ -5,8 +5,8 @@ type Operation_Help struct {
 
 	conf *Conf
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	flags []string
 }
@@ -25,7 +25,7 @@ The first topic passed in is assumed to be a help operation.
 
 func (operation *Operation_Help) Run() {
 	operation.log.Message("running help operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:HELP")
 	helpOperationName := "help"
@@ -37,7 +37,7 @@ func (operation *Operation_Help) Run() {
 		helpOperationFlags = operation.flags[1:]
 	}
 
-	helpOperation := GetOperation(helpOperationName, operation.Nodes , operation.Targets, operation.conf, operation.log)
+	helpOperation := GetOperation(helpOperationName, operation.nodes , operation.targets, operation.conf, operation.log)
 	helpOperation.Help(helpOperationFlags)
 
 }

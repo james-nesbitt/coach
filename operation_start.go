@@ -3,8 +3,8 @@ package main
 type Operation_Start struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
@@ -20,12 +20,16 @@ Coach will attempt to start target node containers.
 }
 
 func (operation *Operation_Start) Run() {
-	operation.Nodes.Start(operation.Targets)
+	operation.nodes.Start(operation.targets, operation.force)
 }
 
-func (nodes *Nodes) Start(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Start([]string{}, false)
+func (nodes *Nodes) Start(targets []string, force bool) {
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Start(force)
+			}
+		}
 	}
 }
 

@@ -9,8 +9,8 @@ import (
 type Operation_Pull struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	Registry string
 }
@@ -29,16 +29,16 @@ Nodes that have build settings will not attempt to pull any images, as it is exp
 
 func (operation *Operation_Pull) Run() {
 	operation.log.Message("running pull operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:BUILD")
-	operation.Nodes.Pull(operation.Targets, operation.Registry)
+	operation.nodes.Pull(operation.targets, operation.Registry)
 }
 
 func (nodes *Nodes) Pull(targets []string, registry string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.log = nodes.log.ChildLog("NODE:"+target.Name)
-		target.Pull(registry)
+	for _, target := range nodes.GetTargets(targets, false) {
+		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
+		target.node.Pull(registry)
 	}
 }
 

@@ -16,7 +16,7 @@ type Operation_Init struct {
 
 	force bool
 
-	Targets []string				// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
+	targets []string				// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
 }
 
 func (operation *Operation_Init) Flags(flags []string) {

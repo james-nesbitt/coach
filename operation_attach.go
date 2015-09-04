@@ -9,9 +9,8 @@ import (
 type Operation_Attach struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
-
+	nodes Nodes
+	targets []string
 }
 func (operation *Operation_Attach) Flags(flags []string) {
 
@@ -25,12 +24,16 @@ Coach will attempt to attach to an existing container.
 }
 
 func (operation *Operation_Attach) Run() {
-	operation.Nodes.Attach(operation.Targets)
+	operation.nodes.Attach(operation.targets)
 }
 
 func (nodes *Nodes) Attach(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Attach([]string{})
+	for _, target := range nodes.GetTargets(targets, true) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Attach()
+			}
+		}
 	}
 }
 

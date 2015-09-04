@@ -3,8 +3,8 @@ package main
 type Operation_Stop struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 	timeout uint
@@ -21,12 +21,16 @@ Coach will attempt to stop target node containers.
 }
 
 func (operation *Operation_Stop) Run() {
-	operation.Nodes.Stop(operation.Targets, operation.force, operation.timeout)
+	operation.nodes.Stop(operation.targets, operation.force, operation.timeout)
 }
 
 func (nodes *Nodes) Stop(targets []string, force bool, timeout uint) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Stop([]string{}, force, timeout)
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Stop(force, timeout)
+			}
+		}
 	}
 }
 

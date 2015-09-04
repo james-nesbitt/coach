@@ -1,16 +1,51 @@
 package main
 
 import (
+	"strings"
+
 	docker "github.com/fsouza/go-dockerclient"
 )
 
 type Operation_Commit struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
+
+	repo string
+
+	tag string
+	message string
 }
 func (operation *Operation_Commit) Flags(flags []string) {
+
+	for index:=0; index<len(flags); index++ {
+		flag:= flags[index]
+
+		switch flag {
+			case "-t":
+				fallthrough
+			case "--tag":
+				if !strings.HasPrefix(flags[index+1], "-") {
+					operation.tag = flags[index+1]
+					index++
+				}
+			case "-r":
+				fallthrough
+			case "--repo":
+				if !strings.HasPrefix(flags[index+1], "-") {
+					operation.repo = flags[index+1]
+					index++
+				}
+			case "-m":
+				fallthrough
+			case "--message":
+				if !strings.HasPrefix(flags[index+1], "-") {
+					operation.repo = flags[index+1]
+					index++
+				}
+		}
+	}
 
 }
 
@@ -22,13 +57,22 @@ Coach will attempt to commit a container to it's image.
 }
 
 func (operation *Operation_Commit) Run() {
-	operation.Nodes.Commit(operation.Targets, "/", map[string]string{"single":"latest"}, "")
+	if operation.tag=="" {
+		operation.tag = "latest"
+	}
+	if operation.repo=="" {
+		operation.repo = "/"
+	}
+
+	operation.nodes.Commit(operation.targets, operation.repo, operation.tag, "")
 }
 
-func (nodes *Nodes) Commit(targets []string, repo string, instanceTags map[string]string, message string) {
-	for _, target := range nodes.GetTargets(targets) {
-		for instance, tag := range instanceTags {
-			target.Commit(repo, instance, tag, message)
+func (nodes *Nodes) Commit(targets []string, repo string, tag string, message string) {
+	for _, target := range nodes.GetTargets(targets,false) {
+		if target.node.Do("commit") {
+			for _, instance := range target.instances {
+				instance.Commit(repo, tag, message)
+			}
 		}
 	}
 }
