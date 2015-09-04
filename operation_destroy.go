@@ -7,8 +7,8 @@ import (
 type Operation_Destroy struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
@@ -39,16 +39,16 @@ func (operation *Operation_Destroy) Run() {
 	}
 
 	operation.log.Message("running destroy operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:BUILD")
-	operation.Nodes.Destroy(operation.Targets, force)
+	operation.nodes.Destroy(operation.targets, force)
 }
 
 func (nodes *Nodes) Destroy(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.log = nodes.log.ChildLog("NODE:"+target.Name)
-		target.Destroy(force)
+	for _, target := range nodes.GetTargets(targets, true) {
+		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
+		target.node.Destroy(force)
 	}
 }
 

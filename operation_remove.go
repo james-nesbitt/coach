@@ -7,8 +7,8 @@ import (
 type Operation_Remove struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
@@ -37,15 +37,19 @@ func (operation *Operation_Remove) Run() {
 	}
 
 	operation.log.Message("running remove operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:REMOVE")
-	operation.Nodes.Remove(operation.Targets, force)
+	operation.nodes.Remove(operation.targets, force)
 }
 
 func (nodes *Nodes) Remove(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Remove([]string{}, force)
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("create") {
+			for _, instance := range target.instances {
+				instance.Remove(force)
+			}
+		}
 	}
 }
 

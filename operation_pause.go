@@ -3,8 +3,8 @@ package main
 type Operation_Pause struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
@@ -20,12 +20,16 @@ Coach will attempt to pause any target containers.
 }
 
 func (operation *Operation_Pause) Run() {
-	operation.Nodes.Pause(operation.Targets)
+	operation.nodes.Pause(operation.targets)
 }
 
 func (nodes *Nodes) Pause(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Pause([]string{}, false)
+	for _, target := range nodes.GetTargets(targets, true) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Pause(false)
+			}
+		}
 	}
 }
 

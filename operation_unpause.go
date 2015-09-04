@@ -3,8 +3,8 @@ package main
 type Operation_Unpause struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
@@ -20,12 +20,16 @@ Coach will attempt to unpause target node containers.
 }
 
 func (operation *Operation_Unpause) Run() {
-	operation.Nodes.Unpause(operation.Targets)
+	operation.nodes.Unpause(operation.targets, operation.force)
 }
 
-func (nodes *Nodes) Unpause(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Unpause([]string{}, false)
+func (nodes *Nodes) Unpause(targets []string, force bool) {
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Unpause(force)
+			}
+		}
 	}
 }
 

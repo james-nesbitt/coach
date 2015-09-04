@@ -7,8 +7,8 @@ import (
 type Operation_Run struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	cmd []string
 	instance string
@@ -45,16 +45,11 @@ Containers can be persistant, but such containers are not as usefull, as the com
 
 func (operation *Operation_Run) Run() {
 	operation.log.Message("running run operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
-// 	operation.Nodes.log = operation.log.ChildLog("OPERATION:RUN")
-	operation.Nodes.Run(operation.Targets, operation.instance, operation.cmd)
-}
-
-func (nodes *Nodes) Run(targets []string, instance string, cmd []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.log = nodes.log.ChildLog("NODE:"+target.Name)
-		target.Run(instance, cmd)
+	for _, target := range operation.nodes.GetTargets(operation.targets, true) {
+		target.node.log = operation.nodes.log.ChildLog("NODE:"+target.node.Name)
+		target.node.Run(operation.instance, operation.cmd)
 	}
 }
 

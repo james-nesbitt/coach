@@ -7,9 +7,10 @@ import (
 type Operation_Create struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
+	cmd []string
 	force bool
 }
 func (operation *Operation_Create) Flags(flags []string) {
@@ -37,15 +38,19 @@ func (operation *Operation_Create) Run() {
 	}
 
 	operation.log.Message("running create operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:CREATE")
-	operation.Nodes.Create(operation.Targets, true, force)
+	operation.nodes.Create(operation.targets, operation.cmd, true, force)
 }
 
-func (nodes *Nodes) Create(targets []string, onlyActive bool, force bool) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Create([]string{}, onlyActive, force)
+func (nodes *Nodes) Create(targets []string, cmdOverride []string, onlyActive bool, force bool) {
+	for _, target := range nodes.GetTargets(targets, onlyActive) {
+		if target.node.Do("create") {
+			for _, instance := range target.instances {
+				instance.Create(cmdOverride, force)
+			}
+		}
 	}
 }
 

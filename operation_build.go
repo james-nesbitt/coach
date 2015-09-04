@@ -10,8 +10,8 @@ import (
 type Operation_Build struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
@@ -41,16 +41,18 @@ func (operation *Operation_Build) Run() {
 	}
 
 	operation.log.Message("running build operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:BUILD")
-	operation.Nodes.Build(operation.Targets, force)
+	operation.nodes.Build(operation.targets, force)
 }
 
 func (nodes *Nodes) Build(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.log = nodes.log.ChildLog("NODE:"+target.Name)
-		target.Build(force)
+	for _, target := range nodes.GetTargets(targets, true) {
+		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
+
+		// ignore target instances, and just build the node
+		target.node.Build(force)
 	}
 }
 
