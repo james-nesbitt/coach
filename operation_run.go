@@ -1,9 +1,5 @@
 package main
 
-import (
-	"strings"
-)
-
 type Operation_Run struct {
 	log Log
 
@@ -14,16 +10,6 @@ type Operation_Run struct {
 	instance string
 }
 func (operation *Operation_Run) Flags(flags []string) {
-	if len(flags)>0 && strings.HasPrefix(flags[0], "->") {
-		operation.instance = string(flags[0][1:])
-
-		if len(flags)>1 {
-			flags = flags[1:]
-		} else {
-			flags = []string{}
-		}
-	}
-
 	operation.cmd = flags
 }
 
