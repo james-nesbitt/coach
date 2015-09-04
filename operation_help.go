@@ -80,6 +80,9 @@ func (operation *Operation_Help) Run() {
 		case "settings:secrets":
 			operation.Topic_Settings_Secrets(helpTopicFlags)
 
+		case "operations":
+			operation.Topic_Operations(helpTopicFlags)
+
 		default: //assume this is an operation call
 			helpTopic := GetOperation(helpTopicName, operation.nodes , operation.targets, operation.conf, operation.log)
 			helpTopic.Help(helpTopicFlags)
@@ -89,7 +92,11 @@ func (operation *Operation_Help) Run() {
 func (operation *Operation_Help) Topic_CLI(flags []string) {
 	operation.log.Note(`Topic: CLI
 
-{CLI HELP}
+The CLI is the primary means of running coach.  The goal is typically to run a coach operation, on a number of coach nodes, or coach node instances.
+
+SEE ALSO:
+- cli:targets : $/> coach help cli:targets
+- operations : $/> coach help operations
 
 `)
 }
@@ -175,5 +182,14 @@ Secrets are typically kept in one of the following locations (list in order of l
 
 - !/.coach/secrets/secrets.yml => in the user secrets.yml.  This map typically keeps user specific container ENV values such as passwords for user specific services that containers may use.
 - .coach/secrets/secrets.yml => in the project secrets.yml.  This map is typically used to keep project specific ID and token values used as ENV variables in containers, but that should not be kept in any source repository.
+`)
+}
+
+
+func (operation *Operation_Help) Topic_Operations(flags []string) {
+	operation.log.Note(`Topic: Operations
+
+{OPERATIONS HELP}
+
 `)
 }
