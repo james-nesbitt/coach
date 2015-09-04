@@ -14,7 +14,7 @@ type Operation_Run struct {
 	instance string
 }
 func (operation *Operation_Run) Flags(flags []string) {
-	if len(flags)>0 && strings.HasPrefix(flags[0], "@") {
+	if len(flags)>0 && strings.HasPrefix(flags[0], "->") {
 		operation.instance = string(flags[0][1:])
 
 		if len(flags)>1 {
@@ -90,6 +90,19 @@ func (node *Node) Run(instanceid string, cmd []string) bool {
 }
 
 func (instance *Instance) Run(cmd []string, persistant bool) bool {
+
+	// Set up some additional settings for TTY commands
+	if instance.Config.Tty==true {
+
+		// set a default hostname to make a prettier prompt
+		if instance.Config.Hostname=="" {
+			instance.Config.Hostname = instance.GetContainerName()
+		}
+
+		// make sure that all tty runs have openstdin
+		instance.Config.OpenStdin=true
+
+	}
 
 	instance.Config.AttachStdin = true
 	instance.Config.AttachStdout = true
