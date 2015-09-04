@@ -16,6 +16,14 @@ func (operation *Operation_Start) Help(topics []string) {
 	operation.log.Note(`Operation: START
 
 Coach will attempt to start target node containers.
+
+SYNTAX:
+    $/> coach {targets} start
+
+	{targets} what target node instances the operation should process ($/> coach help targets)
+
+ACCESS:
+  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
 `)
 }
 

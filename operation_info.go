@@ -24,6 +24,12 @@ func (operation *Operation_Info) Help(topics []string) {
 	operation.log.Note(`Operation: INFO
 
 Coach will attempt to provide project information by investigating target images and containers.
+
+SYNTAX:
+    $/> coach {targets} info
+
+  {targets} what target nodes the operation should process ($/> coach help targets)
+
 `)
 }
 

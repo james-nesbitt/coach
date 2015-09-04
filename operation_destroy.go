@@ -28,7 +28,16 @@ func (operation *Operation_Destroy) Help(topics []string) {
 
 Coach will attempt to remove any built images for target nodes.
 
-Coach will not remove an image for a node that does not build, which is the common case for nodes with an image, but no build setting.  This prevents deleting shared images that are not build targets.
+SYNTAX:
+    $/> coach {targets} destroy
+
+  {targets} what target nodes the operation should process ($/> coach help targets)
+
+ACCESS:
+  - this opertion will only process nodes with "build" access.  This includes only nodes with the Build: settings declared.
+
+NOTE:
+- Coach will try not to remove an image for a node that does not build, which is the common case for nodes with an image, but no build setting.  This prevents deleting shared images that are not build targets.
 `)
 }
 
