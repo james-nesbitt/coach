@@ -26,6 +26,8 @@ type Node struct {
 
 	do map[string]bool 								// permissions list
 
+	Images []docker.APIImages
+
 	Config docker.Config							// docker client configuration for container
 	HostConfig docker.HostConfig			// docker client configuration for host
 
@@ -90,6 +92,8 @@ func (node *Node) Process(nodes Nodes) {
 	// scan the node for dependencies, and add them from the nodes
 	node.SetDependencies(nodes)
 
+	// @TODO I stopped this because it was making things really slow
+	//node.Images = MatchImages( node.client, node.GetImageName() )	
 }
 
 func (node *Node) GetImageName() string {

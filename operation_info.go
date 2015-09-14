@@ -45,9 +45,7 @@ func (node *Node) Info() bool {
 }
 
 func (node *Node) Info_Images() bool {
-	images := node.GetImages()
-
-	if len(images)==0 {
+	if len(node.Images)==0 {
 		node.log.Message("Node has no Images")
 	} else {
 		node.log.Message("Node Images")
@@ -68,7 +66,7 @@ func (node *Node) Info_Images() bool {
 		}
 		w.Write([]byte(strings.Join(row, "\t")+"\n"))
 
-		for index, image := range images {
+		for index, image := range node.Images {
 			row := []string{
 				strconv.FormatInt(int64(index+1), 10)+":",
 				image.ID[:11],
@@ -111,9 +109,7 @@ func (node *Node) Info_Instances() bool {
 
 		instances := node.GetInstances(false)
 
-		for index, instance := range instances {
-			container, exists := instance.GetContainer(false)
-
+		for index, instance := range instances {			
 			row := []string{
 				strconv.FormatInt(int64(index+1), 10),
 				instance.Name,
@@ -124,12 +120,12 @@ func (node *Node) Info_Instances() bool {
 			} else {
 				row = append(row, "no")
 			}
-			if exists {
+			if len(instance.Containers) > 0 {
 				row = append(row,
-					container.Status,
-					container.ID[:12],
-					strconv.FormatInt(int64(container.Created), 10),
-					strings.Join(container.Names, ", "),
+					instance.Containers[0].Status,
+					instance.Containers[0].ID[:12],
+					strconv.FormatInt(int64(instance.Containers[0].Created), 10),
+					strings.Join(instance.Containers[0].Names, ", "),
 				)
 			} else {
 				row = append(row, "n/a")

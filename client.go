@@ -98,7 +98,6 @@ func MatchImages(client *docker.Client, imagePrefix string) []docker.APIImages {
 	return images
 }
 
-
 func (node *Node) GetImages()  []docker.APIImages {
 	return MatchImages(node.client, node.GetImageName())
 }
