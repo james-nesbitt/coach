@@ -177,7 +177,6 @@ type Instance struct {
 	processed bool									// has this instance run .Process()
 }
 func (instance *Instance) Init() bool {
-	instance.processed = false
 	return true
 }
 func (instance *Instance) Process() bool {

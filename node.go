@@ -89,7 +89,6 @@ func (node *Node) Process(nodes Nodes) {
 
 	// scan the node for dependencies, and add them from the nodes
 	node.SetDependencies(nodes)
-
 }
 
 func (node *Node) GetImageName() string {

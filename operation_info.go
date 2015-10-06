@@ -125,9 +125,7 @@ func (node *Node) Info_Instances() bool {
 
 		instances := node.GetInstances(false)
 
-		for index, instance := range instances {
-			container, exists := instance.GetContainer(false)
-
+		for index, instance := range instances {			
 			row := []string{
 				strconv.FormatInt(int64(index+1), 10),
 				instance.Name,
@@ -138,7 +136,9 @@ func (node *Node) Info_Instances() bool {
 			} else {
 				row = append(row, "no")
 			}
-			if exists {
+
+			container, found := instance.GetContainer(false)
+			if found {
 				row = append(row,
 					container.Status,
 					container.ID[:12],
