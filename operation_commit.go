@@ -1,26 +1,90 @@
 package main
 
 import (
+	"strings"
+
 	docker "github.com/fsouza/go-dockerclient"
 )
 
 type Operation_Commit struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
+
+	repo string
+
+	tag string
+	message string
 }
 func (operation *Operation_Commit) Flags(flags []string) {
 
-}
-func (operation *Operation_Commit) Run() {
-	operation.Nodes.Commit(operation.Targets, "/", map[string]string{"single":"latest"}, "")
+	for index:=0; index<len(flags); index++ {
+		flag:= flags[index]
+
+		switch flag {
+			case "-t":
+				fallthrough
+			case "--tag":
+				if !strings.HasPrefix(flags[index+1], "-") {
+					operation.tag = flags[index+1]
+					index++
+				}
+			case "-r":
+				fallthrough
+			case "--repo":
+				if !strings.HasPrefix(flags[index+1], "-") {
+					operation.repo = flags[index+1]
+					index++
+				}
+			case "-m":
+				fallthrough
+			case "--message":
+				if !strings.HasPrefix(flags[index+1], "-") {
+					operation.repo = flags[index+1]
+					index++
+				}
+		}
+	}
+
 }
 
-func (nodes *Nodes) Commit(targets []string, repo string, instanceTags map[string]string, message string) {
-	for _, target := range nodes.GetTargets(targets) {
-		for instance, tag := range instanceTags {
-			target.Commit(repo, instance, tag, message)
+func (operation *Operation_Commit) Help(topics []string) {
+	operation.log.Note(`Operation: COMMIT
+
+Coach will attempt to commit a container to it's image.
+
+SYNTAX:
+    $/> coach {targets} commit [--tag {tag}] [--repo {repo}] [--message "{message}"]
+
+  {targets} what target node instances the operation should process ($/> coach help targets)
+  --tag "{tag}" : what image tag to use (default: "latest")
+  --repo "{repo}" : what image repository to commit to (default: local)
+  --message "{message}" : what commit message to use
+
+ACCESS:
+  - only nodes with the "commit" access are processed.  This excludes build nodes
+
+`)
+}
+
+func (operation *Operation_Commit) Run() {
+	if operation.tag=="" {
+		operation.tag = "latest"
+	}
+	if operation.repo=="" {
+		operation.repo = "/"
+	}
+
+	operation.nodes.Commit(operation.targets, operation.repo, operation.tag, "")
+}
+
+func (nodes *Nodes) Commit(targets []string, repo string, tag string, message string) {
+	for _, target := range nodes.GetTargets(targets,false) {
+		if target.node.Do("commit") {
+			for _, instance := range target.instances {
+				instance.Commit(repo, tag, message)
+			}
 		}
 	}
 }

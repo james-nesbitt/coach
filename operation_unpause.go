@@ -3,21 +3,41 @@ package main
 type Operation_Unpause struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
 func (operation *Operation_Unpause) Flags(flags []string) {
 
 }
-func (operation *Operation_Unpause) Run() {
-	operation.Nodes.Unpause(operation.Targets)
+
+func (operation *Operation_Unpause) Help(topics []string) {
+	operation.log.Note(`Operation: UNPAUSE
+
+Coach will attempt to unpause target node containers.
+
+SYNTAX:
+    $/> coach {targets} unpause
+
+	{targets} what target node instances the operation should process ($/> coach help targets)
+
+ACCESS:
+  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+`)
 }
 
-func (nodes *Nodes) Unpause(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Unpause([]string{}, false)
+func (operation *Operation_Unpause) Run() {
+	operation.nodes.Unpause(operation.targets, operation.force)
+}
+
+func (nodes *Nodes) Unpause(targets []string, force bool) {
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Unpause(force)
+			}
+		}
 	}
 }
 

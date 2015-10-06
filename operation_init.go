@@ -16,7 +16,7 @@ type Operation_Init struct {
 
 	force bool
 
-	Targets []string				// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
+	targets []string				// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
 }
 
 func (operation *Operation_Init) Flags(flags []string) {
@@ -58,6 +58,30 @@ func (operation *Operation_Init) Flags(flags []string) {
 
 	operation.handlerFlags = remainingFlags
 }
+
+func (operation *Operation_Init) Help(topics []string) {
+	operation.log.Note(`Operation: INIT
+
+Coach will attempt to initialize a new coach project in the current folder.
+
+SYNTAX:
+    $/> coach init [ {type} {type flags} ]
+
+EXAMPLES:
+
+    $/> coach init
+    $/> coach init default
+    Populate the current path with default settings
+
+    $/> coach init user {template}
+    Uses the contents of ~/.coach/templates to populate the current folder
+
+    $/> coach init git https://github.com/aleksijohansson/docker-drupal-coach.git
+    Clones the target git URL to the current path
+
+`)
+}
+
 func (operation *Operation_Init) Run() {
 	var err error
 	var ok bool

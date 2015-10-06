@@ -9,8 +9,8 @@ import (
 type Operation_Info struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 }
 func (operation *Operation_Info) Flags(flags []string) {
 	for _, flag := range flags {
@@ -19,19 +19,33 @@ func (operation *Operation_Info) Flags(flags []string) {
 		}
 	}
 }
+
+func (operation *Operation_Info) Help(topics []string) {
+	operation.log.Note(`Operation: INFO
+
+Coach will attempt to provide project information by investigating target images and containers.
+
+SYNTAX:
+    $/> coach {targets} info
+
+  {targets} what target nodes the operation should process ($/> coach help targets)
+
+`)
+}
+
 func (operation *Operation_Info) Run() {
 
 	operation.log.Message("running info operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.Targets)
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:INFO")
-	operation.Nodes.Info(operation.Targets)
+	operation.nodes.Info(operation.targets)
 }
 
 func (nodes *Nodes) Info(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.log = nodes.log.ChildLog("NODE:"+target.Name)
-		target.Info()
+	for _, target := range nodes.GetTargets(targets, false) {
+		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
+		target.node.Info()
 	}
 }
 

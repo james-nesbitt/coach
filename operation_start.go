@@ -3,21 +3,41 @@ package main
 type Operation_Start struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 }
 func (operation *Operation_Start) Flags(flags []string) {
 
 }
-func (operation *Operation_Start) Run() {
-	operation.Nodes.Start(operation.Targets)
+
+func (operation *Operation_Start) Help(topics []string) {
+	operation.log.Note(`Operation: START
+
+Coach will attempt to start target node containers.
+
+SYNTAX:
+    $/> coach {targets} start
+
+	{targets} what target node instances the operation should process ($/> coach help targets)
+
+ACCESS:
+  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+`)
 }
 
-func (nodes *Nodes) Start(targets []string) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Start([]string{}, false)
+func (operation *Operation_Start) Run() {
+	operation.nodes.Start(operation.targets, operation.force)
+}
+
+func (nodes *Nodes) Start(targets []string, force bool) {
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Start(force)
+			}
+		}
 	}
 }
 

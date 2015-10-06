@@ -3,8 +3,8 @@ package main
 type Operation_Stop struct {
 	log Log
 
-	Nodes Nodes
-	Targets []string
+	nodes Nodes
+	targets []string
 
 	force bool
 	timeout uint
@@ -12,13 +12,34 @@ type Operation_Stop struct {
 func (operation *Operation_Stop) Flags(flags []string) {
 
 }
+
+func (operation *Operation_Stop) Help(topics []string) {
+	operation.log.Note(`Operation: STOP
+
+Coach will attempt to stop target node containers.
+
+SYNTAX:
+    $/> coach {targets} stop
+
+	{targets} what target node instances the operation should process ($/> coach help targets)
+
+ACCESS:
+  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+
+`)
+}
+
 func (operation *Operation_Stop) Run() {
-	operation.Nodes.Stop(operation.Targets, operation.force, operation.timeout)
+	operation.nodes.Stop(operation.targets, operation.force, operation.timeout)
 }
 
 func (nodes *Nodes) Stop(targets []string, force bool, timeout uint) {
-	for _, target := range nodes.GetTargets(targets) {
-		target.Stop([]string{}, force, timeout)
+	for _, target := range nodes.GetTargets(targets, !force) {
+		if target.node.Do("start") {
+			for _, instance := range target.instances {
+				instance.Stop(force, timeout)
+			}
+		}
 	}
 }
 

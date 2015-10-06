@@ -74,7 +74,7 @@ func main() {
 	log.DebugObject(LOG_SEVERITY_DEBUG, "OPERATION: ["+operationName+"] => flags :", operationFlags)
 
 	// get an operation object
-	operation := GetOperation(operationName, nodes, targets, client, &conf, log.ChildLog("OPERATION"))
+	operation := GetOperation(operationName, nodes, targets, &conf, log.ChildLog("OPERATION"))
 
 	log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Operation", operation);
 
