@@ -11,7 +11,19 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+var cache dockerClientCache
+
+type dockerClientCache struct {
+	client *docker.Client
+	log Log
+	images []docker.APIImages
+	containers []docker.APIContainers
+}
+
 func GetClient(conf Conf, log Log) (*docker.Client, error) {
+
+	var client *docker.Client
+	var err error 
 
 	log.DebugObject(LOG_SEVERITY_DEBUG_WOAH,"Docker client conf: ",conf.Docker)
 
@@ -20,52 +32,99 @@ func GetClient(conf Conf, log Log) (*docker.Client, error) {
 		if _, err := os.Stat(conf.Docker.CertPath); err == nil {
 
 			// TCP DOCKER CLIENT WITH CERTS
-
-			client, err := docker.NewTLSClient(
+			client, err = docker.NewTLSClient(
 				conf.Docker.Host,
 				path.Join(conf.Docker.CertPath, "cert.pem"),
 				path.Join(conf.Docker.CertPath, "key.pem"),
 				path.Join(conf.Docker.CertPath, "ca.pem"),
 			)
-			if err != nil {
-				log.Fatal(err.Error())
-				return nil, err
-			}
-			return client, nil
 
 		} else {
 
 			// TCP DOCKER CLIENT WITHOUT CERTS
-
-			client, err := docker.NewClient(conf.Docker.Host)
-			if err != nil {
-				log.Fatal(err.Error())
-				return nil, err
-			}
-			return client, nil
-
+			client, err = docker.NewClient(conf.Docker.Host)
 		}
 
 	} else if (strings.HasPrefix(conf.Docker.Host, "unix://")) {
 
 		if _, err := os.Stat(conf.Docker.Host[7:]); err != nil {
 			log.Fatal("Docker socket does not exist: ["+conf.Docker.Host+"] "+err.Error())
-			return nil, err
+		} else {
+			client, err = docker.NewClient(conf.Docker.Host)
 		}
-
-		client, err := docker.NewClient(conf.Docker.Host)
-		if err != nil {
-			log.Fatal(err.Error())
-			return nil, err
-		}
-		return client, nil
 
 	} else {
 
-		err := errors.New("Unknown client host :"+conf.Docker.Host)
-		return nil, err
+		err = errors.New("Unknown client host :"+conf.Docker.Host)
 
 	}
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	if client != nil {
+		cache = dockerClientCache{ client:client, log:log }
+	}
+
+	return client, err
+}
+
+/**
+ * Keep a global cache of retrieved images and containers
+ * so that functionality that retrieves image and container
+ * data doesn't need multiple trips.
+ */
+
+
+// reload image and container lists from the docker client
+func (cache *dockerClientCache) refresh(refreshImages bool, refreshContainers bool) {
+
+	var err error
+
+	if refreshImages {
+		filters := map[string][]string{}
+		//filters["id"] = []string{"something"} // As it turns out, filters are actually kind of useless : https://stackoverflow.com/questions/24659300/how-to-use-docker-images-filter
+
+		options := docker.ListImagesOptions{
+			Filters: filters,
+		}
+		cache.images, err = cache.client.ListImages(options)
+
+		if err != nil {
+			cache.log.Fatal(err.Error())
+		}
+	}
+	if refreshContainers {
+		filters := map[string][]string{}
+		//filters["id"] = []string{"project"} // As it turns out, filters are actually kind of useless : https://stackoverflow.com/questions/24659300/how-to-use-docker-images-filter
+		// filters["status"] = []string{"running"}
+
+		options := docker.ListContainersOptions{
+			All: true,
+			Filters: filters,
+		}
+
+		cache.containers, err = cache.client.ListContainers(options)
+
+		if err != nil {
+			cache.log.Fatal(err.Error())
+		}
+	}
+
+}
+// get a list of images from the docker image cache
+func (cache *dockerClientCache) getImages(refresh bool) []docker.APIImages {
+	if refresh || cache.images==nil {
+		cache.refresh(true, false)
+	}
+	return cache.images
+}
+// get a list of containers from the docker container cache
+func (cache *dockerClientCache) getContainers(refresh bool) []docker.APIContainers {
+	if refresh || cache.containers==nil {
+		cache.refresh(false, true)
+	}
+	return cache.containers	
 }
 
 /**
@@ -74,25 +133,14 @@ func GetClient(conf Conf, log Log) (*docker.Client, error) {
 func MatchImages(client *docker.Client, imagePrefix string) []docker.APIImages {
 	images := []docker.APIImages{}
 
-	filters := map[string][]string{}
-	//filters["id"] = []string{"laird"} // As it turns out, filters are actually kind of useless : https://stackoverflow.com/questions/24659300/how-to-use-docker-images-filter
-
-	options := docker.ListImagesOptions{
-		Filters: filters,
-	}
-
-	if allImages, err := client.ListImages(options); err==nil {
-		for _, image := range allImages {
-			eachimage:
-				for _, tag := range image.RepoTags {
-					if strings.HasPrefix(tag, imagePrefix) {
-						images = append(images, image)
-						continue eachimage
-					}
+	for _, image := range cache.getImages(false) {
+		eachimage:
+			for _, tag := range image.RepoTags {
+				if strings.HasPrefix(tag, imagePrefix) {
+					images = append(images, image)
+					continue eachimage
 				}
-		}
-	} else {
-		return nil
+			}
 	}
 
 	return images
@@ -112,40 +160,20 @@ func (node *Node) hasImage() bool {
 func MatchContainers(client *docker.Client, containerPrefix string, running bool) []docker.APIContainers {
 	containers := []docker.APIContainers{}
 
-	filters := map[string][]string{}
-	//filters["id"] = []string{"project"} // As it turns out, filters are actually kind of useless : https://stackoverflow.com/questions/24659300/how-to-use-docker-images-filter
-
-	if running {
-		filters["status"] = []string{"running"}
-	}
-
-	options := docker.ListContainersOptions{
-		All: true,
-		Filters: filters,
-	}
-
-	if allContainers, err := client.ListContainers(options); err==nil {
-
-		for _, container := range allContainers {
-			EachContainer:
-
-			for _, containerName := range container.Names {
-				if strings.Contains(containerName, "/"+containerPrefix) {
-
-					if running {
-						if strings.Contains(container.Status, "RUNNING") {
-							containers = append(containers, container)
-							continue EachContainer
-						}
-					} else {
-						containers = append(containers, container)
-						continue EachContainer
-					}
-
-				}
-			}
-
+	for _, container := range cache.getContainers(false) {
+		if running && !strings.Contains(container.Status, "RUNNING") {
+			continue
 		}
+
+		EachContainer:
+
+		for _, containerName := range container.Names {
+			if strings.Contains(containerName, "/"+containerPrefix) {
+				containers = append(containers, container)
+				continue EachContainer
+			}
+		}
+
 	}
 
 	return containers
@@ -163,7 +191,6 @@ func (instance *Instance) GetContainer(running bool) (docker.APIContainers, bool
 		return docker.APIContainers{}, false
 	}
 }
-
 func (instance *Instance) HasContainer(running bool) bool {
 	_, found := instance.GetContainer(running)
 	return found
@@ -280,7 +307,7 @@ func DockerClient_HostConfig_Copy(config docker.HostConfig) docker.HostConfig {
  * I could think of doing it was to Marshall the configs to json, do
  * a string replacement, and the UnMarshall them back to objects.
  *
- * So far it's pretty reliable
+ * So far it's pretty reliable, but it's probably not greate for performance.
  */
 
 func ConfigTokenReplace(config docker.Config, tokens map[string]string) docker.Config {

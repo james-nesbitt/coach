@@ -174,8 +174,6 @@ type Instance struct {
 	Config docker.Config
 	HostConfig docker.HostConfig
 
-	Containers []docker.APIContainers
-
 	active bool											// should this instance be active for operations (or is it dormant, perhaps for scaling)
 	processed bool									// has this instance run .Process()
 }
@@ -189,8 +187,6 @@ func (instance *Instance) Process() bool {
 
 	instance.Config = instance.Node.instanceConfig(instance.Name)
 	instance.HostConfig = instance.Node.instanceHostConfig(instance.Name)
-
-	instance.Containers = MatchContainers(instance.Node.client, instance.GetContainerName(), false)
 
 	instance.processed = true
 	return true
