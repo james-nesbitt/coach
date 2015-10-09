@@ -80,10 +80,12 @@ func (operation *Operation_Commit) Run() {
 }
 
 func (nodes *Nodes) Commit(targets []string, repo string, tag string, message string) {
-	for _, target := range nodes.GetTargets(targets,false) {
+	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("commit") {
 			for _, instance := range target.instances {
-				instance.Commit(repo, tag, message)
+				if instance.HasContainer(false) {
+					instance.Commit(repo, tag, message)
+				}
 			}
 		}
 	}
@@ -92,7 +94,7 @@ func (nodes *Nodes) Commit(targets []string, repo string, tag string, message st
 func (node *Node) Commit(repo string, instance string, tag string, message string) {
 	if node.Do("commit") {
 
-		for _, instance := range node.FilterInstances([]string{instance}, false) {
+		for _, instance := range node.FilterInstances([]string{instance}) {
 			if instance.HasContainer(false) {
 				instance.Commit(repo, tag, message)
 			}

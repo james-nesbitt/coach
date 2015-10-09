@@ -52,10 +52,12 @@ func (operation *Operation_Remove) Run() {
 }
 
 func (nodes *Nodes) Remove(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets, !force) {
+	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("create") {
 			for _, instance := range target.instances {
-				instance.Remove(force)
+				if instance.HasContainer(false) {
+					instance.Remove(force)
+				}
 			}
 		}
 	}
@@ -67,12 +69,15 @@ func (node *Node) Remove(filters []string, force bool) {
 		var instances []*Instance
 
 		if len(filters)==0 {
-			instances = node.GetInstances(true)
+			instances = node.GetInstances()
 		} else {
-			instances = node.FilterInstances(filters, true)
+			instances = node.FilterInstances(filters)
 		}
+
 		for _, instance := range instances {
-			instance.Remove(force)
+			if instance.HasContainer(false) {
+				instance.Remove(force)
+			}
 		}
 
 	}

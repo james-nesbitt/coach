@@ -39,10 +39,12 @@ func (operation *Operation_Attach) Run() {
 }
 
 func (nodes *Nodes) Attach(targets []string) {
-	for _, target := range nodes.GetTargets(targets, true) {
+	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("start") {
 			for _, instance := range target.instances {
-				instance.Attach()
+				if instance.isActive() {
+					instance.Attach()
+				}
 			}
 		}
 	}
@@ -54,12 +56,12 @@ func (node *Node) Attach(filters []string) {
 		var instances []*Instance
 
 		if len(filters)==0 {
-			instances = node.GetInstances(false)
+			instances = node.GetInstances()
 		} else {
-			instances = node.FilterInstances(filters, false)
+			instances = node.FilterInstances(filters)
 		}
 		for _, instance := range instances {
-			if instance.active {
+			if instance.isActive() {
 				instance.Attach()
 			}
 		}

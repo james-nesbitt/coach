@@ -34,10 +34,12 @@ func (operation *Operation_Stop) Run() {
 }
 
 func (nodes *Nodes) Stop(targets []string, force bool, timeout uint) {
-	for _, target := range nodes.GetTargets(targets, !force) {
+	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("start") {
 			for _, instance := range target.instances {
-				instance.Stop(force, timeout)
+				if instance.HasContainer(true) {
+					instance.Stop(force, timeout)
+				}
 			}
 		}
 	}
@@ -49,12 +51,13 @@ func (node *Node) Stop(filters []string, force bool, timeout uint) {
 		var instances []*Instance
 
 		if len(filters)==0 {
-			instances = node.GetInstances(true)
+			instances = node.GetInstances()
 		} else {
-			instances = node.FilterInstances(filters, true)
+			instances = node.FilterInstances(filters)
 		}
+
 		for _, instance := range instances {
-			if instance.active {
+			if instance.HasContainer(true) {
 				instance.Stop(force, timeout)
 			}
 		}

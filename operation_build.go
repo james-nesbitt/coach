@@ -62,7 +62,7 @@ func (operation *Operation_Build) Run() {
 }
 
 func (nodes *Nodes) Build(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets, true) {
+	for _, target := range nodes.GetTargets(targets) {
 		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
 
 		// ignore target instances, and just build the node

@@ -52,28 +52,41 @@ func (operation *Operation_Create) Run() {
 	operation.nodes.Create(operation.targets, operation.cmd, true, force)
 }
 
-func (nodes *Nodes) Create(targets []string, cmdOverride []string, onlyActive bool, force bool) {
-	for _, target := range nodes.GetTargets(targets, onlyActive) {
+func (nodes *Nodes) Create(targets []string, cmdOverride []string, onlyDefault bool, force bool) {
+	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("create") {
 			for _, instance := range target.instances {
+				if instance.HasContainer(false) {
+					continue
+				}
+				if onlyDefault && !instance.isDefault() {
+					continue
+				}
 				instance.Create(cmdOverride, force)
 			}
 		}
 	}
 }
 
-func (node *Node) Create(filters []string, onlyActive bool, force bool) {
+func (node *Node) Create(filters []string, cmdOverride []string, onlyDefault bool, force bool) {
 	if node.Do("create") {
 
 		var instances []*Instance
 
 		if len(filters)==0 {
-			instances = node.GetInstances(onlyActive)
+			instances = node.GetInstances()
 		} else {
-			instances = node.FilterInstances(filters, onlyActive)
+			instances = node.FilterInstances(filters)
 		}
+
 		for _, instance := range instances {
-			instance.Create([]string{}, force)
+			if instance.HasContainer(false) {
+				continue
+			}
+			if onlyDefault && !instance.isDefault() {
+				continue
+			}
+			instance.Create(cmdOverride, force)
 		}
 
 	}

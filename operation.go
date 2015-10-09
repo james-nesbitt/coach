@@ -26,6 +26,9 @@ func GetOperation(name string, nodes Nodes, targets []string, conf *Conf, log Lo
 		case "up":
 			return Operation(&Operation_Up{log:log.ChildLog("UP"), nodes:nodes, targets:targets})
 
+		case "scale":
+			return Operation(&Operation_Scale{log:log.ChildLog("SCALE"), nodes:nodes, targets:targets})
+
 		case "create":
 			return Operation(&Operation_Create{log:log.ChildLog("CREATE"), nodes:nodes, targets:targets})
 		case "remove":

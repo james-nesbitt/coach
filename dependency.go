@@ -73,15 +73,15 @@ func (node *Node) DependencyInstanceMatches(targets []string, fallbackInstance s
 
 			if targetInstanceName=="%ALL" {
 				// in this case we have a meta request to link to all active instances of a target
-				targetInstances = targetNode.GetInstances(true)
+				targetInstances = targetNode.GetInstances()
 			} else if targetInstanceName=="%RANDOM" {
 				if randomTarget := targetNode.GetRandomInstance(true); randomTarget!=nil {
 					targetInstances = []*Instance{ randomTarget }
 				}
 			} else if targetNode.InstanceType=="single" && ( targetInstanceName=="" || targetInstanceName=="single" || fallbackInstance=="single" ) {
-				targetInstances = targetNode.FilterInstances([]string{"single"}, true)
+				targetInstances = targetNode.FilterInstances([]string{"single"})
 			} else {
-				targetInstances = targetNode.FilterInstances([]string{targetInstanceName, fallbackInstance}, true)
+				targetInstances = targetNode.FilterInstances([]string{targetInstanceName, fallbackInstance})
 			}
 
 			for _, target := range targetInstances {

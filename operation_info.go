@@ -43,7 +43,7 @@ func (operation *Operation_Info) Run() {
 }
 
 func (nodes *Nodes) Info(targets []string) {
-	for _, target := range nodes.GetTargets(targets, false) {
+	for _, target := range nodes.GetTargets(targets) {
 		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
 		target.node.Info()
 	}
@@ -115,6 +115,7 @@ func (node *Node) Info_Instances() bool {
 			"",
 			"Name",
 			"Container",
+			"Default",
 			"Active",
 			"Status",
 			"ID",
@@ -123,7 +124,7 @@ func (node *Node) Info_Instances() bool {
 		}
 		w.Write([]byte(strings.Join(row, "\t")+"\n"))
 
-		instances := node.GetInstances(false)
+		instances := node.GetInstances()
 
 		for index, instance := range instances {			
 			row := []string{
@@ -131,7 +132,12 @@ func (node *Node) Info_Instances() bool {
 				instance.Name,
 				instance.GetContainerName(),
 			}
-			if instance.active {
+			if instance.isDefault() {
+				row = append(row, "yes")
+			} else {
+				row = append(row, "no")
+			}
+			if instance.isActive() {
 				row = append(row, "yes")
 			} else {
 				row = append(row, "no")
