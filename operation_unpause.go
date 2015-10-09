@@ -32,11 +32,15 @@ func (operation *Operation_Unpause) Run() {
 }
 
 func (nodes *Nodes) Unpause(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets, !force) {
+	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("start") {
+
 			for _, instance := range target.instances {
-				instance.Unpause(force)
+				if instance.HasContainer(true) {
+					instance.Unpause(force)
+				}
 			}
+
 		}
 	}
 }
@@ -47,12 +51,13 @@ func (node *Node) Unpause(filters []string, force bool) {
 		var instances []*Instance
 
 		if len(filters)==0 {
-			instances = node.GetInstances(false)
+			instances = node.GetInstances()
 		} else {
-			instances = node.FilterInstances(filters, false)
+			instances = node.FilterInstances(filters)
 		}
+
 		for _, instance := range instances {
-			if instance.active {
+			if instance.HasContainer(true) {
 				instance.Unpause(force)
 			}
 		}

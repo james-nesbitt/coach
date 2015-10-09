@@ -161,7 +161,7 @@ func MatchContainers(client *docker.Client, containerPrefix string, running bool
 	containers := []docker.APIContainers{}
 
 	for _, container := range cache.getContainers(false) {
-		if running && !strings.Contains(container.Status, "RUNNING") {
+		if running && !strings.Contains(container.Status, "Up") {
 			continue
 		}
 

@@ -46,7 +46,7 @@ func (operation *Operation_Pull) Run() {
 }
 
 func (nodes *Nodes) Pull(targets []string, registry string) {
-	for _, target := range nodes.GetTargets(targets, false) {
+	for _, target := range nodes.GetTargets(targets) {
 		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
 		target.node.Pull(registry)
 	}

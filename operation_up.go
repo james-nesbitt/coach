@@ -39,7 +39,7 @@ func (operation *Operation_Up) Run() {
 	operation.log.Message("running run operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
-	targets := operation.nodes.GetTargets(operation.targets, true)
+	targets := operation.nodes.GetTargets(operation.targets)
 
 	for _, target := range targets {
 		target.node.log = operation.nodes.log.ChildLog("NODE:"+target.node.Name)

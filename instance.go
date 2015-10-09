@@ -43,7 +43,7 @@ func (node *Node) ConfigureInstances_Scaled(min int, max int) bool {
  * first, which it cannot do until all nodes have been created/added
  */
 
-func (node *Node) AddInstance(name string, active bool) {
+func (node *Node) AddInstance(name string, isDefault bool) {
 	if node.InstanceMap==nil {
 		node.InstanceMap = map[string]*Instance{}	// an actual map of instance objects, starts empty to be filled in by the main node handler
 	}
@@ -57,7 +57,7 @@ func (node *Node) AddInstance(name string, active bool) {
 		Name: name,
 		MachineName: node.MachineName+"_"+name,
 
-		active: active,
+		DefaultInstance: isDefault,
 	}
 
 	/**
@@ -83,36 +83,26 @@ func (node *Node) AddInstance(name string, active bool) {
 func (node *Node) AddTemporaryInstance(name string) {
 	node.AddInstance(name, true)
 }
-func (node *Node) AddInstances(instances []string, active bool) {
+func (node *Node) AddInstances(instances []string, isDefault bool) {
 	for _, instance := range instances {
-		node.AddInstance( instance, active )
+		node.AddInstance( instance, isDefault )
 	}
 }
 
 
-func (node *Node) GetInstances(onlyActive bool) []*Instance {
+func (node *Node) GetInstances() []*Instance {
 	instances := []*Instance{}
 	for name, _ := range node.InstanceMap {
 		instance := node.GetInstance(name)
-
-		if onlyActive && !instance.active {
-			continue
-		}
-
 		instances = append(instances, instance)
 	}
 	return instances
 }
-func (node *Node) FilterInstances(filters []string, onlyActive bool) []*Instance {
+func (node *Node) FilterInstances(filters []string) []*Instance {
 	instances := []*Instance{}
 
 	for name, _ := range node.InstanceMap {
 		instance := node.GetInstance(name)
-
-		if onlyActive && !instance.active {
-			continue
-		}
-
 		for _, filter := range filters {
 			if filter==name {
 				instances = append(instances, instance)
@@ -122,11 +112,10 @@ func (node *Node) FilterInstances(filters []string, onlyActive bool) []*Instance
 	}
 	return instances
 }
-func (node *Node) GetRandomInstance(onlyActive bool) *Instance {
+func (node *Node) GetRandomInstance(onlyDefault bool) *Instance {
 	for name, _ := range node.InstanceMap {
 		instance := node.GetInstance(name)
-
-		if onlyActive && !instance.active {
+		if (onlyDefault && !instance.isDefault()) {
 			continue
 		}
 
@@ -140,7 +129,7 @@ func (node *Node) GetInstance(name string) *Instance {
 	// shortcut to get any random instance
 	if name=="" {
 		for _, instance := range node.InstanceMap {
-			if instance.active {
+			if instance.isActive() {
 				if instance.Process() {
 					return instance
 				}
@@ -172,8 +161,9 @@ type Instance struct {
 
 	Config docker.Config
 	HostConfig docker.HostConfig
+								
+	DefaultInstance bool									// this instance is a default instance, and should always be created/started/stopped
 
-	active bool											// should this instance be active for operations (or is it dormant, perhaps for scaling)
 	processed bool									// has this instance run .Process()
 }
 func (instance *Instance) Init() bool {
@@ -193,6 +183,14 @@ func (instance *Instance) Process() bool {
 func (instance *Instance) GetContainerName() string {
 	return strings.ToLower(instance.MachineName)
 }
+
+func (instance *Instance) isDefault() bool {
+	return instance.DefaultInstance
+}
+func (instance *Instance) isActive() bool {
+	return instance.isDefault() || instance.HasContainer(true)
+}
+
 
 /**
  * Elements in the nodes struct are used directly as docker configuration. but are keyed

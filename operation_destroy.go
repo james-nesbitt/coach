@@ -55,7 +55,7 @@ func (operation *Operation_Destroy) Run() {
 }
 
 func (nodes *Nodes) Destroy(targets []string, force bool) {
-	for _, target := range nodes.GetTargets(targets, true) {
+	for _, target := range nodes.GetTargets(targets) {
 		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
 		target.node.Destroy(force)
 	}

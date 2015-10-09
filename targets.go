@@ -49,7 +49,7 @@ func targetStringSeparate(target string) (node string, instances []string) {
 	}
 }
 
-func (nodes Nodes) GetTargets(targetNames []string, onlyActive bool) []*Target {
+func (nodes Nodes) GetTargets(targetNames []string) []*Target {
 	log := nodes.log.ChildLog("TARGETS")
 
 	targets := []*Target{}				// ordered list of targets
@@ -71,9 +71,9 @@ func (nodes Nodes) GetTargets(targetNames []string, onlyActive bool) []*Target {
 							if node, ok := nodes.GetNode(name); ok {
 								_, instances := targetStringSeparate(target)
 								if len(instances)==0 {
-									targets = addNodeToTargets(targets, node, node.GetInstances(onlyActive))
+									targets = addNodeToTargets(targets, node, node.GetInstances())
 								} else {
-									targets = addNodeToTargets(targets, node, node.FilterInstances(instances, onlyActive))
+									targets = addNodeToTargets(targets, node, node.FilterInstances(instances))
 								}
 							}
 						}
@@ -86,9 +86,9 @@ func (nodes Nodes) GetTargets(targetNames []string, onlyActive bool) []*Target {
 						if node, ok := nodes.GetNode(name); ok {
 							_, instances := targetStringSeparate(target)
 							if len(instances)==0 {
-								targets = addNodeToTargets(targets, node, node.GetInstances(onlyActive))
+								targets = addNodeToTargets(targets, node, node.GetInstances())
 							} else {
-								targets = addNodeToTargets(targets, node, node.FilterInstances(instances, onlyActive))
+								targets = addNodeToTargets(targets, node, node.FilterInstances(instances))
 							}
 						}
 					}
@@ -101,9 +101,9 @@ func (nodes Nodes) GetTargets(targetNames []string, onlyActive bool) []*Target {
 				name, instances := targetStringSeparate(target)
 				if node, ok := nodes.GetNode(name); ok {
 					if len(instances)==0 {
-						targets = addNodeToTargets(targets, node, node.GetInstances(onlyActive))
+						targets = addNodeToTargets(targets, node, node.GetInstances())
 					} else {
-						targets = addNodeToTargets(targets, node, node.FilterInstances(instances, onlyActive))
+						targets = addNodeToTargets(targets, node, node.FilterInstances(instances))
 					}
 				} else {
 					nodes.log.Error("Unknown target passed: "+target)
