@@ -42,7 +42,7 @@ func (nodes *Nodes) Attach(targets []string) {
 	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("start") {
 			for _, instance := range target.instances {
-				if instance.isActive() {
+				if instance.HasContainer(true) {
 					instance.Attach()
 				}
 			}
@@ -61,7 +61,7 @@ func (node *Node) Attach(filters []string) {
 			instances = node.FilterInstances(filters)
 		}
 		for _, instance := range instances {
-			if instance.isActive() {
+			if instance.HasContainer(true) {
 				instance.Attach()
 			}
 		}
