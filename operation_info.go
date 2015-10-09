@@ -117,6 +117,7 @@ func (node *Node) Info_Instances() bool {
 			"Container",
 			"Default",
 			"Active",
+			"Running",
 			"Status",
 			"ID",
 			"Created",
@@ -138,6 +139,11 @@ func (node *Node) Info_Instances() bool {
 				row = append(row, "no")
 			}
 			if instance.isActive() {
+				row = append(row, "yes")
+			} else {
+				row = append(row, "no")
+			}
+			if instance.HasContainer(true) {
 				row = append(row, "yes")
 			} else {
 				row = append(row, "no")
