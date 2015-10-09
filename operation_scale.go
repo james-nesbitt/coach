@@ -15,8 +15,16 @@ type Operation_Scale struct {
 }
 func (operation *Operation_Scale) Flags(flags []string) {
 
-	//@TODO GET SCALE FROM FLAG
+	// default scale value
 	operation.scale = 1
+
+	if len(flags)>0 {
+		if flags[0]=="up" {
+			operation.scale = 1
+		} else if flags[0]=="down" {
+			operation.scale = -1
+		}
+	}
 
 }
 
@@ -99,7 +107,7 @@ func (node *Node) ScaleUpNumber(number int) int {
 				instance.Create([]string{}, false)
 			}
 
-			node.log.Message("Node Scaling up. Starting instance :"+instance.Name)
+			node.log.Message("Node Scaling up. Stopping instance :"+instance.Name)
 			instance.Start(false)
 
 			count++
