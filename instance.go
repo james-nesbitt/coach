@@ -27,7 +27,7 @@ func (node *Node) ConfigureInstances_Scaled(min int, max int) bool {
 
 		node.InstanceType = "scaled"
 		for i:=0; i<max; i++ {
-			node.AddInstance(strconv.Itoa(i+1), i<min)
+			node.AddInstance(strconv.Itoa(i), i<min)
 		}
 		return true
 
@@ -80,6 +80,11 @@ func (node *Node) AddInstance(name string, isDefault bool) {
 	instance.Init()
 	node.InstanceMap[name] = &instance
 }
+/**
+ * Add a temporary instance to a node
+ *
+ * @note there is currently no difference between a temporary and persistant instance.
+ */
 func (node *Node) AddTemporaryInstance(name string) {
 	node.AddInstance(name, true)
 }
