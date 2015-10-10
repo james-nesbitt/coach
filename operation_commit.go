@@ -73,7 +73,7 @@ func (operation *Operation_Commit) Run() {
 		operation.tag = "latest"
 	}
 	if operation.repo=="" {
-		operation.repo = "/"
+		operation.repo = ""
 	}
 
 	operation.nodes.Commit(operation.targets, operation.repo, operation.tag, "")
@@ -108,8 +108,8 @@ func (instance *Instance) Commit(repo string, tag string, message string) bool {
 	id := instance.GetContainerName()
 	config := instance.Config
 
-	if (config.Image=="") {
-		config.Image = instance.Node.GetImageName()
+	if repo=="" {
+		repo = instance.Node.GetImageName()
 	}
 
 	options := docker.CommitContainerOptions{
