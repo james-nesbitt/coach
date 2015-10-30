@@ -224,7 +224,7 @@ func (node Node) instanceHostConfig(name string) docker.HostConfig {
 			} else if (binds[0][0:1]=="~") { // one would think that path can handle such terminology
 				binds[0] = path.Join(node.conf.Paths["userhome"], binds[0][1:])
 			} else {
-				binds[0] = path.Join(node.conf.Paths["project"], binds[0])
+				binds[0] = path.Join(node.conf.Paths["projectroot"], binds[0])
 			}
 			config.Binds[index] = strings.Join(binds, ":")
 		}

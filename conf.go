@@ -44,7 +44,7 @@ func GetConf(log Log) Conf {
 }
 
 type DockerClientConf struct {
-	Host			string			`json:"Host,omitempty" yaml:"Host,omitempty"`
+	Host		string			`json:"Host,omitempty" yaml:"Host,omitempty"`
 	CertPath	string			`json:"CertPath,omitempty" yaml:"CertPath,omitempty"`
 }
 
@@ -135,12 +135,19 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 	conf.Paths["usercoach"] = path.Join(conf.Paths["userhome"],coachConfigFolder)
 	conf.Paths["usertemplates"] = path.Join(conf.Paths["usercoach"],"templates")
 	conf.Paths["usersecrets"] = path.Join(conf.Paths["usercoach"],"secrets")
-	conf.Paths["project"] = wd
+	conf.Paths["projectroot"] = wd
 	conf.Paths["projectcoach"] = path.Join(wd,coachConfigFolder)
 	conf.Paths["projectsecrets"] = path.Join(conf.Paths["projectcoach"],"secrets") // keep secret things in one place for gitignore
 	conf.Paths["build"] = conf.Paths["projectcoach"] // maybe for remote builds, this should be different?
 
-	// add all environment variables for the user to the env list
+	// add paths to the token list
+	// @TODO this is too early to perform this task, as the paths may change
+	for key, keyPath := range conf.Paths {
+		key = "PATH_"+strings.ToUpper(key)
+		conf.Tokens[key] = keyPath
+	}
+
+	// add all environment variables for the user to the token list
 	if includeEnv {
 		for _, env := range os.Environ() {
 			envsplit := strings.SplitN(env, "=", 2)
@@ -150,5 +157,4 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 			conf.Tokens[envsplit[0]] = envsplit[1]
 		}
 	}
-
 }

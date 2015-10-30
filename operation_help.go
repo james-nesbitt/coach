@@ -83,9 +83,13 @@ func (operation *Operation_Help) Run() {
 		case "operations":
 			operation.Topic_Operations(helpTopicFlags)
 
-		default: //assume this is an operation call
-			helpTopic := GetOperation(helpTopicName, operation.nodes , operation.targets, operation.conf, operation.log)
-			helpTopic.Help(helpTopicFlags)
+		default: 
+
+			//  test this is an operation call
+			if helpOperation, found := GetOperation(helpTopicName, operation.nodes , operation.targets, operation.conf, operation.log); found {
+				helpOperation.Help(helpTopicFlags)
+			}
+
 	}
 }
 
