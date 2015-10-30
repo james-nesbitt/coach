@@ -31,7 +31,7 @@ func (tools Tools) GetToolsFromYaml(conf *Conf, log Log, source []byte, overwrit
 				}
 
 				tool.conf = conf
-				tool.log = log
+				tool.log = log.ChildLog("SCRIPT")
 
 				if exists:=tools[name]; exists==nil || overwrite {
 					tools[name] = Tool(&tool)
@@ -59,14 +59,13 @@ type Tool_Script struct {
 }
 func (tool *Tool_Script) Run(flags []string) bool {
 
-tool.log.DebugObject( LOG_SEVERITY_MESSAGE, "TOOL SCRIPT", tool.Script)
-
-// tool.Script = []string{"ps", "-aux"}
-
 	cmd_first := tool.Script[0]
 	args := []string{}
 	if len(tool.Script)>1 {
 		args = tool.Script[1:]
+	}
+	if len(flags)>0 {
+		args = append(args, flags...)
 	}
 
 	if path.IsAbs(cmd_first) {
@@ -90,15 +89,15 @@ tool.log.DebugObject( LOG_SEVERITY_MESSAGE, "TOOL SCRIPT", tool.Script)
 		cmd.Env = append(cmd.Env, tool.Env...) 
 	}
 
-	tool.log.Message("Running Script")
+	tool.log.Message("RUN: "+cmd_first)
 	err := cmd.Start()
 
 	if err!=nil {
-		tool.log.Error("SCRIPT FAILED => "+err.Error())
+		tool.log.Error("FAILED => "+err.Error())
 		return false
 	}
 
-	tool.log.Message("SCRIPT RUN")
 	err = cmd.Wait()
+	tool.log.Message("FINISHED")
 	return err==nil
 }
