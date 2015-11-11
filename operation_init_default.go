@@ -104,7 +104,7 @@ fpm:
 # - Standalone nginx service
 # - Sets Hostname and DomainName using coach tokens
 # - Sets DnsDock Alias ENV var using coach tokens
-# - Tries to bind to the Host 8000 port
+# - Tries to bind to the Host 8080 port
 #
 # * It needs source, and assets 
 # * ExposedPorts are likely not necessary, they just gives a host port for the server
