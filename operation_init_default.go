@@ -108,7 +108,7 @@ fpm:
 #
 # * It needs source, and assets 
 # * ExposedPorts are likely not necessary, they just gives a host port for the server
-# * If you make this scaled, you will get an error trying to reused the 8000 port
+# * If you make this scaled, you will get an error trying to reused the 8080 port
 #
 www:
   Type: service
