@@ -24,7 +24,6 @@ func GetClient(conf Conf, log Log) (*docker.Client, error) {
 
 	var client *docker.Client
 	var err error 
-
 	log.DebugObject(LOG_SEVERITY_DEBUG_WOAH,"Docker client conf: ",conf.Docker)
 
 	if (strings.HasPrefix(conf.Docker.Host, "tcp://")) {
@@ -43,6 +42,7 @@ func GetClient(conf Conf, log Log) (*docker.Client, error) {
 
 			// TCP DOCKER CLIENT WITHOUT CERTS
 			client, err = docker.NewClient(conf.Docker.Host)
+
 		}
 
 	} else if (strings.HasPrefix(conf.Docker.Host, "unix://")) {
