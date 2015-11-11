@@ -43,6 +43,10 @@ OPERATIONS:
 	unpause
 	remove
 
+	scale
+
+	tool
+
 The first topic passed in is assumed to be a help operation.
 `)
 }
