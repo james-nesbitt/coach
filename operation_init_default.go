@@ -21,6 +21,13 @@ Docker:  # Override Docker configuration
 
 		".coach/nodes.yml":  `
 # Files volume container
+#
+# - A volume container used to hold files assets for an application
+# - Also has a place to put backups (separate from file assets)
+# - Volatile, and not likely to handle exports well
+#
+# * Should be used as a ReadWrite container for Links/VolumesFrom
+#
 files:
   Type: volume
 
@@ -34,6 +41,11 @@ files:
       - app/backup:/app/backup     # host based archive folder
 
 # Source volume container
+#
+# - A volume container to hold application source
+#
+# * Can be used as a ReadOnly container for Links/VolumesFrom
+#
 source:
   Type: volume
 
@@ -45,6 +57,11 @@ source:
       - app/www:/app/www          # host based webroots folder (needs /active subroot for nginx conf)
 
 # Database service
+#
+# - Standalone DB server
+#
+# * ExposedPorts is likely not necessary, it just gives a host port for the server
+#
 db:
   Type: service
   Build: docker/db               # DB has a docker build so that we can create databases and set custom passwords.
@@ -55,16 +72,21 @@ db:
     ExposedPorts:
       3306/tcp: {}
 
-  Host:
-    VolumesFrom:
-      - files                              # I am not sure if this is needed
-
 # FPM service
+#
+# - Standalone php-fpm service
+#
+# * iIt needs source, and assets 
+# * ExposedPorts is likely not necessary, it just gives a host port for the server
+#
+# ! Alternate image: jamesnesbitt/wunder-php7fpm
+# ! Alternate image: jamesnesbitt/wunder-hhvm
+#
 fpm:
   Type: service
 
   Config:
-    Image: jamesnesbitt/wunder-php5fpm     # The FPM works, and should have blackfire working
+    Image: jamesnesbitt/wunder-php56fpm     # The FPM works, and should have blackfire working
     RestartPolicy: on-failure
 
     ExposedPorts:
@@ -78,6 +100,16 @@ fpm:
       - source
 
 # WWW service
+#
+# - Standalone nginx service
+# - Sets Hostname and DomainName using coach tokens
+# - Sets DnsDock Alias ENV var using coach tokens
+# - Tries to bind to the Host 8080 port
+#
+# * It needs source, and assets 
+# * ExposedPorts are likely not necessary, they just gives a host port for the server
+# * If you make this scaled, you will get an error trying to reused the 8080 port
+#
 www:
   Type: service
 
@@ -86,7 +118,7 @@ www:
     RestartPolicy: on-failure
 
     Hostname: "%PROJECT_%INSTANCE"                  # Token : project name (can be set in conf.yml)
-    Domainname: "%DOMAIN"                           # Token : can be set in conf.yml:Tokens
+    Domainname: "%DOMAIN"                           # Token : environment domain (can be set in conf.yml)
     Env:
       - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN"  # If you are using DNSDOCK, this will create a DNS Entry.
 
@@ -128,6 +160,8 @@ The www folder is meant to house the htdocs parts of the apllication.  This give
 target for application source code, into which it can be linked or copied.  This allows separation
 of project custom code, from community code for frameworks and libraries.
 
+* The typical nginx configuration expects an application Web Root at www/active
+
 ## Assets
 
 The assets folder is meant to be a non-versioned folder that contains elements needed to
@@ -138,35 +172,58 @@ Assets folder being the writeable.
 
 ## Backups
 
+The backups folder is meant to be a non-versioned fodler that contains backups dumps for
+the application, which are kept separate from assets to that they can be managed separately.
 `,
 		"app/assets/README.md":  `
-
-`,
-		"app/backup/README.md":  `
 The assets folder is meant to be a non-versioned folder that contains elements needed to
 run the application, but which should not be a part of the project source code.  This includes
 file assets, and cache elements and temprorary elements.
 The real goal of this folder is to separate filespace into Read-Only and Writeable, with the
 Assets folder being the writeable.
 `,
-		"app/www/active/index.php":  `<?php phpinfo();`,
-	".coach/docker/db/Dockerfile": `
-	FROM        jamesnesbitt/wunder-mariadb
-	MAINTAINER  james.nesbitt@wunderkraut.com
+		"app/backup/README.md":  `
+The backups folder is meant to be a non-versioned fodler that contains backups dumps for
+the application, which are kept separate from assets to that they can be managed separately. 
+`,
+		"app/www/active/index.php":  `<?php 
+/**
+ * This is your web root, where you application root should sit.
+ *
+ * This is kept as a sub-path of the www folder, so that the www folder can be mapped into
+ * the container, with a sub-folder that can be the target of a build process which may replacement
+ * or sym-link it.
+ * If you are using a build process to generate your web-root, have it build the active folder,
+ * or symlink the latest build to ./active.
+ **/
+phpinfo();`,
+	".coach/docker/db/Dockerfile": `#####
+# Create a custom DB build for my project
+#
+# - this gives a custom DB for my project
+# - my custom DB will respond to credentials that I define here
+# - this DB image can be used as a "docker commit" target to create DB snapshots
+#
+# * This image build was created by coach init
 
-	### ProjectDB --------------------------------------------------------------------
+FROM        jamesnesbitt/wunder-mariadb
+MAINTAINER  james.nesbitt@wunderkraut.com
 
-	# Create our project DB
-	RUN (/usr/bin/mysqld_safe &) && sleep 5 && \
-			mysql -uroot -e "UPDATE mysql.user SET Password=PASSWORD('RESETME') WHERE User='root'" && \
-			mysql -uroot -e "DELETE FROM mysql.user WHERE User=''" && \
-			mysql -uroot -e "DROP DATABASE test" && \
-			mysql -uroot -e "UPDATE mysql.user SET Password=PASSWORD('RESETME') WHERE User='root'" && \
-			mysql -uroot -e "CREATE DATABASE project" && \
-			mysql -uroot -e "GRANT ALL ON project.* to project@'10.0.%' IDENTIFIED BY 'project'" && \
-			mysql -uroot -e "FLUSH PRIVILEGES"
+### ProjectDB --------------------------------------------------------------------
 
-	### /ProjectDB -------------------------------------------------------------------
+# Create our project DB
+#
+# - create a new database "app"
+# - grant privileges to that database to user app@172.*, using the password "app"
+# - flush privileges
+#
+# * this expects Docker to run it's bridge/subnet using 172.* (and limits access to that subnet)
+# 
+RUN (/usr/bin/mysqld_safe &) && sleep 5 && \
+		mysql -uroot -e "GRANT ALL ON app.* to app@'172.%' IDENTIFIED BY 'app'" && \
+		mysql -uroot -e "FLUSH PRIVILEGES"
+
+### /ProjectDB -------------------------------------------------------------------
 `,
 
 	}

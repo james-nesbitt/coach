@@ -64,10 +64,11 @@ type Conf_Yaml struct {
 
 	Settings map[string]string	`yaml:"Settings,omitempty"`
 
-	Docker	DockerClientConf		`yaml:"Docker,omitempty"`
+	Docker DockerClientConf		`yaml:"Docker,omitempty"`
 }
 
 func (source *Conf_Yaml) toConf(log Log) Conf {
+
 	conf := Conf{
 		Paths: map[string]string{},
 		Tokens: map[string]string{},
@@ -97,7 +98,6 @@ func (source *Conf_Yaml) toConf(log Log) Conf {
 		conf.Docker.CertPath = source.Docker.CertPath
 	}
 
-log.DebugObject(LOG_SEVERITY_DEBUG_STAAAP,"YAML CONVERT:", source.Docker, conf.Docker)
-
+	log.DebugObject(LOG_SEVERITY_DEBUG_STAAAP,"YAML CONVERT:", source.Docker, conf.Docker)
 	return conf
 }
