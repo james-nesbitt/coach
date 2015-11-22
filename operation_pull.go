@@ -55,8 +55,7 @@ func (nodes *Nodes) Pull(targets []string, registry string) {
 func (node *Node) Pull(registry string) bool {
 	if node.Do("pull") {
 
-		image := node.GetImageName()
-		tag := node.GetImageTag()
+		image, tag := node.GetImageName()
 
 		options := docker.PullImageOptions {
 			Repository: image,

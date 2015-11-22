@@ -38,6 +38,8 @@ func main() {
 	log.DebugObject(LOG_SEVERITY_DEBUG, "Global Flags:", globalFlags)
 	log.DebugObject(LOG_SEVERITY_DEBUG, "Initial Targets:", targets)
 
+
+
 	/**
 	 * CONF: Get a configuration object
 	 */
@@ -74,7 +76,8 @@ func main() {
 	log.DebugObject(LOG_SEVERITY_DEBUG, "OPERATION: ["+operationName+"] => flags :", operationFlags)
 
 	// get an operation object
-	operation, _ := GetOperation(operationName, nodes, targets, &conf, log.ChildLog("OPERATION"))
+	operations := Operations{}
+	operation, _ := operations.GetOperation(operationName, nodes, targets, &conf, log.ChildLog("OPERATION"))
 
 	log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Operation", operation);
 

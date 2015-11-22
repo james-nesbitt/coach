@@ -74,6 +74,7 @@ type Node_Yaml struct {
 
 	Requires []string								`yaml:"Requires,omitempty"`
 }
+
 /**
  * Convert this YAML Node to a proper Node
  *
