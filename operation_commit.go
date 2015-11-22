@@ -109,7 +109,7 @@ func (instance *Instance) Commit(repo string, tag string, message string) bool {
 	config := instance.Config
 
 	if repo=="" {
-		repo = instance.Node.GetImageName()
+		repo, _ = instance.Node.GetImageName()
 	}
 
 	options := docker.CommitContainerOptions{

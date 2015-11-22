@@ -6,6 +6,8 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+
+
 // Base Node
 
 type Node struct {
@@ -91,23 +93,30 @@ func (node *Node) Process(nodes Nodes) {
 	node.SetDependencies(nodes)
 }
 
-func (node *Node) GetImageName() string {
+/**
+ * Get node image name and tag
+ */
+func (node *Node) GetImageName() (image string, tag string) {
+	image = strings.ToLower(node.MachineName)
+	tag = "latest"
+
 	if node.Config.Image=="" {
-		return strings.ToLower(node.MachineName)
+		return
 	}
 	if strings.Contains(node.Config.Image, ":") {
-		return strings.SplitN(node.Config.Image, ":", 2)[0]
+		split := strings.SplitN(node.Config.Image, ":", 2)
+		image = split[0]
+		tag = split[1]
+	}	else {
+		image = node.Config.Image
 	}
-	return node.Config.Image
-}
-func (node *Node) GetImageTag() string {
-	if strings.Contains(node.Config.Image, ":") {
-		return strings.SplitN(node.Config.Image, ":", 2)[1]
-	}
-	return "latest"
+	return
 }
 
 // check if a node should do an action (if it is permitted)
+/**
+ * @todo rename this function 
+ */
 func (node *Node) Do(action string) (bool) {
 	if do, ok := node.do[action]; ok {
 		return do

@@ -77,13 +77,10 @@ func (node *Node) Build(force bool) bool {
 		buildPath, _ := node.conf.Path("build")
 		buildPath = path.Join(buildPath, node.BuildPath)
 
-		image := node.GetImageName()
-		if tag := node.GetImageTag(); tag!="" {
-			image +=":"+tag
-		}
+		image, tag := node.GetImageName()
 
 		options := docker.BuildImageOptions{
-			Name: image,
+			Name: image+":"+tag,
 			ContextDir: buildPath,
 			RmTmpContainer: true,
 			OutputStream: os.Stdout,

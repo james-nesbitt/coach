@@ -1,6 +1,34 @@
 package main
 
-func GetOperation(name string, nodes Nodes, targets []string, conf *Conf, log Log) (Operation, bool) {
+type Operations struct {}
+
+func (operations *Operations) ListOperations() []string {
+	return []string{
+		"help",
+		"info",
+		"tool",
+		"init",
+		"pull",
+		"build",
+		"destroy",
+		"run",
+		"up",
+		"scale",
+		"create",
+		"remove",
+		"start",
+		"stop",
+		"attach",
+		"pause",
+		"unpause",
+		"commit",
+	}
+}
+
+/**
+ * operation factory function
+ */
+func (operations *Operations) GetOperation(name string, nodes Nodes, targets []string, conf *Conf, log Log) (Operation, bool) {
 
 	switch name {
 		case "help":

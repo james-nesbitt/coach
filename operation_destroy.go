@@ -65,8 +65,8 @@ func (node *Node) Destroy(force bool) bool {
 	if node.Do("build") {
 
 		// Get the image name
-		image := node.GetImageName()
-		if tag := node.GetImageTag(); tag!="" && tag!="latest" {
+		image, tag := node.GetImageName()
+		if tag!="" && tag!="latest" {
 			image +=":"+tag
 		}
 

@@ -4,6 +4,16 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+const (
+  NODE_BUILD = iota
+  NODE_VOLUME
+  NODE_SERVICE
+  NODE_COMMAND
+)
+
+/**
+ * Nodes factory method
+ */
 func getNodes(log Log, conf *Conf, client *docker.Client, targets []string) Nodes {
 	nodes := Nodes{
 		conf: conf,

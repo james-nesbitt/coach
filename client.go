@@ -147,7 +147,8 @@ func MatchImages(client *docker.Client, imagePrefix string) []docker.APIImages {
 }
 
 func (node *Node) GetImages()  []docker.APIImages {
-	return MatchImages(node.client, node.GetImageName())
+	image, _ := node.GetImageName()
+	return MatchImages(node.client, image)
 }
 func (node *Node) hasImage() bool {
 	return len(node.GetImages())>0
