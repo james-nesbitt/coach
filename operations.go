@@ -56,6 +56,8 @@ func (operations *Operations) GetOperation(name string, nodes Nodes, targets []s
 
 		case "up":
 			return Operation(&Operation_Up{log:log.ChildLog("UP"), nodes:nodes, targets:targets}), true
+		case "clean":
+			return Operation(&Operation_Clean{log:log.ChildLog("CLEAN"), nodes:nodes, targets:targets}), true
 
 		case "scale":
 			return Operation(&Operation_Scale{log:log.ChildLog("SCALE"), nodes:nodes, targets:targets}), true

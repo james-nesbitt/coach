@@ -76,6 +76,7 @@ func (operation *Operation_Commit) Run() {
 		operation.repo = ""
 	}
 
+	operation.log.Info("running commit operation")
 	operation.nodes.Commit(operation.targets, operation.repo, operation.tag, "")
 }
 

@@ -121,7 +121,7 @@ func (nodes Nodes) GetTargets(targetNames []string) []*Target {
 	return sorted
 }
 func (nodes *Nodes) SortTargets(targets []*Target) []*Target {
-	log := nodes.log.ChildLog("SORT")
+	log := nodes.log.ChildLog("TARGETSORT")
 
 	g := graph.New(graph.Directed)
 	graphNodes := make(map[string]graph.Node, 0)

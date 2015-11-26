@@ -34,8 +34,7 @@ SYNTAX:
 }
 
 func (operation *Operation_Info) Run() {
-
-	operation.log.Message("running info operation")
+	operation.log.Info("running info operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:INFO")

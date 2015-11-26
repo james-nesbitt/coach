@@ -30,6 +30,7 @@ NOTE:
 }
 
 func (operation *Operation_Pause) Run() {
+	operation.log.Info("running pause operation")	
 	operation.nodes.Pause(operation.targets)
 }
 
@@ -39,8 +40,12 @@ func (nodes *Nodes) Pause(targets []string) {
 			for _, instance := range target.instances {
 				if instance.HasContainer(true) {
 					instance.Pause(false)
+				} else {
+					target.node.log.Info(target.node.Name+": Skipping Node Instance ["+instance.Name+"] Container pause, as it has no running containers")
 				}
 			}
+		} else {
+			target.node.log.Info(target.node.Name+": Skipping Node Instance pause, as it is not a starteable node")
 		}
 	}
 }
@@ -59,9 +64,13 @@ func (node *Node) Pause(filters []string, force bool) {
 		for _, instance := range instances {
 			if instance.HasContainer(true) {
 				instance.Pause(force)
+			} else {
+				node.log.Info(node.Name+": Skipping Node Instance ["+instance.Name+"] Container pause, as it has no running containers")
 			}
 		}
 
+	} else {
+		node.log.Info(node.Name+": Skipping Node pause, as it is not a starteable node")
 	}
 }
 
@@ -71,10 +80,10 @@ func (instance *Instance) Pause(force bool) bool {
 
 	err := instance.Node.client.PauseContainer( id )
 	if err!=nil {
-		instance.Node.log.Error("FAILED TO PAUSE INSTANCE CONTAINER ["+id+"] =>"+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to paus intance ["+instance.Name+"] Container ["+id+"] =>"+err.Error())
 		return false
 	} else {
-		instance.Node.log.Message("PAUSED INSTANCE CONTAINER ["+id+"]")
+		instance.Node.log.Message(instance.Node.Name+": Paused instance ["+instance.Name+"] Container ["+id+"]")
 		return true
 	}
 

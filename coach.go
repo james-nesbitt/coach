@@ -10,14 +10,14 @@ func main() {
 	// operation, targets, globalFlags, operationFlags := parseGlobalFlags( os.Args )
 	operationName, targets, globalFlags, operationFlags := parseGlobalFlags( os.Args )
 
-	// Interpret some of the global vars
-
 	// verbosity
-	var verbosity int = LOG_SEVERITY_WARNING
+	var verbosity int = LOG_SEVERITY_MESSAGE
 	if globalFlags["verbosity"]!="" {
 		switch globalFlags["verbosity"] {
 			case "message":
 				verbosity = LOG_SEVERITY_MESSAGE
+			case "info":
+				verbosity = LOG_SEVERITY_INFO
 			case "warning":
 				verbosity = LOG_SEVERITY_WARNING
 			case "verbose":
@@ -38,15 +38,12 @@ func main() {
 	log.DebugObject(LOG_SEVERITY_DEBUG, "Global Flags:", globalFlags)
 	log.DebugObject(LOG_SEVERITY_DEBUG, "Initial Targets:", targets)
 
-
-
 	/**
 	 * CONF: Get a configuration object
+	 *
 	 */
-
 	conf := GetConf( log.ChildLog("CONF") )
-
-	log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "CONF", conf);
+	log.DebugObject(LOG_SEVERITY_DEBUG, "CONF", conf);
 
 	/**
 	 * DOCKER CLIENT: Get a docker client from the conf settings
@@ -106,13 +103,17 @@ func parseGlobalFlags(flags []string) (operation string, targets []string, globa
 		switch(arg) {
 			case "-v":
 				fallthrough
+			case "--info":
+				globalFlags["verbosity"] = "info"
+			case "-vv":
+				fallthrough
 			case "--verbose":
 				globalFlags["verbosity"] = "verbose"
-			case "-vv":
+			case "-vvv":
 				fallthrough
 			case "--debug":
 				globalFlags["verbosity"] = "debug"
-			case "-vvv":
+			case "-vvvv":
 				fallthrough
 			case "--staaap":
 				globalFlags["verbosity"] = "staaap"

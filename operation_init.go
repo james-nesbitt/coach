@@ -79,10 +79,17 @@ EXAMPLES:
     $/> coach init git https://github.com/aleksijohansson/docker-drupal-coach.git
     Clones the target git URL to the current path
 
+    There are also various demo inits:
+      $/> coach init demo lamp
+      $/> coach init demo scale
+      $/> coach init demo wunder
+
 `)
 }
 
 func (operation *Operation_Init) Run() {
+	operation.log.Info("running init operation")
+
 	var err error
 	var ok bool
 	var targetPath, coachPath string
@@ -123,6 +130,8 @@ func (operation *Operation_Init) Run() {
 			_, files = operation.Init_User_Run(operation.handlerFlags)
 		case "git":
 			_, files = operation.Init_Git_Run(operation.handlerFlags)
+		case "demo":
+			_, files = operation.Init_Demo_Run(operation.handlerFlags)
 		case "default":
 			fallthrough
 		default:

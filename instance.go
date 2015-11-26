@@ -190,6 +190,9 @@ func (instance *Instance) isDefault() bool {
 func (instance *Instance) isActive() bool {
 	return instance.isDefault() || instance.HasContainer(true)
 }
+func (instance *Instance) isRunning() bool {
+	return instance.HasContainer(true)
+}
 
 
 /**
