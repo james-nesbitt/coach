@@ -40,7 +40,7 @@ TODO:
 }
 
 func (operation *Operation_Run) Run() {
-	operation.log.Message("running run operation")
+	operation.log.Info("running run operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 	for _, target := range operation.nodes.GetTargets(operation.targets) {
@@ -98,6 +98,12 @@ func (instance *Instance) Run(cmd []string, persistant bool) bool {
 	instance.Config.AttachStdin = true
 	instance.Config.AttachStdout = true
 	instance.Config.AttachStderr = true
+
+  // trap any messages from the other intance operations
+	if instance.Node.log.Severity()==LOG_SEVERITY_MESSAGE {
+		instance.Node.log.Hush()
+		defer instance.Node.log.UnHush()
+	}
 
 	// 1. get the container for the instance (create it if needed)
 	hasContainer := instance.HasContainer(false)

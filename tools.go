@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"encoding/json"
 
+	"io/ioutil"
 	"path"
 	"os"
  	"os/exec"	
@@ -12,11 +13,30 @@ import (
 // DB of Tools
 type Tools map[string]Tool
 
-func (tools Tools) GetToolsFromYaml(conf *Conf, log Log, source []byte, overwrite bool) {
+// load tools from a yaml file
+func (tools Tools) GetToolsFromYamlFile(conf *Conf, log Log, toolPath string, overwrite bool) bool {
+		log.Debug(LOG_SEVERITY_DEBUG_WOAH,"coach tool file:"+toolPath)
+
+		// read the config file
+		yamlFile, err := ioutil.ReadFile(toolPath)
+		if err!=nil {
+			log.Info("Could not read the YAML file ["+toolPath+"]: "+err.Error())
+			return false
+		}
+
+		// replace tokens in the yamlFile
+		yamlFile = []byte( conf.TokenReplace(string(yamlFile)) )
+		log.Debug(LOG_SEVERITY_DEBUG_STAAAP,"YAML (tokenized):"+ string(yamlFile))
+
+		return tools.GetToolsFromYaml(conf, log, yamlFile, overwrite)
+}
+
+// load tools from yaml []byte
+func (tools Tools) GetToolsFromYaml(conf *Conf, log Log, source []byte, overwrite bool) bool {
 	var yaml_tools map[string]map[string]interface{}
 	err := yaml.Unmarshal(source, &yaml_tools)
 	if err!=nil {
-		return
+		return false
 	}
 
 	for name, tool_struct := range yaml_tools {
@@ -39,6 +59,7 @@ func (tools Tools) GetToolsFromYaml(conf *Conf, log Log, source []byte, overwrit
 		}
 
 	}
+	return true
 }
 
 // Defining Tool interface
@@ -97,6 +118,7 @@ func (tool *Tool_Script) Run(flags []string) bool {
 		return false
 	}
 
+	tool.log.Debug(LOG_SEVERITY_INFO ,"SCRIPT RUN")
 	err = cmd.Wait()
 	tool.log.Message("FINISHED")
 	return err==nil

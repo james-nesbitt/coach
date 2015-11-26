@@ -61,7 +61,7 @@ The first topic passed in is assumed to be a help operation.
 }
 
 func (operation *Operation_Help) Run() {
-	operation.log.Message("running help operation")
+	operation.log.Info("running help operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"path"
-	"io/ioutil"
 )
 
 type Operation_Tool struct {
@@ -14,6 +13,8 @@ type Operation_Tool struct {
 	targets []string
 
 	flags []string
+
+	toolPaths []string
 
 	tool string
 	tools Tools
@@ -28,6 +29,8 @@ func (operation *Operation_Tool) Flags(flags []string) {
 	}
 
 	operation.flags = flags
+
+	operation.toolPaths = []string{"usercoach","projectcoach"}
 }
 
 func (operation *Operation_Tool) Help(topics []string) {
@@ -42,15 +45,17 @@ to worry about the path to the script.
 `)
 }
 
-func (operation *Operation_Tool) Run() {
+func (operation *Operation_Tool) Run() {	
+	operation.log.Info("running tool operation")	
+
 	if operation.tools==nil {
 		operation.tools = Tools{}
 	}
 
-	// load any user tools
-	operation.ToolsFromYaml("usercoach", true)
-	// load any project specific tools
-	operation.ToolsFromYaml("projectcoach", true)
+	// load tools from tool paths
+	for _, pathKey := range operation.toolPaths {
+		operation.ToolsFromYaml(pathKey, true)
+	}
 
 	if operation.tool=="" {
 		operation.log.Error("No tool specified")
@@ -61,28 +66,15 @@ func (operation *Operation_Tool) Run() {
 	}
 }
 
-
+// populate the tools list from a yamlfile, in a conf path
 func (operation *Operation_Tool) ToolsFromYaml(toolPathKey string, overwrite bool) bool {
 	operation.log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Updating Conf from YAML")
 
 	if toolPath, ok := operation.conf.Path(toolPathKey); ok {
 		// get the path to where the config file should be
 		toolPath = path.Join(toolPath, "tools.yml")
+		operation.tools.GetToolsFromYamlFile(operation.conf, operation.log, toolPath, overwrite)
 
-		operation.log.Debug(LOG_SEVERITY_DEBUG_WOAH,"coach tool file:"+toolPath)
-
-		// read the config file
-		yamlFile, err := ioutil.ReadFile(toolPath)
-		if err!=nil {
-			operation.log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Could not read the YAML file ["+toolPath+"]: "+err.Error())
-			return false
-		}
-
-		// replace tokens in the yamlFile
-		yamlFile = []byte( operation.conf.TokenReplace(string(yamlFile)) )
-		operation.log.Debug(LOG_SEVERITY_DEBUG_STAAAP,"YAML (tokenized):"+ string(yamlFile))
-
-		operation.tools.GetToolsFromYaml(operation.conf, operation.log, yamlFile, overwrite)
 		return true
 	}
 	return false

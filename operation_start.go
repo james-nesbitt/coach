@@ -28,6 +28,7 @@ ACCESS:
 }
 
 func (operation *Operation_Start) Run() {
+	operation.log.Info("running start operation")
 	operation.nodes.Start(operation.targets, operation.force)
 }
 
@@ -35,10 +36,16 @@ func (nodes *Nodes) Start(targets []string, force bool) {
 	for _, target := range nodes.GetTargets(targets) {
 		if target.node.Do("start") {
 			for _, instance := range target.instances {
-				if instance.HasContainer(false) {
+				if instance.isRunning() {
+					target.node.log.Info(target.node.Name+"["+instance.Name+"]: is already running.")
+				} else if instance.HasContainer(false) {
 					instance.Start(force)
+				} else {
+					target.node.log.Info(target.node.Name+"["+instance.Name+"]: has no container to start.")
 				}
 			}
+		} else {
+			target.node.log.Info(target.node.Name+": is not a startable node.")
 		}
 	}
 }
@@ -54,11 +61,17 @@ func (node *Node) Start(filters []string, force bool) {
 			instances = node.FilterInstances(filters)
 		}
 		for _, instance := range instances {
-			if instance.HasContainer(false) {
+			if instance.isRunning() {
+				node.log.Info(node.Name+": instance is already running ["+instance.Name+"]")
+			} else if instance.HasContainer(false) {
 				instance.Start(force)
+			} else {
+				node.log.Info(node.Name+": has no container to start ["+instance.Name+"]")
 			}
 		}
 
+	} else {
+		node.log.Info(node.Name+": is not a startable node.")
 	}
 }
 
@@ -72,10 +85,10 @@ func (instance *Instance) Start(force bool) bool {
 	err := instance.Node.client.StartContainer(id, &HostConfig)
 
 	if err!= nil {
-		instance.Node.log.Error("Failed to start node container :"+id+" => "+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to start node container ["+id+"] => "+err.Error())
 		return false
 	} else {
-		instance.Node.log.Message("Node instance started: "+id)
+		instance.Node.log.Message(instance.Node.Name+": Node instance started ["+id+"]")
 		return true
 	}
 }

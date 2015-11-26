@@ -38,9 +38,13 @@ func (nodes *Nodes) Unpause(targets []string, force bool) {
 			for _, instance := range target.instances {
 				if instance.HasContainer(true) {
 					instance.Unpause(force)
+				} else {
+					target.node.log.Info(target.node.Name+": Skipping Node Instance ["+instance.Name+"] Container unpause, as it has no running containers")
 				}
 			}
 
+		} else {
+			target.node.log.Info(target.node.Name+": Skipping Node unpause, as it is not a starteable node")
 		}
 	}
 }
@@ -59,9 +63,13 @@ func (node *Node) Unpause(filters []string, force bool) {
 		for _, instance := range instances {
 			if instance.HasContainer(true) {
 				instance.Unpause(force)
+			} else {
+				node.log.Info(node.Name+": Skipping Node Instance ["+instance.Name+"] Container unpause, as it has no running containers")
 			}
 		}
 
+	} else {
+		node.log.Info(node.Name+": Skipping Node unpause, as it is not a starteable node")
 	}
 }
 
@@ -70,10 +78,10 @@ func (instance *Instance) Unpause(force bool) bool {
 
 	err := instance.Node.client.UnpauseContainer( id )
 	if err!=nil {
-		instance.Node.log.Error("FAILED TO UNPAUSE INSTANCE CONTAINER ["+id+"] =>"+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to unpause Instance ["+instance.Name+"] Container ["+id+"] =>"+err.Error())
 		return false
 	} else {
-		instance.Node.log.Message("UNPAUSED INSTANCE CONTAINER ["+id+"]")
+		instance.Node.log.Message(instance.Node.Name+": Unpaused Instance ["+instance.Name+"] Container ["+id+"]")
 		return true
 	}
 }

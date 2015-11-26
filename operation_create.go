@@ -11,6 +11,8 @@ type Operation_Create struct {
 	targets []string
 
 	cmd []string
+
+	nonDefault bool
 	force bool
 }
 func (operation *Operation_Create) Flags(flags []string) {
@@ -40,30 +42,32 @@ Access:
 }
 
 func (operation *Operation_Create) Run() {
-	force := false
-	if operation.force == true {
-		force = true
-	}
-
-	operation.log.Message("running create operation")
+	operation.log.Info("running create operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:CREATE")
-	operation.nodes.Create(operation.targets, operation.cmd, true, force)
+	operation.nodes.Create(operation.targets, operation.cmd, !operation.nonDefault, operation.force)
 }
 
 func (nodes *Nodes) Create(targets []string, cmdOverride []string, onlyDefault bool, force bool) {
 	for _, target := range nodes.GetTargets(targets) {
+
 		if target.node.Do("create") {
 			for _, instance := range target.instances {
 				if instance.HasContainer(false) {
+					nodes.log.Info(target.node.Name+"["+instance.Name+"]: Skipping node instance, which already has a container")
 					continue
 				}
 				if onlyDefault && !instance.isDefault() {
+					nodes.log.Info(target.node.Name+"["+instance.Name+"]: Skipping node instance, which is not created by default default")
 					continue
 				}
+
+				nodes.log.Info("Creating node instance :"+target.node.Name+":"+instance.Name)
 				instance.Create(cmdOverride, force)
 			}
+		} else {
+			nodes.log.Info("Skipping 'uncreateable' node :"+target.node.Name)
 		}
 	}
 }
@@ -81,9 +85,11 @@ func (node *Node) Create(filters []string, cmdOverride []string, onlyDefault boo
 
 		for _, instance := range instances {
 			if instance.HasContainer(false) {
+				node.log.Info(node.Name+"["+instance.Name+"]: Skipping node instance, which already has a container")
 				continue
 			}
 			if onlyDefault && !instance.isDefault() {
+				node.log.Info(node.Name+"["+instance.Name+"]: Skipping node instance, which is not created by default default")	
 				continue
 			}
 			instance.Create(cmdOverride, force)
@@ -136,16 +142,16 @@ func (instance *Instance) Create(overrideCmd []string, force bool) bool {
 			*/
 		if err.Error()=="no such image" {
 			if container, ok := instance.GetContainer(false); ok {
-				instance.Node.log.Message("CREATED INSTANCE CONTAINER ["+name+" FROM "+Config.Image+"] => "+container.ID)
-				instance.Node.log.Warning("Docker created the container, but reported an error due to a 'missing image'")
+				instance.Node.log.Message(instance.Node.Name+": Created instance container ["+name+" FROM "+Config.Image+"] => "+container.ID)
+				instance.Node.log.Warning("Docker created the container, but reported an error due to a 'missing image'.  This is a known bug, that can be ignored")
 				return true
 			}
 		}
 
-		instance.Node.log.Error("FAILED TO CREATE INSTANCE CONTAINER ["+name+" FROM "+Config.Image+"] =>"+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to create instance container ["+name+" FROM "+Config.Image+"] =>"+err.Error())
 		return false
 	} else {
-		instance.Node.log.Message("CREATED INSTANCE CONTAINER ["+name+" FROM "+Config.Image+"] => "+container.ID)
+		instance.Node.log.Message(instance.Node.Name+": Created instance container ["+name+" FROM "+Config.Image+"] => "+container.ID)
 		return true
 	}
 }

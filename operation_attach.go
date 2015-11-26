@@ -35,6 +35,7 @@ NOTES:
 }
 
 func (operation *Operation_Attach) Run() {
+	operation.log.Info("running attach operation")	
 	operation.nodes.Attach(operation.targets)
 }
 
@@ -92,13 +93,13 @@ func (instance *Instance) Attach() bool {
 		RawTerminal: instance.Config.Tty, // Use raw terminal? Usually true when the container contains a TTY.
 	}
 
-	instance.Node.log.Message("ATTACHING TO INSTANCE CONTAINER ["+id+"]")
+	instance.Node.log.Message(instance.Node.Name+": Attaching to instance container ["+id+"]")
 	err := instance.Node.client.AttachToContainer( options )
 	if err!=nil {
-		instance.Node.log.Error("FAILED TO ATTACH TO INSTANCE CONTAINER ["+id+"] =>"+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to attach to instance container ["+id+"] =>"+err.Error())
 		return false
 	} else {
-		instance.Node.log.Message("DISCONNECTED FROM INSTANCE CONTAINER ["+id+"]")
+		instance.Node.log.Message(instance.Node.Name+": Disconnected from instance container ["+id+"]")
 		return true
 	}
 

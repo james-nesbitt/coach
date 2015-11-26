@@ -38,7 +38,7 @@ NOTES:
 }
 
 func (operation *Operation_Pull) Run() {
-	operation.log.Message("running pull operation")
+	operation.log.Info("running pull operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:BUILD")

@@ -10,6 +10,23 @@ type Operation_Stop struct {
 	timeout uint
 }
 func (operation *Operation_Stop) Flags(flags []string) {
+  operation.timeout=10
+
+	remainingFlags := []string{}
+
+  flagLoop:
+		for index:=0; index<len(flags); index++ {
+			flag:= flags[index]
+
+			switch flag {
+				case "-q":
+					fallthrough
+				case "--quick":
+					operation.timeout=1
+
+			}
+		}
+
 
 }
 
@@ -21,6 +38,9 @@ Coach will attempt to stop target node containers.
 SYNTAX:
     $/> coach {targets} stop
 
+    $/> coach {targets} stop --quick
+      - makes docker stop the containers with --time=1
+
 	{targets} what target node instances the operation should process ($/> coach help targets)
 
 ACCESS:
@@ -30,6 +50,7 @@ ACCESS:
 }
 
 func (operation *Operation_Stop) Run() {
+	operation.log.Info("running stop operation")	
 	operation.nodes.Stop(operation.targets, operation.force, operation.timeout)
 }
 
@@ -39,8 +60,12 @@ func (nodes *Nodes) Stop(targets []string, force bool, timeout uint) {
 			for _, instance := range target.instances {
 				if instance.HasContainer(true) {
 					instance.Stop(force, timeout)
+				} else {
+					target.node.log.Info(target.node.Name+": instance has no running container to stop ["+instance.Name+"]")
 				}
 			}
+		} else {
+			target.node.log.Info(target.node.Name+": is not a stoppable node")
 		}
 	}
 }
@@ -59,9 +84,14 @@ func (node *Node) Stop(filters []string, force bool, timeout uint) {
 		for _, instance := range instances {
 			if instance.HasContainer(true) {
 				instance.Stop(force, timeout)
+			} else {
+				node.log.Message(node.Name+": instance has no running container to stop ["+instance.Name+"]")
 			}
+
 		}
 
+	} else {
+		node.log.Info(node.Name+": is not a stoppable node")
 	}
 }
 
@@ -72,10 +102,10 @@ func (instance *Instance) Stop(force bool, timeout uint) bool {
 	err := instance.Node.client.StopContainer(id, timeout)
 
 	if err!= nil {
-		instance.Node.log.Error("Failed to stop node container :"+id+" => "+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to stop node container ["+id+"] => "+err.Error())
 		return false
 	} else {
-		instance.Node.log.Message("Node instance stopped: "+id)
+		instance.Node.log.Message(instance.Node.Name+": Node instance stopped ["+id+"]")
 		return true
 	}
 }

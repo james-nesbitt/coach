@@ -44,8 +44,7 @@ Access:
 }
 
 func (operation *Operation_Scale) Run() {
-	operation.log.Message("running scale operation")
-	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
+	operation.log.Info("running scale operation")
 
 	if operation.scale==0 {
 		operation.log.Warning("scale operation was told to scale to 0")
@@ -64,23 +63,24 @@ func (operation *Operation_Scale) Run() {
 			count := target.node.ScaleUpNumber(operation.scale)
 			
 			if count==0 {
-				target.node.log.Warning("Scale operation could not scale up any new instances of node :"+target.node.Name)
+				target.node.log.Warning(target.node.Name+": Scale operation could not scale up any new instances of node")
 			} else if count<operation.scale {
-				target.node.log.Warning("Scale operation could not scale up all of the requested instances of node :"+target.node.Name)
+				target.node.log.Warning(target.node.Name+": Scale operation could not scale up all of the requested instances of node. "+strconv.FormatInt(int64(count+1), 10)+" started.")
 			} else {
-				target.node.log.Warning("Scale operation scaled up all requested node instances :"+target.node.Name)
+				target.node.log.Warning(target.node.Name+": Scale operation scaled up "+strconv.FormatInt(int64(count+1), 10)+" instances")
 			}
 
 		} else {
-			count := target.node.ScaleDOwnNumber(-operation.scale)
+			count := target.node.ScaleDownNumber(-operation.scale)
 
 			if count==0 {
-				target.node.log.Warning("Scale operation could not scale down any new instances of node :"+target.node.Name)
+				target.node.log.Warning(target.node.Name+": Scale operation could not scale down any new instances of node")
 			} else if count<(-operation.scale) {
-				target.node.log.Warning("Scale operation could not scale down all of the requested instances of node :"+target.node.Name)
+				target.node.log.Warning(target.node.Name+": Scale operation could not scale down all of the requested instances of node. "+strconv.FormatInt(int64(count+1), 10)+" stopped.")
 			} else {
-				target.node.log.Warning("Scale operation scaled down all requested node instances :"+target.node.Name)
+				target.node.log.Message(target.node.Name+": Scale operation scaled down "+strconv.FormatInt(int64(count+1), 10)+" instances")
 			}
+
 		}
 
 	}
@@ -88,10 +88,11 @@ func (operation *Operation_Scale) Run() {
 	cache.refresh(false, true)
 }
 
+// scale a node up a certain number of instances
 func (node *Node) ScaleUpNumber(number int) int {
-
 	count := 0
 
+	// find the first non-running instance, and start it
 	InstanceScaleReturn:
 	for i := 0; i < len(node.InstanceMap); i++ {
 		if instance, ok := node.InstanceMap[strconv.FormatInt(int64(i+1), 10)]; ok {
@@ -107,7 +108,7 @@ func (node *Node) ScaleUpNumber(number int) int {
 				instance.Create([]string{}, false)
 			}
 
-			node.log.Message("Node Scaling up. Stopping instance :"+instance.Name)
+			node.log.Info(node.Name+": Node Scaling up. Starting instance :"+instance.Name)
 			instance.Start(false)
 
 			count++
@@ -115,12 +116,12 @@ func (node *Node) ScaleUpNumber(number int) int {
 				return count
 			}
 		}
-// operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "SCALE NODE TEST INSTANCE:", *target.node.InstanceMap[strconv.FormatInt(int64(i+1), 10)])
 	}
 	
 	return count
 }
-func (node *Node) ScaleDOwnNumber(number int) int {
+// scale a node down a certain number of instances
+func (node *Node) ScaleDownNumber(number int) int {
 
 	count := 0
 
@@ -134,7 +135,7 @@ func (node *Node) ScaleDOwnNumber(number int) int {
 				continue InstanceScaleReturn
 			}
 
-			node.log.Message("Node Scaling down. Starting instance :"+instance.Name)
+			node.log.Info(node.Name+": Node Scaling down. Stopping instance :"+instance.Name)
 			instance.Stop(false,10)
 
 			count++
@@ -142,7 +143,6 @@ func (node *Node) ScaleDOwnNumber(number int) int {
 				return count
 			}
 		}
-// operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "SCALE NODE TEST INSTANCE:", *target.node.InstanceMap[strconv.FormatInt(int64(i+1), 10)])
 	}
 	
 	return count

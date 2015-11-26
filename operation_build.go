@@ -49,16 +49,11 @@ NOTES:
 }
 
 func (operation *Operation_Build) Run() {
-	force := false
-	if operation.force == true {
-		force = true
-	}
-
-	operation.log.Message("running build operation")
+	operation.log.Info("running build operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 // 	operation.Nodes.log = operation.log.ChildLog("OPERATION:BUILD")
-	operation.nodes.Build(operation.targets, force)
+	operation.nodes.Build(operation.targets, operation.force)
 }
 
 func (nodes *Nodes) Build(targets []string, force bool) {
@@ -86,16 +81,16 @@ func (node *Node) Build(force bool) bool {
 			OutputStream: os.Stdout,
 		}
 
-		node.log.Message("BUILDING NODE ["+node.Name+"] : "+image+" FROM "+buildPath)
+		node.log.Message(node.Name+": Building node image ["+image+"] From build path ["+buildPath+"]")
 
 		// ask the docker client to build the image
 		err := node.client.BuildImage( options )
 
 		if (err!=nil) {
-			node.log.Error("NODE BUILD FAILED ["+node.Name+"] : "+buildPath+" => "+err.Error())
+			node.log.Error(node.Name+": Node build failed ["+node.Name+"] in build path ["+buildPath+"] => "+err.Error())
 			return false
 		} else {
-			node.log.Message("NODE BUILT ["+node.Name+"] : "+image+" FROM "+buildPath)
+			node.log.Message(node.Name+": Node succesfully built image ["+image+"] From path ["+buildPath+"]")
 			return true
 		}
 
