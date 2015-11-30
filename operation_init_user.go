@@ -2,111 +2,34 @@ package main
 
 import (
 	"os"
-	"io"
 	"path"
 )
 
-func (operation *Operation_Init) Init_User_Run(flags []string) (bool, map[string]string) {
-operation.log.DebugObject( LOG_SEVERITY_MESSAGE, "FLAGS:", flags)
+func (operation *Operation_Init) Init_User_Run(template string, tasks *InitTasks) bool {
 
-	if len(flags)==0 {
+	if template=="" {
 		operation.log.Error("You have not provided a template name  $/> coach init user {template}")
-		return false, map[string]string{}
+		return false
 	}
-
-	template := flags[0]
-	flags = flags[1:]
 
 	templatePath, ok := operation.conf.Path("usertemplates")
 	if !ok {
-		operation.log.Error("COACH has no directive for a user template path")
-		return false, map[string]string{}
+		operation.log.Error("COACH has no user template path for the current user")
+		return false
 	}
-	targetPath := path.Join(templatePath , template )
+	sourcePath := path.Join(templatePath , template )
 
-	if _, err := os.Stat( targetPath ); err!=nil {
-		operation.log.Error("Invalid template path suggested for new project init : ["+template+"] expected path ["+targetPath+"] => "+err.Error())
-		return false, map[string]string{}
+	if _, err := os.Stat( sourcePath ); err!=nil {
+		operation.log.Error("Invalid template path suggested for new project init : ["+template+"] expected path ["+sourcePath+"] => "+err.Error())
+		return false
 	}
+	
+	operation.log.Message("Perfoming init operation from user template ["+template+"] : "+sourcePath)
 
-	operation.log.Message("Copying new project init from template : ["+template+"] path ["+targetPath+"]")
-	if err := CopyDir(targetPath, operation.root); err!=nil {
-		operation.log.Error("Falied copying new project init from template : ["+template+"] expected path ["+targetPath+"] => "+err.Error())
-		return false, map[string]string{}
-	}
+	tasks.AddFileCopy(operation.root, sourcePath)
 
-	return true, map[string]string{
-		".coach/CREATEDFROM.md":  `THIS PROJECT WAS CREATED FROM A User Template`,
-	}
-}
+  tasks.AddMessage("Copied coach template ["+template+"] to init project")
+	tasks.AddFile(".coach/CREATEDFROM.md", `THIS PROJECT WAS CREATED FROM A User Template :`+template)
 
-func CopyFile(source string, dest string) (err error) {
-		sourcefile, err := os.Open(source)
-		if err != nil {
-				return err
-		}
-
-		defer sourcefile.Close()
-
-		destfile, err := os.Create(dest)
-		if err != nil {
-				return err
-		}
-
-		defer destfile.Close()
-
-		_, err = io.Copy(destfile, sourcefile)
-		if err == nil {
-				sourceinfo, err := os.Stat(source)
-				if err != nil {
-						err = os.Chmod(dest, sourceinfo.Mode())
-				}
-
-		}
-
-		return
-}
-
-func CopyDir(source string, dest string) (err error) {
-
-		// get properties of source dir
-		sourceinfo, err := os.Stat(source)
-		if err != nil {
-				return err
-		}
-
-		// create dest dir
-
-		err = os.MkdirAll(dest, sourceinfo.Mode())
-		if err != nil {
-				return err
-		}
-
-		directory, _ := os.Open(source)
-
-		objects, err := directory.Readdir(-1)
-
-		for _, obj := range objects {
-
-				sourcefilepointer := source + "/" + obj.Name()
-
-				destinationfilepointer := dest + "/" + obj.Name()
-
-
-				if obj.IsDir() {
-						// create sub-directories - recursively
-						err = CopyDir(sourcefilepointer, destinationfilepointer)
-						if err != nil {
-// 								fmt.Println(err)
-						}
-				} else {
-						// perform copy
-						err = CopyFile(sourcefilepointer, destinationfilepointer)
-						if err != nil {
-// 								fmt.Println(err)
-						}
-				}
-
-		}
-		return
+	return true
 }
