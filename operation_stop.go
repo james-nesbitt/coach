@@ -12,20 +12,17 @@ type Operation_Stop struct {
 func (operation *Operation_Stop) Flags(flags []string) {
   operation.timeout=10
 
-	remainingFlags := []string{}
+	for index:=0; index<len(flags); index++ {
+		flag:= flags[index]
 
-  flagLoop:
-		for index:=0; index<len(flags); index++ {
-			flag:= flags[index]
+		switch flag {
+			case "-q":
+				fallthrough
+			case "--quick":
+				operation.timeout=1
 
-			switch flag {
-				case "-q":
-					fallthrough
-				case "--quick":
-					operation.timeout=1
-
-			}
 		}
+	}
 
 
 }
