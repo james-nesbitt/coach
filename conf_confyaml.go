@@ -72,13 +72,14 @@ func (source *Conf_Yaml) toConf(log Log) Conf {
 	conf := Conf{
 		Paths: map[string]string{},
 		Tokens: map[string]string{},
+		Settings: map[string]string{},
 	}
 
 	if source.Project!="" {
 		conf.Project = source.Project
 	}
 	if source.Author!="" {
-// 		conf.Author = source.Author
+ 		conf.Author = source.Author
 	}
 
 	if source.Paths!=nil {
@@ -91,6 +92,12 @@ func (source *Conf_Yaml) toConf(log Log) Conf {
 			conf.Tokens[token] = value
 		}
 	}
+	if source.Settings!=nil {
+		for setting, value := range source.Settings {
+			conf.Settings[setting] = value
+		}
+	}
+	
 	if source.Docker.Host!="" {
 		conf.Docker.Host = source.Docker.Host
 	}
