@@ -24,21 +24,37 @@ func GetConf(log Log) Conf {
 		Targets: []string{},
 	}
 
-	conf.from_Default(false, log.ChildLog("DEFAULT"))
+	conf.from_Default(log.ChildLog("DEFAULT"))
 
+	// load a conf.yml file first from the user ~/.coach/conf. and then
+	// from the project/coach.yml file, the latter overwrites the former
 	conf.from_YamlConf(log.ChildLog("USER"), "usercoach")
 	if !conf.from_YamlConf(log.ChildLog("PROJECT"), "projectcoach") {
-		log.Warning("This project contains no CONF Yaml file")
+		log.Info("This project contains no CONF Yaml file")
 	}
 
 	log.DebugObject(LOG_SEVERITY_DEBUG_LOTS,"Docker client conf: ",conf)
 
+	// first load secrets/tokens from the users ~/.coach/secrets/secrets.yml
+	// file then from the projects /.coach/secrets/secrets.yml
 	conf.from_SecretsYaml(log.ChildLog("SECRETS"), "usersecrets")
 	conf.from_SecretsYaml(log.ChildLog("SECRETS"), "projectsecrets")
 
 	conf.from_DefaultDockerClient(log.ChildLog("DEFAULTDOCKERCLIENT") )
 
 	conf.Tokens["PROJECT"] = conf.Project
+
+
+	// add all environment variables for the user to the token list
+	if conf.SettingIsTrue("UseEnvVariablesAsTokens") {
+		for _, env := range os.Environ() {
+			envsplit := strings.SplitN(env, "=", 2)
+			if len(envsplit)==1 {
+				envsplit = append(envsplit, "")
+			}
+			conf.Tokens[envsplit[0]] = envsplit[1]
+		}
+	}
 
 	return conf
 }
@@ -56,6 +72,8 @@ type Conf struct {
 	Paths map[string]string
 
 	Tokens map[string]string
+
+	Settings map[string]string
 
 	Targets []string
 
@@ -97,6 +115,7 @@ func TokenMapReplace(tokens map[string]string, value string) string {
 func (conf *Conf) TokenReplace(value string) (string) {
 	return TokenMapReplace(conf.Tokens, value)
 }
+
 // return a path for a key it if is set
 func (conf *Conf) Path(name string) (string, bool) {
 	if path, ok := conf.Paths[name]; ok {
@@ -106,7 +125,7 @@ func (conf *Conf) Path(name string) (string, bool) {
 	}
 }
 
-func (conf *Conf) from_Default(includeEnv bool, log Log) {
+func (conf *Conf) from_Default(log Log) {
 	log.Debug(LOG_SEVERITY_DEBUG_LOTS,"Creating default Conf")
 
 	homeDir := "."
@@ -123,6 +142,7 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 			wd = path.Dir(wd)
 			if (wd==homeDir || wd=="." || wd=="/") {
 				log.Warning("Could not find a project folder, coach will assume that this project is not initialized.")
+				wd, _ = os.Getwd()
 				break RootSearch
 			}
 			_, err = os.Stat(path.Join(wd, coachConfigFolder) )
@@ -147,14 +167,21 @@ func (conf *Conf) from_Default(includeEnv bool, log Log) {
 		conf.Tokens[key] = keyPath
 	}
 
-	// add all environment variables for the user to the token list
-	if includeEnv {
-		for _, env := range os.Environ() {
-			envsplit := strings.SplitN(env, "=", 2)
-			if len(envsplit)==1 {
-				envsplit = append(envsplit, "")
-			}
-			conf.Tokens[envsplit[0]] = envsplit[1]
+}
+
+// boolean for if a conf setting is true
+func (conf *Conf) SettingIsTrue(key string) bool {
+	if value, ok := conf.Settings[key]; ok {
+		switch strings.ToLower(value) {
+			case "true":
+				fallthrough
+			case "yes":
+				fallthrough
+			case "y":
+				fallthrough
+			case "1":
+				return true 
 		}
 	}
+	return false
 }
