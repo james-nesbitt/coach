@@ -113,17 +113,7 @@
     #    by using the format %{key} in files loaded after this
     #    one
     #
-    # Paths: a string map of paths that you can use for 
-    #    things like docker builds and mounts.  Paths can be 
-    #    absolute or relative to the project root.
-    #    Note that you can override the following paths:
-    #      - usertemplates : path to users init templates
-    #      - usersecrets : path to user secrets
-    #      - projectsecrets : path to project secrets
-    #      - build : path to builds
-    #    Paths are also made available as tokens using the
-    #    format PATH_{UPPERCASEKEY}
-    #
+    ###
 
     # Project name
     Project: lampphptests
@@ -145,83 +135,6 @@
     # A string map of node configurations, each entry is a node, which 
     # corresponds to a set of containers based on a single image.  the
     # nodes have different types, an different purposes:
-    #
-    # Nodes: 
-    #   Each element in the yml file is a keyed configuration to configure
-    #   a single coach node, which is any number of docker containers
-    #   that use a single build/image.  The nodes can be just used to 
-    #   build images, or can be used to store data, run services or run
-    #   commands.  A node can use multiple containers to provide scaling
-    #   services, or alternate services.
-    #
-    # Types:
-    #   - build: only used for building images, let's you build a base 
-    #        image for other nodes
-    #   - volume: non-running containers meant to hold files that are 
-    #        shared with other nodes
-    #   - service: a node with containers that get started and stopped
-    #   - command: a node that uses disposable containers to run commands
-    #        inside an environment
-    #
-    # Instances:
-    #   Nodes can have multiple containers called instances. The instances
-    #   setting tells coach how to treat the node instances:
-    #   - scale: allow numeric instances, and allow the scale operation 
-    #        to spin up new instanes.
-    #   - fixed: if you provide a string list of instances, then they 
-    #         can be started and stopped by name.
-    #   - temporary: instances started are removed when stopped.  For example
-    #         command containers are considered temporary.
-    #
-    #   Multiple instances are complex, especially when it comes to linking
-    #   Nodes together.  If one node is linked to another, either by Link,
-    #   or VolumesFrom, then coach tries to link matching instance names
-    #   possible (or you can user node:all to link to all)
-    #
-    # Tokens:
-    #
-    #  Tokens can be used for string substitution in this file.  Tokens can come
-    #  from the conf.yml, or from the secrets.yml (or from the users secrets.)
-    #  Tokens are substituted using a "%" prefix, before the YML is parsed, so
-    #  you may need to wrap tokenized settings in "quotes" when using them.
-    #
-    #  The following tokens are available:
-    #
-    #    - anything from the tokens section of the conf.yml
-    #    - anything from the project or user secrets.yml
-    #    
-    #    - the project name is accessible using %PROJECT
-    #    - any path value is accessible using %PATH_UPPERCASEPATHKEY
-    #    - multi-instance nodes can access the intance name as %INSTANCE
-    #
-    # Coach configuration:
-    #
-    #   - Type: You can define the node type (or it will default to service)
-    #   - Build: You can assign a Build path, which will be used to build a local
-    #        image for the node.  If you also define an image then that
-    #        is used for the image name.  If the path is relative, then it
-    #        is considered relative inside the .coach/ folder.
-    #   - Instances: a string list of instance names, or the keyword temporary
-    #        or the keyword scaled, followed by the integer values for initial
-    #        and maximum number of running containers
-    #        e.g.:
-    #           Instances: first second third
-    #           Instances: temporary
-    #           Instances: scaled 3 9
-    #
-    # Docker remote API Configurations:
-    #
-    #   The two principle parts of the configuration for a node are the 
-    #   Config and Host settings.
-    #   These wrap the client config and can use any of it's keys, which 
-    #   gives access to pretty much all of the docker remote API settings.
-    #
-    #   - Config : the dockerclient config element used define the internals
-    #        of a container.  
-    #        https://github.com/fsouza/go-dockerclient/blob/master/container.go#L200
-    #   - Host : the dockerclient config element used to define the relationship
-    #        between the container and it's host.
-    #        https://github.com/fsouza/go-dockerclient/blob/master/container.go#L472
     #
     ###
 
@@ -384,7 +297,7 @@
 
 
 - Type: File
-  Path: .coach/docker/db/Dockerfile
+  Path: .coach/docker/nginx/Dockerfile
   Contents: |
     FROM        jamesnesbitt/wunder-nginx
     MAINTAINER  james.nesbitt@wunderkraut.com
@@ -400,7 +313,7 @@
     ### /NGINX -------------------------------------------------------------------
 
 - Type: File
-  Path: .coach/docker/db/etc/nginx/conf.d/default.conf
+  Path: .coach/docker/nginx/etc/nginx/conf.d/default.conf
   Contents: |
     # PHP56 Server
     server {

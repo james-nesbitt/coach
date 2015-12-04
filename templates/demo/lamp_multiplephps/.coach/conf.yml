@@ -11,17 +11,7 @@
 #    by using the format %{key} in files loaded after this
 #    one
 #
-# Paths: a string map of paths that you can use for 
-#    things like docker builds and mounts.  Paths can be 
-#    absolute or relative to the project root.
-#    Note that you can override the following paths:
-#      - usertemplates : path to users init templates
-#      - usersecrets : path to user secrets
-#      - projectsecrets : path to project secrets
-#      - build : path to builds
-#    Paths are also made available as tokens using the
-#    format PATH_{UPPERCASEKEY}
-#
+###
 
 # Project name
 Project: lampphptests
