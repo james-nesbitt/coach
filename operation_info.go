@@ -50,8 +50,9 @@ func (nodes *Nodes) Info(targets []string) {
 
 func (node *Node) Info() bool {
 
-	node.Info_Images()
+  node.log.Message("## "+node.Name)
 
+	node.Info_Images()
 	node.Info_Instances()
 
 	return true
@@ -61,14 +62,19 @@ func (node *Node) Info_Images() bool {
 	images := node.GetImages()
 
 	if len(images)==0 {
-		node.log.Message("Node has no Images")
+		if node.Do("build") {
+			node.log.Message("|-= Node image not built")
+		} else {
+			node.log.Message("|-= Node image not pulled")
+		}
 	} else {
-		node.log.Message("Node Images")
+		node.log.Message("|-> Node Images")
 
 		w := new(tabwriter.Writer)
 		w.Init(node.log, 8, 12, 2, ' ', 0)
 
 		row := []string{
+			"|=",
 			"",
 			"ID",
 			"RepoTags",
@@ -83,6 +89,7 @@ func (node *Node) Info_Images() bool {
 
 		for index, image := range images {
 			row := []string{
+				"|-",
 				strconv.FormatInt(int64(index+1), 10)+":",
 				image.ID[:11],
 				strings.Join(image.RepoTags, ","),
@@ -103,19 +110,21 @@ func (node *Node) Info_Images() bool {
 func (node *Node) Info_Instances() bool {
 
 	if len(node.InstanceMap)==0 {
-		node.log.Message("Node has no instances")
+		node.log.Message("|-= Node has no instances")
 	} else {
-		node.log.Message("Node Instances TYPE:"+node.InstanceType)
+		node.log.Message("|-> Node instances TYPE:"+node.InstanceType)
 
 		w := new(tabwriter.Writer)
 		w.Init(node.log, 8, 12, 2, ' ', 0)
 
 		row := []string{
+			"|=",
 			"",
 			"Name",
 			"Container",
 			"Default",
 			"Active",
+			"Created",
 			"Running",
 			"Status",
 			"ID",
@@ -128,6 +137,7 @@ func (node *Node) Info_Instances() bool {
 
 		for index, instance := range instances {			
 			row := []string{
+				"|-",
 				strconv.FormatInt(int64(index+1), 10),
 				instance.Name,
 				instance.GetContainerName(),
@@ -138,6 +148,11 @@ func (node *Node) Info_Instances() bool {
 				row = append(row, "no")
 			}
 			if instance.isActive() {
+				row = append(row, "yes")
+			} else {
+				row = append(row, "no")
+			}
+			if instance.HasContainer(false) {
 				row = append(row, "yes")
 			} else {
 				row = append(row, "no")
