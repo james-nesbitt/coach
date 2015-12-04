@@ -1,13 +1,31 @@
 - Type: File
   Path: README.md
   Contents: |
-    # COACH DEMO: Standard Lamp
+    # COACH DEMO: Lamp with multiple PHP backends
 
-    This coach demo provides a standard LAMP stack:
+    This coach demo provides an enhanced LAMP stack:
 
-    - Nginx service using jamesnesbitt/wunder-nginx
-    - PHP-FPM service using jamesnesbitt/wunder-php56fpm
     - DB service using jamesnesbitt/wunder-mariadb
+
+    - 3 fpm services, that connect a standard to a different
+      php version.  All php versions point to the same DB
+      container, and use a separate nginx host.
+        - php56fpm : from centos REMI
+        - php7fpm : from REMI-7
+        - hhvm : from EPEL I think
+
+    - 1 master nginx server that has three server{} settings
+      to point to each of the PHP FPMs using wildcarded URLS
+        - php56.* -> the php56 fpm server
+        - php7.* -> the php7 fpm server
+        - hhvm.* -> the hhvm server
+
+    @NOTE you may have to do some DNS/hosts magic to get these
+    DNS entries to resolve
+
+    This should produce 3 parrallel nginx services that
+    all point to the same source, which can be used for
+    parrallel testing.
 
     To incorporate source, the source code from /app/source
     is mapped into a "source" container, which is used in
@@ -28,7 +46,7 @@
 
       You already did this:
 
-        #/> coach init demo lampstack
+        #/> coach init demo lamp_multiplephp
 
       Now just do this:
 
@@ -40,12 +58,10 @@
         - build any local images that were defined
         - create a source container which will map ./app/source to /app/www/active
 
-        - start an nginx container, and fpm container and a db container
+        - start nginx containers, and fpm containers and a db container
 
-      You should then have
-
-        - http access at host:8080, or directly on the container
-        - the http should point to the source code in /app/source
+      You can access the different http servers directly, or set
+      different port numbers for each
 
     # Day to day use
 
@@ -54,15 +70,13 @@
         $/> coach stop
         $/> coach start
 
-    ## starting a specific container
+    ## coach targets
 
-      - start a specific node
+      You can target coach at only certain nodes using targets
 
-        $/> coach @www start
+        $/> coach @www stop
 
-      - start all service nodes
-
-        $/> coach %service start
+        $/> coach @php56 @php7 @hhvm start
 
     ## rebuild any containers
 
@@ -81,47 +95,6 @@
       4. start the new containers
 
         $/> coach start
-
-    # Alterations that you should make
-
-    ## Custom DB
-
-    The nodes.yml file has a better DB image commented out which you could use to get
-    a DB container that has an already populated DB with specific access credentials.
-
-    ## Switch to PHP7 or HHVM
-
-    If you want to test out the latest PHP7 or HHVM builds, try changing nodes.yml, the
-    fpm node Image values.  There are instructions above the node.
-
-    Note that if you want to swap out fpm containers, you will need to stop and remove
-    both the fpm and nginx nodes, alter the nodes yml, and then start www and fpm again
-    (you do not need to stop the db container.)
-
-    Instructions:
-
-    1. Make changes to your nodes.yml (change the fpm image)
-
-    2. stop www and fpm
-
-      $/> coach @fpm @www stop
-
-    3. remove www and fpm containers
-
-      $/> coach @fpm @www remove
-
-    4. make sure that you have all needed images
-
-      $/> coach pull
-      $/> coach build
-
-    5. re-create www and fpm containers
-
-      $/> coach @fpm @www recreate
-
-    6. restart www and fpm containers
-
-      $/> coach @fpm @www start
 
 
 - Type: File
@@ -153,7 +126,7 @@
     #
 
     # Project name
-    Project: lamp
+    Project: lampphptests
 
     Author: me
 
@@ -161,6 +134,7 @@
     Tokens:
       # Set a container domain, which containers can pull in as ENV or box domains
       CONTAINER_DOMAIN: demo.coach
+
 
 - Type: File
   Path: .coach/nodes.yml
@@ -281,55 +255,67 @@
         Image: jamesnesbitt/wunder-mariadb  # this base db image has no running db, user, access yet
 
     ###
-    # Alternative Custom Database service
+    # FPM services
     #
-    # This container uses a local build to extend a base db, adding in a database "app" and changing
-    # the root user password
-    # 
-    # @see ./coach/docker/db/Dockerfile
+    # # services are created in parrallel
+    #    - php56 : from REMI
+    #    - php7 : from REMI-7
+    #    - hhvm : from .. EPEL I think
     #
-    # This node needs building !  $/> coach build
-    #
-
-    # db:
-    #   Type: service
-    #   Build: /docker/db          # DB has a docker build so that we can create databases and set custom passwords.
-    #
-    #   Config:
-    #     RestartPolicy: on-failure
-    #     OpenStdin: true
-
-    ###
-    # FPM service
-    #
-    # This node implements a standard PHP-FPM service, which you can connect to over
-    # TCP/IP.  The node has access to the source via the source container, and the db
+    # Each node implements a standard PHP-FPM service, which you can connect to over
+    # TCP/IP.  Each node has access to the source via the source container, and the db
     # using a docker link (accessible over TCP/IP at db.app)
     #
-    # There are alternative PHP images that you could try, to test out HHVM or PHP7
-    # But note that if you switch, you have to recreate the container.
-    #
-    # Note that the WWW node needs this container
-    #
-    fpm:
+    hhvm:
       Type: service
 
       Config:
-        #Image: jamesnesbitt/wunder-hhvm      # The HHVM works
-        Image: jamesnesbitt/wunder-php56fpm     # The FPM works, and should have blackfire working
-        #Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+        Image: jamesnesbitt/wunder-hhvm      # The HHVM works
 
       Host:
         Links:
           - db:db.app # make the db container available as db.app
         VolumesFrom:
           - source  # map in all volumes from the source container
+
+    php56:
+      Type: service
+
+      Config:
+        Image: jamesnesbitt/wunder-php56fpm     # The FPM works, and should have blackfire working
+
+      Host:
+        Links:
+          - db:db.app # make the db container available as db.app
+        VolumesFrom:
+          - source  # map in all volumes from the source container
+
+    php7:
+      Type: service
+
+      Config:
+        Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+
+      Host:
+        Links:
+          - db:db.app # make the db container available as db.app
+        VolumesFrom:
+          - source  # map in all volumes from the source container
+
     ###
     # WWW service
     #
     # An nginx service, that handles http requests, and passes PHP parsing off to 
     # the fpm node.  This node has some custom configurations to try to get it
     # to respond to different URLs appropriately
+    #
+    # This nginx server handles URLS as follows:
+    #   php56.* => goes to the php56 fpm
+    #   php7.* => goes to the php7 fpm
+    #   hhvm.* => goes to the hhvm fpm
+    #
+    # @note you may need to do some DNS magic to get your machine to point to
+    #  the www container for all three URLs, but that is your business.
     #
     # @note that this container binds to the host port for 8080, but can still be 
     #   resolved by pointing to port 80 on the container IP
@@ -338,9 +324,9 @@
     #
     www:
       Type: service
+      Build: docker/nginx # We need a custom nginx build to handler multiple URLS and multiple FPMs
 
       Config:
-        Image: jamesnesbitt/wunder-nginx  # recent nginx build using nginx provided centos repo
         Hostname: "%PROJECT" # Token derived from the project name in conf.yml
         Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
         Env:
@@ -350,17 +336,25 @@
 
       Host:
         Links:
-          - fpm:fpm.app # make the fpm service available as fpm.app
+          - php56:php56.fpm.app # make the fpm service available as fpm.app
+          - php7:php7.fpm.app # make the fpm service available as fpm.app
+          - hhvm:hhvm.fpm.app # make the fpm service available as fpm.app
         VolumesFrom:
           - source  # map in all volumes from the source container
-        PortBindings:
-          80/tcp:
-            - HostPort: 8080 # Port 80 applies to all Host IPs
+    #     PortBindings:
+    #       80/tcp:
+    #         - HostPort: 8080 # Port 80 applies to all Host IPs
+
 
 - Type: File
   Path: app/README.md
   Contents: |
-    # DEMO lamp
+    # DEMO lamp : multiple PHP options
+
+      Test your project with various PHP backends
+        - PHP56
+        - PHP7
+        - HHVM
 
     ## /app/source
 
@@ -381,37 +375,236 @@
     phpinfo();
 
 - Type: File
-  Path: .coach/docker/db/README.md
+  Path: .coach/docker/nginx/README.md
   Contents: |
-    # DB Docker Build
+    # custom nginx build
 
-    This is a Docker build that can optionally be used for building a custom Database
-    image for the local project.
+    This demo uses a custom nginx build, which overrides the default.conf
+    nginx conf, to allow for 3 server{} listeners, 1 for each fpm service.
 
-    To use this build, add "docker/db" (the path inside the .coach folder) to an node,
-    and then you can use "$/> docker build" to build all node images
 
 - Type: File
   Path: .coach/docker/db/Dockerfile
   Contents: |
-    FROM        jamesnesbitt/wunder-mariadb
+    FROM        jamesnesbitt/wunder-nginx
     MAINTAINER  james.nesbitt@wunderkraut.com
 
-    ### ProjectDB --------------------------------------------------------------------
+    ### NGINX --------------------------------------------------------------------
 
-
-    # Create our project DB
+    # Use new nginx vhost confs
     #
-    # - set the root user password to something safe (considered a good idea)
-    # - create an "app" database
-    # - give access to the new database to an "app" user using the password "app"
-    # - app user can only access from 172.* IPs !!!! (inside the docker subnet)
-    # - flush access
+    # This new conf send connections to one of three fpm servers
     #
-    RUN (/usr/bin/mysqld_safe &) && sleep 5 && \
-        mysql -uroot -e "UPDATE mysql.user SET Password=PASSWORD('H4x0r') WHERE User='root'" && \
-        mysql -uroot -e "CREATE DATABASE app" && \
-        mysql -uroot -e "GRANT ALL ON app.* to app@'172.%' IDENTIFIED BY 'app'" && \
-        mysql -uroot -e "FLUSH PRIVILEGES"
+    ADD etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-    ### /ProjectDB -------------------------------------------------------------------
+    ### /NGINX -------------------------------------------------------------------
+
+- Type: File
+  Path: .coach/docker/db/etc/nginx/conf.d/default.conf
+  Contents: |
+    # PHP56 Server
+    server {
+      listen       80;
+      server_name  php56.*;
+      root /app/www/active;
+
+      error_log /app/log/nginx/php56.error.log;
+      access_log /app/log/nginx/php56.access.log;
+
+      charset utf8;
+
+      gzip_static on;
+
+      location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+      }
+
+      location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+      }
+
+      location ~ \..*/.*\.php$ {
+        return 403;
+      }
+
+      # No no for private
+      location ~ ^/sites/.*/private/ {
+        return 403;
+      }
+
+      # Block access to "hidden" files and directories whose names begin with a
+      # period. This includes directories used by version control systems such
+      # as Subversion or Git to store control files.
+      location ~ (^|/)\. {
+        return 403;
+      }
+
+      location / {
+        # This is cool because no php is touched for static content
+        try_files $uri @rewrite;
+      }
+
+      location @rewrite {
+        rewrite ^ /index.php;
+      }
+
+      location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $request_filename;
+        fastcgi_intercept_errors on;
+        fastcgi_pass php56.fpm.app:9000;
+      }
+
+      # Fighting with Styles? This little gem is amazing.
+      location ~ ^/sites/.*/files/styles/ {
+        try_files $uri @rewrite;
+      }
+
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        expires max;
+        log_not_found off;
+      }
+    }
+
+    # PHP7 Server
+    server {
+      listen       80;
+      server_name  php7.*;
+      root /app/www/active;
+
+      error_log /app/log/nginx/php7.error.log;
+      access_log /app/log/nginx/php7.access.log;
+
+      charset utf8;
+
+      gzip_static on;
+
+      location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+      }
+
+      location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+      }
+
+      location ~ \..*/.*\.php$ {
+        return 403;
+      }
+
+      # No no for private
+      location ~ ^/sites/.*/private/ {
+        return 403;
+      }
+
+      # Block access to "hidden" files and directories whose names begin with a
+      # period. This includes directories used by version control systems such
+      # as Subversion or Git to store control files.
+      location ~ (^|/)\. {
+        return 403;
+      }
+
+      location / {
+        # This is cool because no php is touched for static content
+        try_files $uri @rewrite;
+      }
+
+      location @rewrite {
+        rewrite ^ /index.php;
+      }
+
+      location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $request_filename;
+        fastcgi_intercept_errors on;
+        fastcgi_pass php7.fpm.app:9000;
+      }
+
+      # Fighting with Styles? This little gem is amazing.
+      location ~ ^/sites/.*/files/styles/ {
+        try_files $uri @rewrite;
+      }
+
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        expires max;
+        log_not_found off;
+      }
+    }
+
+    # HHVM Server
+    server {
+      listen       80;
+      server_name  hhvm.*;
+      root /app/www/active;
+
+      error_log /app/log/nginx/hhvm.error.log;
+      access_log /app/log/nginx/hhvm.access.log;
+
+      charset utf8;
+
+      gzip_static on;
+
+      location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+      }
+
+      location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+      }
+
+      location ~ \..*/.*\.php$ {
+        return 403;
+      }
+
+      # No no for private
+      location ~ ^/sites/.*/private/ {
+        return 403;
+      }
+
+      # Block access to "hidden" files and directories whose names begin with a
+      # period. This includes directories used by version control systems such
+      # as Subversion or Git to store control files.
+      location ~ (^|/)\. {
+        return 403;
+      }
+
+      location / {
+        # This is cool because no php is touched for static content
+        try_files $uri @rewrite;
+      }
+
+      location @rewrite {
+        rewrite ^ /index.php;
+      }
+
+      location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $request_filename;
+        fastcgi_intercept_errors on;
+        fastcgi_pass hhvm.fpm.app:9000;
+      }
+
+      # Fighting with Styles? This little gem is amazing.
+      location ~ ^/sites/.*/files/styles/ {
+        try_files $uri @rewrite;
+      }
+
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        expires max;
+        log_not_found off;
+      }
+    }
