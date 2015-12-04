@@ -15,6 +15,9 @@ var (
  	// coach demos are keyed remoteyamls
 	COACH_DEMO_URLS = map[string]string{
 	  "lamp": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp/.coach/coachinit.yml",
+	  "lamp_monolithic": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp_monolithic/.coach/coachinit.yml",
+	  "lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
+	  "lamp_scaling": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp_scaling/.coach/coachinit.yml",
   }
 )
 
@@ -126,16 +129,43 @@ EXAMPLES:
     Populate the current path with default settings
 
     $/> coach init user {template}
+
     Uses the contents of ~/.coach/templates to populate the current folder
 
     $/> coach init git https://github.com/aleksijohansson/docker-drupal-coach.git
+
     Clones the target git URL to the current path
 
     There are also various demo inits:
       $/> coach init demo lamp
-      $/> coach init demo scale
-      $/> coach init demo wunder
 
+      	creates a standard LAMP stack
+
+      $/> coach init demo lamp_monolithic
+
+        creates a single container LAMP stack
+
+      $/> coach init demo lamp_multiplephps
+
+        creates a LAMP stack with multiple php servers to
+
+      $/> coach init demo lamp_scaling
+
+YAML base inits
+
+There is is a YAML file syntax that can be used to define an init,
+which describes a set of operations such as creating fields etc. The 
+demo inits are based on this forumla, and can be seen on the git repo
+for the coach project.
+
+If you have a fileset that you like, then convert it to the YAML syntax
+and keep it on the internet, either in a repo, or a gist or even a pastebin.
+
+Then you can create a new project using :
+  
+    $/> coach init remoteyaml http://path.to.my/yaml.yml
+
+    (note that the path has to be a full body yml file)
 `)
 }
 
