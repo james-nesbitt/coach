@@ -14,10 +14,10 @@ import (
 var (
  	// coach demos are keyed remoteyamls
 	COACH_DEMO_URLS = map[string]string{
-	  "lamp": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp/.coach/coachinit.yml",
-	  "lamp_monolithic": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp_monolithic/.coach/coachinit.yml",
-	  "lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
-	  "lamp_scaling": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp_scaling/.coach/coachinit.yml",
+	  "lamp": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp/.coach/coachinit.yml",
+	  "lamp_monolithic": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_monolithic/.coach/coachinit.yml",
+	  "lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
+	  "lamp_scaling": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_scaling/.coach/coachinit.yml",
   }
 )
 
