@@ -55,7 +55,7 @@ func (operation *Operation_Scale) Run() {
 	for _, target := range operation.nodes.GetTargets(operation.targets) {
 
 		if target.node.InstanceType!="scaled" {
-			operation.log.Warning("Tried to scale non-scaleable node :"+target.node.Name)
+			operation.log.Info("Tried to scale non-scaleable node :"+target.node.Name)
 			continue TargetScaleReturn
 		}
 
@@ -67,7 +67,7 @@ func (operation *Operation_Scale) Run() {
 			} else if count<operation.scale {
 				target.node.log.Warning(target.node.Name+": Scale operation could not scale up all of the requested instances of node. "+strconv.FormatInt(int64(count+1), 10)+" started.")
 			} else {
-				target.node.log.Warning(target.node.Name+": Scale operation scaled up "+strconv.FormatInt(int64(count+1), 10)+" instances")
+				target.node.log.Message(target.node.Name+": Scale operation scaled up "+strconv.FormatInt(int64(count), 10)+" instances")
 			}
 
 		} else {
@@ -78,7 +78,7 @@ func (operation *Operation_Scale) Run() {
 			} else if count<(-operation.scale) {
 				target.node.log.Warning(target.node.Name+": Scale operation could not scale down all of the requested instances of node. "+strconv.FormatInt(int64(count+1), 10)+" stopped.")
 			} else {
-				target.node.log.Message(target.node.Name+": Scale operation scaled down "+strconv.FormatInt(int64(count+1), 10)+" instances")
+				target.node.log.Message(target.node.Name+": Scale operation scaled down "+strconv.FormatInt(int64(count), 10)+" instances")
 			}
 
 		}
