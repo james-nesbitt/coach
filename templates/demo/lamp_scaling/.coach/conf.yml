@@ -1,0 +1,34 @@
+# Coach project conf
+#
+# Configurations for the coach project
+#
+# Project: project name, used to create container names
+# Author: used for docker commits & pushes.
+#   @note this needs to be valid for container names/images
+#     so it can contain alpha-numeric & "_"
+#
+# Tokens: a string map for string substitutions elsewhere
+#    by using the format %{key} in files loaded after this
+#    one
+#
+# Paths: a string map of paths that you can use for 
+#    things like docker builds and mounts.  Paths can be 
+#    absolute or relative to the project root.
+#    Note that you can override the following paths:
+#      - usertemplates : path to users init templates
+#      - usersecrets : path to user secrets
+#      - projectsecrets : path to project secrets
+#      - build : path to builds
+#    Paths are also made available as tokens using the
+#    format PATH_{UPPERCASEKEY}
+#
+
+# Project name
+Project: lampscaler
+
+Author: me
+
+# Custom Tokens
+Tokens:
+  # Set a container domain, which containers can pull in as ENV or box domains
+  CONTAINER_DOMAIN: demo.coach

@@ -1,0 +1,101 @@
+###
+# Project nodes
+#
+# A string map of node configurations, each entry is a node, which 
+# corresponds to a set of containers based on a single image.  the
+# nodes have different types, an different purposes:
+#
+# Instances
+#
+# Note that while the source and db nodes will have single containers,
+# the www and fpm nodes will run somewhere between 3 and 9 containers
+# The www and fpm containers will try to correspond their links, but
+# all fpm containers will connect to the same DB and source containers
+#
+###
+
+###
+# A volume container to hold source
+#
+# Using a conmtainer to hold source, even if it just locally binded source, is
+# a good idea, because it replicates what a production service would do.  It would
+# have source copied/exported/retrieved in, and make it available in the same way
+#
+source:
+  Type: volume
+
+  Config:
+    Image: jamesnesbitt/wunder-base # RUn from a standard base image
+  Host:
+    Binds:
+      - "app/source:/app/www/active" # map the local source folder, into where the nginx/fpm expect the web root
+
+###
+# Database service
+#
+# This container is a base DB image with no existing DB, nor access.  Consider 
+# using a local build, to extend a base DB image, adding in a db, adding a user
+# and setting exactly what access credentials that you want
+#
+db:
+  Type: service
+
+  Config:
+    Image: jamesnesbitt/wunder-mariadb  # this base db image has no running db, user, access yet
+
+###
+# FPM service
+#
+# This node implements a scaling number of PHP7 FPM services from the same
+# image, running concurrently.
+#
+# Each instance will connect to the same single DB container.
+#
+fpm:
+  Type: service
+
+  Instances: scaled 3 9
+
+  Config:
+    Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+
+  Host:
+    Links:
+      - db:db.app # make the db container available as db.app
+    VolumesFrom:
+      - source  # map in all volumes from the source container
+
+###
+# WWW service
+#
+# A scaling nginx node, that offers multiple instances of the same
+# image running concurrently.
+#
+# Each instance expects to have a matching FPM instance to link to
+# and will try to link to the instance with the matching instance id
+#
+# @note instance IDs are integer values
+# @note the container hostname will include the instance
+#
+www:
+  Type: service
+
+  Instances: scaled 3 9
+
+  Config:
+    Image: jamesnesbitt/wunder-nginx  # Recent nginx build using nginx provided centos repo
+    Hostname: "%PROJECT_%INSTANCE" # Tokens derived from the project and instance id
+    Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
+    Env:
+      - "DNSDOCK_ALIAS=%INSTANCE.%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
+    ExposedPorts:
+      80/tcp: {}
+
+  Host:
+    Links:
+      - fpm:fpm.app # make the fpm service available as fpm.app
+    VolumesFrom:
+      - source  # map in all volumes from the source container
+    PortBindings:
+      80/tcp:
+        - HostPort: "808%INSTANCE" # Port 808X applies to all Host IPs
