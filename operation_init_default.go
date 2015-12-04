@@ -77,7 +77,7 @@ Project: starter
 Author: me
 
 Paths:
-  "key: "path"
+  key: "path"
 
 Tokens:
   TOKEN_KEY: "TOKEN VALUE"
