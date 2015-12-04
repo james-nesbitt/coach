@@ -1,0 +1,25 @@
+###
+# Coach project conf
+#
+# Configurations for the coach project
+#
+# Project: project name, used to create container names
+# Author: used for docker commits & pushes.
+#   @note this needs to be valid for container names/images
+#     so it can contain alpha-numeric & "_"
+#
+# Tokens: a string map for string substitutions elsewhere
+#    by using the format %{key} in files loaded after this
+#    one
+#
+###
+
+# Project name
+Project: lampmono
+
+Author: me
+
+# Custom Tokens
+Tokens:
+  # Set a container domain, which containers can pull in as ENV or box domains
+  CONTAINER_DOMAIN: demo.coach
