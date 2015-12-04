@@ -76,9 +76,9 @@
 
       3. recreate and containers
 
-        $/> coach create 
+        $/> coach create
 
-      4. start the new containers 
+      4. start the new containers
 
         $/> coach start
 
@@ -91,7 +91,7 @@
 
     ## Switch to PHP7 or HHVM
 
-    If you want to test out the latest PHP7 or HHVM builds, try changing nodes.yml, the 
+    If you want to test out the latest PHP7 or HHVM builds, try changing nodes.yml, the
     fpm node Image values.  There are instructions above the node.
 
     Note that if you want to swap out fpm containers, you will need to stop and remove
@@ -111,7 +111,7 @@
       $/> coach @fpm @www remove
 
     4. make sure that you have all needed images
-     
+
       $/> coach pull
       $/> coach build
 
@@ -418,4 +418,3 @@
         mysql -uroot -e "FLUSH PRIVILEGES"
 
     ### /ProjectDB -------------------------------------------------------------------
-
