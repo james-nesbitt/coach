@@ -100,11 +100,20 @@ Docker:  # Override Docker configuration
 #
 PERSONAL_APP_KEY: APP_KEY_VALUE
 `)
-  tasks.AddFile(".coach/nodes.yml",  `# Project nodes
+  tasks.AddFile(".coach/nodes.yml",  `###
+# Project nodes
 #
 # A string map of node configurations, each entry is a node, which 
 # corresponds to a set of containers based on a single image.  the
 # nodes have different types, an different purposes:
+#
+# Nodes: 
+#   Each element in the yml file is a keyed configuration to configure
+#   a single coach node, which is any number of docker containers
+#   that use a single build/image.  The nodes can be just used to 
+#   build images, or can be used to store data, run services or run
+#   commands.  A node can use multiple containers to provide scaling
+#   services, or alternate services.
 #
 # Types:
 #   - build: only used for building images, let's you build a base 

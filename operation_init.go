@@ -14,10 +14,7 @@ import (
 var (
  	// coach demos are keyed remoteyamls
 	COACH_DEMO_URLS = map[string]string{
-	  "wunder": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
-	  "lamp": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
-	  "lamp-drupal8composer": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
-	  "lamp-platformsh": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
+	  "lamp": "https://raw.githubusercontent.com/james-nesbitt/coach/demoinits/templates/demo/lamp/.coach/coachinit.yml",
   }
 )
 
@@ -282,7 +279,6 @@ func (operation *Operation_Init) Init_RemoteYaml_Run(url string, tasks *InitTask
   }
   defer resp.Body.Close()
   yamlSourceBytes, err := ioutil.ReadAll(resp.Body)
-
 
   tasks.AddMessage("Initializing using Remote YAML Source ["+url+"] to local project folder")
 

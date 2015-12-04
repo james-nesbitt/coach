@@ -303,7 +303,6 @@ func (task *InitTaskMessage) RunTask(log Log) bool {
  * Getting tasks from YAML
  */
 
-
 func (tasks *InitTasks) AddTasksFromYaml(yamlSource []byte) error {
 
   var yaml_tasks []map[string]interface{}
@@ -354,9 +353,6 @@ func (tasks *InitTasks) AddTasksFromYaml(yamlSource []byte) error {
           taskAdder = TaskAdder(&task)
         }
     }
-
-
-tasks.log.DebugObject(LOG_SEVERITY_ERROR, "INIT TASK:", task_struct["Type"], task_struct)
 
     if taskAdder!=nil {
       taskAdder.AddTask(tasks)
