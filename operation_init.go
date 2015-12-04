@@ -1,10 +1,24 @@
 package main
 
 import (
-	"os"
 	"path"
-	"io"
 	"strings"
+
+	"os"
+ 	"os/exec"	
+ 	"io/ioutil"
+
+ 	"net/http"
+)
+
+var (
+ 	// coach demos are keyed remoteyamls
+	COACH_DEMO_URLS = map[string]string{
+	  "wunder": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
+	  "lamp": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
+	  "lamp-drupal8composer": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
+	  "lamp-platformsh": "https://github.com/james-nesbitt/coach/blob/master/coach.go",
+  }
 )
 
 type Operation_Init struct {
@@ -61,25 +75,39 @@ func (operation *Operation_Init) Flags(flags []string) {
 		remainingFlags = remainingFlags[1:]
 
 		switch handler {
+			case "demo":
+				operation.handler = "remoteyaml"
+				if len(remainingFlags)>0 {
+					operation.source = remainingFlags[0]
+					remainingFlags = remainingFlags[1:]
+				} else {
+					operation.source = "wunder"
+				}
+				operation.source = COACH_DEMO_URLS[operation.source]
+
 			case "user":
 				fallthrough
-			case "git":
+			case "remoteyaml":
 				fallthrough
-			case "demo":
+			case "git":
 				fallthrough
 			case "default":
 
 				operation.handler = handler
+				if len(remainingFlags)>0 {
+					operation.source = remainingFlags[0]
+					remainingFlags = remainingFlags[1:]
+				}
 
 			default:
 				operation.handler = "default"
 				remainingFlags = append([]string{handler}, remainingFlags...)
 
-		}
+				if len(remainingFlags)>0 {
+					operation.source = remainingFlags[0]
+					remainingFlags = remainingFlags[1:]
+				}
 
-		if len(remainingFlags)>0 {
-			operation.source = remainingFlags[0]
-			remainingFlags = remainingFlags[1:]
 		}
 
 	}
@@ -141,7 +169,7 @@ func (operation *Operation_Init) Run() {
 
 	coachPath = path.Join(targetPath, coachConfigFolder);
 
-	operation.log.Message("Preparing INIT operation ["+operation.handler+"/"+operation.source+"] in path : "+targetPath)
+	operation.log.Message("Preparing INIT operation ["+operation.handler+":"+operation.source+"] in path : "+targetPath)
 
 	_, err = os.Stat( coachPath )
 	if (!operation.force && err==nil) {
@@ -158,8 +186,8 @@ func (operation *Operation_Init) Run() {
 			ok = operation.Init_User_Run(operation.source, &tasks)
 		case "git":
 			ok = operation.Init_Git_Run(operation.source, &tasks)
-		case "demo":
-			ok = operation.Init_Demo_Run(operation.source, &tasks)
+		case "remoteyaml":
+			ok = operation.Init_RemoteYaml_Run(operation.source, &tasks)
 		case "default":
 			ok = operation.Init_Default_Run(operation.source, &tasks)
 		default:
@@ -176,248 +204,94 @@ func (operation *Operation_Init) Run() {
 		operation.log.Warning("No init tasks were defined.")
 	}
 
-
 }
 
 
-type InitTasks struct {
-  log Log
+func (operation *Operation_Init) Init_User_Run(template string, tasks *InitTasks) bool {
 
-  root string
-
-  tasks []InitTask
-}
-
-func (tasks *InitTasks) RunTasks() {
-  for _, task := range tasks.tasks {
-  	tasks.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "INIT TASK:", task)
-  	task.RunTask(tasks.log)
-  }	
-}
-
-func (tasks *InitTasks) AddTask(task InitTask) {
-	if tasks.tasks==nil {
-		tasks.tasks = []InitTask{}
-	}
-
-	tasks.tasks = append(tasks.tasks, task)
-}
-
-func (tasks *InitTasks) AddFile(path string, contents string) {
-	tasks.AddTask( InitTask( &InitTaskFile{
-		root: tasks.root,
-		path: path,
-		contents: contents,
-	} ))	
-}
-func (tasks *InitTasks) AddFileCopy(path string, source string) {
-	tasks.AddTask( InitTask( &InitTaskFileCopy{
-		root: tasks.root,
-		path: path,
-		source: source,
-	} ))		
-}
-func (tasks *InitTasks) AddMessage(message string) {
-	tasks.AddTask( InitTask( &InitTaskMessage{
-		message: message,
-	} ))
-}
-func (tasks *InitTasks) AddError(error string) {
-	tasks.AddTask( InitTask( &InitTaskError{
-		error: error,
-	} ))
-}
-
-type InitTask interface {
-	RunTask(log Log) bool
-}
-
-type InitTaskFileBase struct {
-	root string
-}
-
-func (task *InitTaskFileBase) MakeDir(log Log, makePath string, pathIsFile bool) bool {
-	pd := path.Join(task.root, makePath)
-	if pathIsFile {
-		pd = path.Dir(pd)
-	}
-
-	if err := os.MkdirAll(pd, 0777); err!=nil {
-		// @todo something log
+	if template=="" {
+		operation.log.Error("You have not provided a template name  $/> coach init user {template}")
 		return false
-	}	
+	}
+
+	templatePath, ok := operation.conf.Path("usertemplates")
+	if !ok {
+		operation.log.Error("COACH has no user template path for the current user")
+		return false
+	}
+	sourcePath := path.Join(templatePath , template )
+
+	if _, err := os.Stat( sourcePath ); err!=nil {
+		operation.log.Error("Invalid template path suggested for new project init : ["+template+"] expected path ["+sourcePath+"] => "+err.Error())
+		return false
+	}
+	
+	operation.log.Message("Perfoming init operation from user template ["+template+"] : "+sourcePath)
+
+	tasks.AddFileCopy(operation.root, sourcePath)
+
+  tasks.AddMessage("Copied coach template ["+template+"] to init project")
+	tasks.AddFile(".coach/CREATEDFROM.md", `THIS PROJECT WAS CREATED FROM A User Template :`+template)
+
 	return true
 }
-func (task *InitTaskFileBase) MakeFile(log Log, makePath string, contents string) bool {
-	if !task.MakeDir(log, makePath, true) {
-    // @todo something log
+
+func (operation *Operation_Init) Init_Git_Run(source string, tasks *InitTasks) bool {
+
+	if source=="" {
+		operation.log.Error("You have not provided a git target $/> coach init git https://github.com/aleksijohansson/docker-drupal-coach")
 		return false
 	}
 
-	pd := path.Join(task.root, makePath)
+	url := source
+	path := operation.root
 
-	fileObject, err := os.Create(pd)
-	defer fileObject.Close()
+	cmd := exec.Command("git", "clone", "--progress", url, path)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = operation.log
+	cmd.Stderr = operation.log
+
+	err := cmd.Start()
+
 	if err!=nil {
-    // @todo something log
+		operation.log.Error("Failed to clone the remote repository ["+url+"] => "+err.Error())
 		return false
 	}
-	if _, err := fileObject.WriteString(contents); err!=nil {
-	  // @todo something log
+
+	operation.log.Message("Clone remote repository to local project folder ["+url+"]")
+	err = cmd.Wait()
+
+	if err!=nil {
+		operation.log.Error("Failed to clone the remote repository ["+url+"] => "+err.Error())
 		return false
 	}
+
+	tasks.AddMessage("Cloned remote repository ["+url+"] to local project folder")
+	tasks.AddFile(".coach/CREATEDFROM.md", `THIS PROJECT WAS CREATED FROM GIT`)
 
 	return true
 }
 
-func (task *InitTaskFileBase) CopyFile(log Log, destinationPath string, sourcePath string) bool {
+// Get tasks from remote YAML corresponding to a remote yaml file
+func (operation *Operation_Init) Init_RemoteYaml_Run(url string, tasks *InitTasks) bool {
 
-	sourceFile, err := os.Open(sourcePath)
-	if err != nil {
-		log.Warning("could not copy file as it does not exist ["+sourcePath+"] : "+err.Error())
-		return false
-	}	
-	defer sourceFile.Close()
-
-	destinationRootPath := path.Join(task.root, destinationPath)
-	if !task.MakeDir(log, destinationRootPath, true) {
-    // @todo something log
-		log.Warning("could not copy file as the path to the destination file could not be created ["+destinationPath+"]")
-		return false
-	}
-
-	destinationFile, err := os.Open(destinationRootPath)
-	if err == nil {
-		log.Warning("could not copy file as it already exists ["+destinationPath+"]")
-		defer destinationFile.Close()
-		return false
-	}
-
-	destinationFile, err = os.Create(destinationRootPath)
-	if err != nil {
-		log.Warning("could not copy file as destination file could not be created ["+destinationPath+"] : "+err.Error())
-		return false
-	}
-
-	defer destinationFile.Close()
-
-	_, err = io.Copy(sourceFile, destinationFile)
-	if err == nil {
-		sourceInfo, err := os.Stat(sourcePath)
-		if err == nil {
-			err = os.Chmod(destinationPath, sourceInfo.Mode())
-			return true
-		} else {
-			log.Warning("could not copy file as destination file could not be created ["+destinationPath+"] : "+err.Error())
-			return false
-		}
-	} else {
-		log.Warning("could not copy file as copy failed ["+destinationPath+"] : "+err.Error())
-	}
+  resp, err := http.Get(url)
+  if err != nil {
+    operation.log.Error("Could not retrieve remote yaml init instructions ["+url+"] : "+err.Error())
+    return false
+  }
+  defer resp.Body.Close()
+  yamlSourceBytes, err := ioutil.ReadAll(resp.Body)
 
 
-	return true
+  tasks.AddMessage("Initializing using Remote YAML Source ["+url+"] to local project folder")
+
+  // get tasks from yaml
+  tasks.AddTasksFromYaml(yamlSourceBytes)
+
+  // Add some message items
+  tasks.AddFile(".coach/CREATEDFROM.md", "THIS PROJECT WAS CREATED A COACH YAML INSTALLER :"+url)
+
+  return true
 }
 
-func (task *InitTaskFileBase) CopyFileRecursive(log Log, path string, source string) bool {
-	return task.copyFileRecursive(log, path, source, "")
-}
-func (task *InitTaskFileBase) copyFileRecursive(log Log, destinationRootPath string, sourceRootPath string, sourcePath string) bool {
-
-		fullPath := sourceRootPath
-
-		if sourcePath!="" {
-			fullPath = path.Join(fullPath, sourcePath)
-		}
-
-		// get properties of source dir
-		info, err := os.Stat(fullPath)
-		if err!=nil {
-			// @TODO do something log : source doesn't exist
-			return false
-		}
-
-		mode := info.Mode()
-		if mode.IsDir() {
-
-			directory, _ := os.Open(fullPath)
-			objects, err := directory.Readdir(-1)
-
-			if err!=nil {
-				// @TODO do something log : source doesn't exist
-				return false
-			}				
-
-			for _, obj := range objects {
-
-				//childSourcePath := source + "/" + obj.Name()
-				childSourcePath := path.Join(sourcePath, obj.Name())
-				task.copyFileRecursive(log, destinationRootPath, sourceRootPath, childSourcePath)
-
-			}
-
-		} else {
-				// add file copy
-			destinationPath := path.Join(destinationRootPath, sourcePath)
-		  if task.CopyFile(log, destinationPath, sourceRootPath ) {
-		  	log.Message("--> Copied file (recursively): "+sourcePath+" [from "+sourceRootPath+"]")
-		  	return true
-		  } else {
-		  	log.Warning("--> Failed to copy file: "+sourcePath+" [from "+sourceRootPath+"]")
-				return false
-			}
-			return true
-		}
-		return true
-}
-
-
-type InitTaskFile struct {
-	InitTaskFileBase
-	root string
-
-	path string
-  contents string
-}
-func (task *InitTaskFile) RunTask(log Log) bool {
-	if task.MakeFile(log, task.path, task.contents) {
-		log.Message("--> Created file : "+task.path)
-		return true
-	} else {
-		log.Warning("--> Failed to create file : "+task.path)
-		return false
-	}
-}
-type InitTaskFileCopy struct {
-	InitTaskFileBase
-	root string
-
-	path string
-	source string
-}
-func (task *InitTaskFileCopy) RunTask(log Log) bool {
-	if task.CopyFileRecursive(log, task.path, task.source) {
-		log.Message("--> Copied file : "+task.source+" -> "+task.path)
-		return true
-	} else {
-		log.Warning("--> Failed to copy file : "+task.source+" -> "+task.path)
-		return false
-	}
-}
-
-
-type InitTaskError struct {
-	error string
-}
-func (task *InitTaskError) RunTask(log Log) bool {
-	log.Error(task.error)
-	return true
-}
-
-type InitTaskMessage struct {
-	message string
-}
-func (task *InitTaskMessage) RunTask(log Log) bool {
-	log.Message(task.message)
-	return true
-}
