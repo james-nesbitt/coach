@@ -50,7 +50,7 @@ func (nodes *Nodes) Info(targets []string) {
 
 func (node *Node) Info() bool {
 
-  node.log.Message("## "+node.Name)
+	node.log.Message("## "+node.Name)
 
 	node.Info_Images()
 	node.Info_Instances()
@@ -63,9 +63,9 @@ func (node *Node) Info_Images() bool {
 
 	if len(images)==0 {
 		if node.Do("build") {
-			node.log.Message("|-= Node image not built")
+			node.log.Message("|-= image not built")
 		} else {
-			node.log.Message("|-= Node image not pulled")
+			node.log.Message("|-= image not pulled")
 		}
 	} else {
 		node.log.Message("|-> Node Images")
@@ -110,9 +110,9 @@ func (node *Node) Info_Images() bool {
 func (node *Node) Info_Instances() bool {
 
 	if len(node.InstanceMap)==0 {
-		node.log.Message("|-= Node has no instances")
+		node.log.Message("|-= no containers")
 	} else {
-		node.log.Message("|-> Node instances TYPE:"+node.InstanceType)
+		node.log.Message("|-> instances (containers) TYPE:"+node.InstanceType)
 
 		w := new(tabwriter.Writer)
 		w.Init(node.log, 8, 12, 2, ' ', 0)
