@@ -5,34 +5,34 @@ import (
 	"strings"
 
 	"os"
- 	"os/exec"	
+	"os/exec"
  	"io/ioutil"
 
  	"net/http"
 )
 
 var (
- 	// coach demos are keyed remoteyamls
+	// coach demos are keyed remoteyamls
 	COACH_DEMO_URLS = map[string]string{
-	  "lamp": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp/.coach/coachinit.yml",
-	  "lamp_monolithic": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_monolithic/.coach/coachinit.yml",
-	  "lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
-	  "lamp_scaling": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_scaling/.coach/coachinit.yml",
-  }
+		"lamp": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp/.coach/coachinit.yml",
+		"lamp_monolithic": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_monolithic/.coach/coachinit.yml",
+		"lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
+		"lamp_scaling": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_scaling/.coach/coachinit.yml",
+	}
 )
 
 type Operation_Init struct {
 	conf *Conf
 	log Log
 
-	root string							// Path to root
+	root string						// Path to root
 
-  handler string          // which method to use to initialize
+	handler strings 			// which method to use to initialize
 	source string					// which method variant to initialize
 
 	force bool
 
-	targets []string				// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
+	targets []string			// often not used, but perhaps it might be useful to define what nodes to create in some scenarios
 }
 
 func (operation *Operation_Init) Flags(flags []string) {
@@ -47,7 +47,7 @@ func (operation *Operation_Init) Flags(flags []string) {
 
 	remainingFlags := []string{}
 
-  flagLoop:
+	flagLoop:
 		for index:=0; index<len(flags); index++ {
 			flag:= flags[index]
 
@@ -86,6 +86,8 @@ func (operation *Operation_Init) Flags(flags []string) {
 				operation.source = COACH_DEMO_URLS[operation.source]
 
 			case "user":
+				fallthrough
+			case "yaml":
 				fallthrough
 			case "remoteyaml":
 				fallthrough
@@ -207,12 +209,14 @@ func (operation *Operation_Init) Run() {
 	operation.log = operation.log.ChildLog(strings.ToUpper(operation.handler))
 	tasks := InitTasks{log: operation.log.ChildLog("TASKS")}
 
-  ok = true
+	ok = true
 	switch operation.handler {
 		case "user":
 			ok = operation.Init_User_Run(operation.source, &tasks)
 		case "git":
 			ok = operation.Init_Git_Run(operation.source, &tasks)
+		case "yaml":
+			ok = operation.Init_Yaml_Run(operation.source, &tasks)
 		case "remoteyaml":
 			ok = operation.Init_RemoteYaml_Run(operation.source, &tasks)
 		case "default":
@@ -257,7 +261,7 @@ func (operation *Operation_Init) Init_User_Run(template string, tasks *InitTasks
 
 	tasks.AddFileCopy(operation.root, sourcePath)
 
-  tasks.AddMessage("Copied coach template ["+template+"] to init project")
+	tasks.AddMessage("Copied coach template ["+template+"] to init project")
 	tasks.AddFile(".coach/CREATEDFROM.md", `THIS PROJECT WAS CREATED FROM A User Template :`+template)
 
 	return true
@@ -300,24 +304,48 @@ func (operation *Operation_Init) Init_Git_Run(source string, tasks *InitTasks) b
 }
 
 // Get tasks from remote YAML corresponding to a remote yaml file
-func (operation *Operation_Init) Init_RemoteYaml_Run(url string, tasks *InitTasks) bool {
+func (operation *Operation_Init) Init_Yaml_Run(path string, tasks *InitTasks) bool {
 
-  resp, err := http.Get(url)
-  if err != nil {
-    operation.log.Error("Could not retrieve remote yaml init instructions ["+url+"] : "+err.Error())
-    return false
-  }
-  defer resp.Body.Close()
-  yamlSourceBytes, err := ioutil.ReadAll(resp.Body)
+	// read the config file
+	yamlSourceBytes, err := ioutil.ReadFile(path)
+	if err!=nil {
+		operation.log.Error("Could not read the YAML file ["+path+"]: "+err.Error())
+		return false
+	}
+	if len(yamlSourceBytes)==0 {
+		operation.log.Error("Yaml file ["+path+"] was empty")
+		return false
+	}
 
-  tasks.AddMessage("Initializing using Remote YAML Source ["+url+"] to local project folder")
+	tasks.AddMessage("Initializing using YAML Source ["+path+"] to local project folder")
 
-  // get tasks from yaml
-  tasks.AddTasksFromYaml(yamlSourceBytes)
+	// get tasks from yaml
+	tasks.AddTasksFromYaml(yamlSourceBytes)
 
-  // Add some message items
-  tasks.AddFile(".coach/CREATEDFROM.md", "THIS PROJECT WAS CREATED A COACH YAML INSTALLER :"+url)
+	// Add some message items
+	tasks.AddFile(".coach/CREATEDFROM.md", "THIS PROJECT WAS CREATED A COACH YAML INSTALLER :"+path)
 
-  return true
+	return true
 }
 
+// Get tasks from remote YAML corresponding to a remote yaml file
+func (operation *Operation_Init) Init_RemoteYaml_Run(url string, tasks *InitTasks) bool {
+
+	resp, err := http.Get(url)
+	if err != nil {
+		operation.log.Error("Could not retrieve remote yaml init instructions ["+url+"] : "+err.Error())
+		return false
+	}
+	defer resp.Body.Close()
+	yamlSourceBytes, err := ioutil.ReadAll(resp.Body)
+
+	tasks.AddMessage("Initializing using Remote YAML Source ["+url+"] to local project folder")
+
+	// get tasks from yaml
+	tasks.AddTasksFromYaml(yamlSourceBytes)
+
+	// Add some message items
+	tasks.AddFile(".coach/CREATEDFROM.md", "THIS PROJECT WAS CREATED A COACH YAML INSTALLER :"+url)
+
+	return true
+}
