@@ -28,7 +28,7 @@ shell:
     Script: 
 # use this as the tool script
       - "sh"
-      - "~/.coach/tools/shell"
+      - ".coach/tools/shell"
 
     ENV:
 # Set what image is used for the shell
