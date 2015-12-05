@@ -31,7 +31,7 @@ The following demos are available
 A simple LAMP stack, with each service in it's own container, and source mapped
 into a separate container.
 
-### lamp_multiplphps
+### lamp_multiplephps
 
 This LAMP demo runs a single containers for DB and nginx but runs three PHP
 servers in parralel, to allow testing of PHP56, PHP7 and HHVM on a single 
@@ -57,7 +57,7 @@ included, such as "building your application from source"
 ### Complete
 
 An attempt to get complete documentation and implementation of coach features
-into a LAMP set.  This demo is pretty extensive, but not deeply tested.
+into a LAMP set.  This demo is extensive, but not deeply tested.
 
 Features demonstrated:
 
