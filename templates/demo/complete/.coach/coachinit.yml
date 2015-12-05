@@ -382,7 +382,7 @@
           - redis:redis.app                    # make the redis container available
           - elasticsearch:elasticsearch.app    # make the elasticsearch container available
         VolumesFrom:
-          - source                             # map in all volumes from the source container
+          - "source:ro"                        # map in all volumes from the source container (read only)
 
     ###
     # WWW service
@@ -412,7 +412,7 @@
         Links:
           - fpm:fpm.app # make the fpm service available as fpm.app
         VolumesFrom:
-          - source  # map in all volumes from the source container
+          - "source:ro"  # map in all volumes from the source container
         PortBindings:
           80/tcp:
             - HostPort: 8080 # map Port 80 to Host 8080 (applies to all Host IPs)
@@ -466,7 +466,7 @@
           - redis:redis.app
           - elasticsearch:elasticsearch.app
         VolumesFrom:
-          - source
+          - "source:ro"
           - dev
 
     ####
@@ -492,7 +492,7 @@
           - redis:redis.app
           - elasticsearch:elasticsearch.app
         VolumesFrom:
-          - source
+          - "source:ro"
           - dev
 
     ####
@@ -517,7 +517,7 @@
         Env:
           - "PLATFORMSH_CLI_API_TOKEN:%PLATFORMSH_CLI_API_TOKEN"
         VolumesFrom:
-          - source
+          - "source:ro"
           - dev
     ####
     # composer
@@ -543,7 +543,7 @@
           - redis:redis.app
           - elasticsearch:elasticsearch.app
         VolumesFrom:
-          - source
+          - "source:ro"
           - dev
 
 
@@ -568,7 +568,7 @@
         Links:
           - db:db.app
         VolumesFrom:
-          - source
+          - "source:ro"
           - dev
 
 - Type: File

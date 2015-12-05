@@ -57,4 +57,17 @@ included, such as "building your application from source"
 ### Complete
 
 An attempt to get complete documentation and implementation of coach features
-into a LAMP set.
+into a LAMP set.  This demo is pretty extensive, but not deeply tested.
+
+Features demonstrated:
+
+- extensive configuration of coach
+- secret/sensitive tokens
+- custom shell script tool
+- custom help topics
+- custom Docker build
+- volume nodes (including read only sharing)
+- build base node (db)
+- singular service nodes
+- command nodes
+- source separation
