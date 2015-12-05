@@ -132,7 +132,11 @@ func (instance *Instance) Create(overrideCmd []string, force bool) bool {
 	}
 
 	container, err := instance.Node.client.CreateContainer( options )
+	cache.refresh(false, true)
+
 	if (err!=nil) {
+
+		instance.Node.log.DebugObject(LOG_SEVERITY_DEBUGc, "CREATE FAIL CONTAINERS: ", err)
 
 		/**
 			* There is a weird bug with the library, where sometimes it
@@ -140,15 +144,19 @@ func (instance *Instance) Create(overrideCmd []string, force bool) bool {
 			* container.  It is not clear if this failure occurs in the
 			* remote API, or in the dockerclient library.
 			*/
+
 		if err.Error()=="no such image" {
-			if container, ok := instance.GetContainer(false); ok {
+			if instance.HasContainer(false) {
 				instance.Node.log.Message(instance.Node.Name+": Created instance container ["+name+" FROM "+Config.Image+"] => "+container.ID)
 				instance.Node.log.Warning("Docker created the container, but reported an error due to a 'missing image'.  This is a known bug, that can be ignored")
 				return true
+			} else {
+				instance.Node.log.Error(instance.Node.Name+": Failed to create instance container ["+name+" FROM "+Config.Image+"] => The Docker remote API has reported that the image cannot be found.\n\t This error has been known to often occur in cases where container Links, or VolumesFrom produce issues.")
+				return false
 			}
 		}
 
-		instance.Node.log.Error(instance.Node.Name+": Failed to create instance container ["+name+" FROM "+Config.Image+"] =>"+err.Error())
+		instance.Node.log.Error(instance.Node.Name+": Failed to create instance container ["+name+" FROM "+Config.Image+"] => "+err.Error())
 		return false
 	} else {
 		instance.Node.log.Message(instance.Node.Name+": Created instance container ["+name+" FROM "+Config.Image+"] => "+container.ID)
