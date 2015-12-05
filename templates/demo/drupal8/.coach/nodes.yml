@@ -1,0 +1,217 @@
+###
+# Project nodes
+###
+
+###
+# A volume container to hold source which can be shared as Read Only
+#
+# Using a conmtainer to hold source, even if it just locally binded source, is
+# a good idea, because it replicates what a production service would do.  It would
+# have source copied/exported/retrieved in, and make it available in the same way
+#
+source:
+  Type: volume
+
+  Config:
+    Image: jamesnesbitt/wunder-base # RUn from a standard base image
+  Host:
+    Binds:
+      - app/drupal-project:/app/project
+      - app/settings/drupal/settings.local.php:/app/project/web/sites/default/settings.local.php
+
+###
+# A volume container to hold source which can be shared as Read-Write
+#
+# @note that this container has volumes that might map on top of the 
+#   source container, to provide readable assets inside the read-only
+#   source code.
+#
+assets:
+  Type: volume
+
+  Config:
+    Image: jamesnesbitt/wunder-base # RUn from a standard base image
+  Host:
+    Binds:
+      - app/assets/files/public:/app/project/web/sites/default/files
+      - app/assets/files/private:/app/project/web/sites/default/private
+
+###
+# Database service
+#
+# This container uses a local build to extend a base db, adding in a database "app" and changing
+# the root user password
+# 
+# @see ./coach/docker/db/Dockerfile
+#
+# This node needs building !  $/> coach build
+#
+db:
+  Type: service
+  Build: /docker/db          # DB has a docker build so that we can create databases and set custom passwords.
+
+  Config:
+    RestartPolicy: on-failure
+    OpenStdin: true
+
+###
+# FPM service
+#
+# This node implements a standard PHP-FPM service, which you can connect to over
+# TCP/IP.  The node has access to the source via the source container, and the db
+# using a docker link (accessible over TCP/IP at db.app)
+#
+# There are alternative PHP images that you could try, to test out HHVM or PHP7
+# But note that if you switch, you have to recreate the container.
+#
+# Note that the WWW node needs this container
+#
+fpm:
+  Type: service
+
+  Config:
+    Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+
+  Host:
+    Links:
+      - db:db.app # make the db container available as db.app
+    VolumesFrom:
+      - source:ro
+      - assets
+
+###
+# WWW service
+#
+# An nginx service, that handles http requests, and passes PHP parsing off to 
+# the fpm node.  This node has some custom configurations to try to get it
+# to respond to different URLs appropriately
+#
+# @note that this container binds to the host port for 8080, but can still be 
+#   resolved by pointing to port 80 on the container IP
+# @note that if you are using DNSDOCK, the DNSDOCK_ALIAS will help you browser to the service
+# @note https is an option if you set up the image properly.
+#
+www:
+  Type: service
+  Build: docker/nginx  # we override the nginx.conf on the default nginx server
+
+  Config:
+    Hostname: "%PROJECT" # Token derived from the project name in conf.yml
+    Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
+    Env:
+      - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
+    ExposedPorts:
+      80/tcp: {}
+
+  Host:
+    Links:
+      - fpm:fpm.app # make the fpm service available as fpm.app
+    VolumesFrom:
+      - source:ro
+      - assets
+    # PortBindings:
+    #   80/tcp:
+    #     - HostPort: 8080 # Port 80 applies to all Host IPs
+
+###
+#
+# DEVELOPER NODES
+#
+# Developer containers tend to connect to the DB, and map in 
+# source as read-write, along with assets, and some additional
+# files and folder to configure relevant tools.
+#
+# Commonly you map in:
+#  - your user .ssh to get ... ssh access
+#  - drush and console configurations
+#  - git and github so that you can use you user tokens and settings
+#
+
+###
+# Command configuration and caches
+#
+# This is a volume container into which you can map files 
+# that are used to configure developer tools, but which you
+# may not want to have available in your www and fpm containers
+#
+commandconfig:
+  Type: volume
+
+  Config:
+    Image: jamesnesbitt/wunder-base # RUn from a standard base image
+  Host:
+    Binds:
+      - ~/.ssh:/app/ssh
+      - ~/.gitconfig:/app/.gitconfig
+      - ~/.composer:/app/.composer  # for github tokens
+      - app/settings/drush:/app/.drush
+      - app/settings/console:/app/.console
+
+####
+# Drush console
+#
+# A utility command container that you can use to run drush commands
+##
+console:
+  Type: command
+
+  Config:
+    Image: jamesnesbitt/wunder-developershell
+    Entrypoint:
+      - /app/project/vendor/bin/console
+      - --ansi
+    WorkingDir: /app/project/web
+    Tty: true
+
+  Host:
+    Links:
+      - db:db.app
+    VolumesFrom:
+      - source
+      - assets
+
+####
+# Drush command container
+#
+# A utility command container that you can use to run drush commands
+##
+drush:
+  Type: command
+
+  Config:
+    Image: jamesnesbitt/wunder-developershell
+    Entrypoint:
+      - /app/project/vendor/bin/drush
+    WorkingDir: /app/project/web
+    Tty: true
+
+  Host:
+    Links:
+      - db:db.app
+    VolumesFrom:
+      - source
+      - assets
+      - commandconfig
+
+####
+# composer
+#
+# run the developershell image, but run composer
+# in the app/project/repository
+##
+composer:
+  Type: command
+
+  Config:
+    Image: jamesnesbitt/wunder-developershell
+    WorkingDir: /app/project
+    Entrypoint:
+      - /usr/bin/composer
+    Tty: true
+  Host:
+    Dns: 
+      - 8.8.8.8
+    VolumesFrom:
+      - source
+      - assets
+      - commandconfig

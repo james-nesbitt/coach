@@ -1,0 +1,662 @@
+- Type: File
+  Path: README.md
+  Contents: |
+    # COACH DEMO: Drupal8 w/ composer
+
+    This coach demo provides a Drupal 8 site, using composer and
+    the drupal-project composer repo.  The Drupal source code is
+    retrieved from git, so composer will need to be run before
+    using Drupal, but instructions below should cover that.
+
+    The demo provides the following:
+
+    - standalone nginx and php7 fpm containers
+    - a standalone db server, with an empty db (mysql://app:app@db.app/app)
+    - read-only source for fpm (but read-write in dev containers)
+    - writeable assets, mapped directly into the sites default paths (no sym-links required)
+    - command containers for composer/console/drush
+
+    - a host mounted backup folder that can be used for drush dumps
+
+    The database is empty, but you can either include provisioning
+    in the custom DB build, or you can install into it.
+
+    There is a writeable settings.local.php in the app/drupal
+    folder, but you will have to play around to get settings.php
+    writeable (just duplicate what I did for the local settings)
+
+    All of the suggested images in this project are based on
+    the wunder-base concept, which is used to provide a commong
+    /app project folder, and similar users/OS, to keep access
+    privileges working better.
+    The builds are all CentOS7, EPEL and often REMI based builds.
+
+    # Getting Started:
+
+      You already did this:
+
+        #/> coach init demo drupal8
+
+      Now just do this:
+
+        $/> coach up
+
+      This should:
+
+        - download some images
+        - build any local images that were defined
+        - create a source container which will map ./app/source to /app/www/active
+
+        - start an nginx container, and fpm container and a db container
+
+      You should then have
+
+        - http access at host:8080, or directly on the container
+        - the http should point to the source code in /app/source
+
+      As Drupal8 needs composer to run, you will need to use the composer command
+      container to do the initial installs
+
+        $/> coach @composer run update
+        $/> coach @composer run install
+
+    # Day to day use
+
+    ## starting and stopping
+
+        $/> coach stop
+        $/> coach start
+
+    ## starting a specific container
+
+      - start a specific node
+
+        $/> coach @www start
+
+      - start all service nodes
+
+        $/> coach %service start
+
+    ## rebuild any containers
+
+      @NOTE that you will lose your DB contents if you don not export them
+
+      1. stop any running containers
+
+        $/> coach stop
+
+      2. remove and created containers
+
+        $/> coach remove
+
+      3. recreate and containers
+
+        $/> coach create
+
+      4. start the new containers
+
+        $/> coach start
+
+    # Alterations that you should make
+
+    ## Installable
+
+    If you can get drush to install, it uses the source as read-write
+    so it could avoid any problems.
+
+    You could add a writeable settings.php on top of the read-only
+    source, to allow a Drupal install.  Really this should not be
+    necessary, as there are plenty of patches out there to allow
+    Drupal to be installed if the settings.php give a DB connection
+    already.
+
+    You can add a mount to the source container:
+
+      Config:
+        Volumes:
+          "/app/project/web/sites/default/settings.php": {}
+
+    But you will have to copy the default.settings.php into that new
+    file
+
+    ## Custom DB
+
+    You could alter the DB build to include an sql dump
+
+- Type: File 
+  Path: .coach/conf.yml
+  Contents: |
+    # Coach project conf
+    #
+
+    # Project name
+    Project: drupal8comp
+
+    Author: me
+
+    # Custom Tokens
+    Tokens:
+      # Set a container domain, which containers can pull in as ENV or box domains
+      CONTAINER_DOMAIN: demo.coach
+
+    Path:
+      APP: app
+      SETTINGS: app/settings
+      PROJECT: app/drupal-project
+      DRUPAL: app/drupal-project/web
+
+- Type: File
+  Path: .coach/nodes.yml 
+  Contents: |
+    ###
+    # Project nodes
+    ###
+
+    ###
+    # A volume container to hold source which can be shared as Read Only
+    #
+    # Using a conmtainer to hold source, even if it just locally binded source, is
+    # a good idea, because it replicates what a production service would do.  It would
+    # have source copied/exported/retrieved in, and make it available in the same way
+    #
+    source:
+      Type: volume
+
+      Config:
+        Image: jamesnesbitt/wunder-base # RUn from a standard base image
+      Host:
+        Binds:
+          - app/drupal-project:/app/project
+          - app/settings/drupal/settings.local.php:/app/project/web/sites/default/settings.local.php
+
+    ###
+    # A volume container to hold source which can be shared as Read-Write
+    #
+    # @note that this container has volumes that might map on top of the 
+    #   source container, to provide readable assets inside the read-only
+    #   source code.
+    #
+    assets:
+      Type: volume
+
+      Config:
+        Image: jamesnesbitt/wunder-base # RUn from a standard base image
+      Host:
+        Binds:
+          - app/assets/files/public:/app/project/web/sites/default/files
+          - app/assets/files/private:/app/project/web/sites/default/private
+
+    ###
+    # Database service
+    #
+    # This container uses a local build to extend a base db, adding in a database "app" and changing
+    # the root user password
+    # 
+    # @see ./coach/docker/db/Dockerfile
+    #
+    # This node needs building !  $/> coach build
+    #
+    db:
+      Type: service
+      Build: /docker/db          # DB has a docker build so that we can create databases and set custom passwords.
+
+      Config:
+        RestartPolicy: on-failure
+        OpenStdin: true
+
+    ###
+    # FPM service
+    #
+    # This node implements a standard PHP-FPM service, which you can connect to over
+    # TCP/IP.  The node has access to the source via the source container, and the db
+    # using a docker link (accessible over TCP/IP at db.app)
+    #
+    # There are alternative PHP images that you could try, to test out HHVM or PHP7
+    # But note that if you switch, you have to recreate the container.
+    #
+    # Note that the WWW node needs this container
+    #
+    fpm:
+      Type: service
+
+      Config:
+        Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+
+      Host:
+        Links:
+          - db:db.app # make the db container available as db.app
+        VolumesFrom:
+          - source:ro
+          - assets
+
+    ###
+    # WWW service
+    #
+    # An nginx service, that handles http requests, and passes PHP parsing off to 
+    # the fpm node.  This node has some custom configurations to try to get it
+    # to respond to different URLs appropriately
+    #
+    # @note that this container binds to the host port for 8080, but can still be 
+    #   resolved by pointing to port 80 on the container IP
+    # @note that if you are using DNSDOCK, the DNSDOCK_ALIAS will help you browser to the service
+    # @note https is an option if you set up the image properly.
+    #
+    www:
+      Type: service
+      Build: docker/nginx  # we override the nginx.conf on the default nginx server
+
+      Config:
+        Hostname: "%PROJECT" # Token derived from the project name in conf.yml
+        Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
+        Env:
+          - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
+        ExposedPorts:
+          80/tcp: {}
+
+      Host:
+        Links:
+          - fpm:fpm.app # make the fpm service available as fpm.app
+        VolumesFrom:
+          - source:ro
+          - assets
+        # PortBindings:
+        #   80/tcp:
+        #     - HostPort: 8080 # Port 80 applies to all Host IPs
+
+    ###
+    #
+    # DEVELOPER NODES
+    #
+    # Developer containers tend to connect to the DB, and map in 
+    # source as read-write, along with assets, and some additional
+    # files and folder to configure relevant tools.
+    #
+    # Commonly you map in:
+    #  - your user .ssh to get ... ssh access
+    #  - drush and console configurations
+    #  - git and github so that you can use you user tokens and settings
+    #
+
+    ###
+    # Command configuration and caches
+    #
+    # This is a volume container into which you can map files 
+    # that are used to configure developer tools, but which you
+    # may not want to have available in your www and fpm containers
+    #
+    commandconfig:
+      Type: volume
+
+      Config:
+        Image: jamesnesbitt/wunder-base # RUn from a standard base image
+      Host:
+        Binds:
+          - ~/.ssh:/app/ssh
+          - ~/.gitconfig:/app/.gitconfig
+          - ~/.composer:/app/.composer  # for github tokens
+          - app/settings/drush:/app/.drush
+          - app/settings/console:/app/.console
+
+    ####
+    # Drush console
+    #
+    # A utility command container that you can use to run drush commands
+    ##
+    console:
+      Type: command
+
+      Config:
+        Image: jamesnesbitt/wunder-developershell
+        Entrypoint:
+          - /app/project/vendor/bin/console
+          - --ansi
+        WorkingDir: /app/project/web
+        Tty: true
+
+      Host:
+        Links:
+          - db:db.app
+        VolumesFrom:
+          - source
+          - assets
+
+    ####
+    # Drush command container
+    #
+    # A utility command container that you can use to run drush commands
+    ##
+    drush:
+      Type: command
+
+      Config:
+        Image: jamesnesbitt/wunder-developershell
+        Entrypoint:
+          - /app/project/vendor/bin/drush
+        WorkingDir: /app/project/web
+        Tty: true
+
+      Host:
+        Links:
+          - db:db.app
+        VolumesFrom:
+          - source
+          - assets
+          - commandconfig
+
+    ####
+    # composer
+    #
+    # run the developershell image, but run composer
+    # in the app/project/repository
+    ##
+    composer:
+      Type: command
+
+      Config:
+        Image: jamesnesbitt/wunder-developershell
+        WorkingDir: /app/project
+        Entrypoint:
+          - /usr/bin/composer
+        Tty: true
+      Host:
+        VolumesFrom:
+          - source
+          - assets
+          - commandconfig
+
+- Type: File
+  Path: .coach/docker/db/README.md
+  Contents: |
+    # DB Docker Build
+
+    This is a Docker build that can optionally be used for building a custom Database
+    image for the local project.
+
+    To use this build, add "docker/db" (the path inside the .coach folder) to an node,
+    and then you can use "$/> docker build" to build all node images
+- Type: File
+  Path: .coach/docker/db/Dockerfile
+  Contents: |
+    FROM        jamesnesbitt/wunder-mariadb
+    MAINTAINER  james.nesbitt@wunderkraut.com
+
+    ### ProjectDB --------------------------------------------------------------------
+
+
+    # Create our project DB
+    #
+    # - set the root user password to something safe (considered a good idea)
+    # - create an "app" database
+    # - give access to the new database to an "app" user using the password "app"
+    # - app user can only access from 172.* IPs !!!! (inside the docker subnet)
+    # - flush access
+    #
+    RUN (/usr/bin/mysqld_safe &) && sleep 5 && \
+        mysql -uroot -e "UPDATE mysql.user SET Password=PASSWORD('H4x0r') WHERE User='root'" && \
+        mysql -uroot -e "CREATE DATABASE app" && \
+        mysql -uroot -e "GRANT ALL ON app.* to app@'172.%' IDENTIFIED BY 'app'" && \
+        mysql -uroot -e "FLUSH PRIVILEGES"
+
+    ### /ProjectDB -------------------------------------------------------------------
+- Type: File
+  Path: .coach/docker/nginx/README.md
+  Contents: |
+    # custom nginx build
+
+    This demo uses a custom nginx build, which overrides the default.conf
+    nginx conf, to point to the drupal-project web-root, which is at 
+    ./app/drupal-project/web/
+- Type: File
+  Path: .coach/docker/nginx/Dockerfile
+  Contents: |
+    FROM        jamesnesbitt/wunder-nginx
+    MAINTAINER  james.nesbitt@wunderkraut.com
+
+    ### NGINX --------------------------------------------------------------------
+
+    # Use new nginx vhost conf for the d8 project web-root
+    #
+    ADD etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+
+    ### /NGINX -------------------------------------------------------------------
+- Type: File
+  Path: .coach/docker/nginx/etc/nginx/conf.d/default.conf
+  Contents: |
+    server {
+      listen       80 default_server;
+      server_name  _;
+      root /app/project/web;
+
+      error_log /app/log/nginx/error.log;
+      access_log /app/log/nginx/access.log;
+
+      charset utf8;
+
+      gzip_static on;
+
+      location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+      }
+
+      location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+      }
+
+      location ~ \..*/.*\.php$ {
+        return 403;
+      }
+
+      # No no for private
+      location ~ ^/sites/.*/private/ {
+        return 403;
+      }
+
+      # Block access to "hidden" files and directories whose names begin with a
+      # period. This includes directories used by version control systems such
+      # as Subversion or Git to store control files.
+      location ~ (^|/)\. {
+        return 403;
+      }
+
+      location / {
+        # This is cool because no php is touched for static content
+        try_files $uri @rewrite;
+      }
+
+      location @rewrite {
+        rewrite ^ /index.php;
+      }
+
+      location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $request_filename;
+        fastcgi_intercept_errors on;
+        fastcgi_pass fpm.app:9000;
+      }
+
+      # Fighting with Styles? This little gem is amazing.
+      location ~ ^/sites/.*/files/styles/ {
+        try_files $uri @rewrite;
+      }
+
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        expires max;
+        log_not_found off;
+      }
+    }
+
+- Type: File
+  Path: app/README.md
+  Contents: |
+    # DEMO Drupal 8
+
+    ## /app/drupal-project
+
+    Drupal 8 source as provided by the drupalproject
+
+    https://github.com/drupal-composer/drupal-project.git
+
+    This source is cloned during project init, so it is a
+    clean copy.  You will probably want to remote the git
+    remote, and make some changes
+
+    Note that many of the paths in the source are mapped
+    over in the containers, so that the assets paths can 
+    be mapped over the source code.  this allows source 
+    to be mounted as read-only, for security.
+
+    # /app/assets/
+
+    ## /app/assets/files
+
+    The two folders inside this path will be mounted into
+    containers for the sites/default public and private 
+    files paths.
+
+    # /app/settings
+
+    Various cli app configurations
+
+    # /app/settings/console
+
+    Configurations for the Drupal console command container
+
+    # /app/settings/drush
+
+    Configurations and aliases for drush
+
+    # /app/settings/settings.local.php
+
+    An example for how to mount a local file over the source
+    code, this keeps the local settings file out of the source code
+
+    # /app/backups
+
+    Mounted into the containers as an optional destination for
+    backup and archive dumping.
+
+- Type: GitClone
+  Path: app/drupal-project
+  Url: https://github.com/drupal-composer/drupal-project.git
+
+- Type: File
+  Path: app/assets/files/private/.gitkeep
+  Contents: keep this folder
+- Type: File
+  Path: app/assets/files/public/.gitkeep
+  Contents: keep this folder
+
+- Type: File
+  Path: app/settings/console/.gitkeep
+  Contents: Keep this folder
+- Type: File
+  Path: app/settings/drush/.gitkeep
+  Contents: Keep this folder
+- Type: File
+  Path: app/settings/drupal/settings.local.php
+  Contents: |
+    <?php
+
+    /**
+     * @file
+     * Local development override configuration feature.
+     *
+     * To activate this feature, copy and rename it such that its path plus
+     * filename is 'sites/example.com/settings.local.php', where example.com
+     * is the name of your site. Then, go to the bottom of
+     * 'sites/example.com/settings.php' and uncomment the commented lines that
+     * mention 'settings.local.php'.
+     */
+
+    $databases['default']['default'] = array(
+     'driver' => 'mysql',
+     'database' => 'app',
+     'username' => 'app',
+     'password' => 'app',
+     'host' => 'db.app',
+    ); 
+
+    /**
+     * Assertions.
+     *
+     * The Drupal project primarily uses runtime assertions to enforce the
+     * expectations of the API by failing when incorrect calls are made by code
+     * under development.
+     *
+     * @see http://php.net/assert
+     * @see https://www.drupal.org/node/2492225
+     *
+     * If you are using PHP 7.0 it is strongly recommended that you set
+     * zend.assertions=1 in the PHP.ini file (It cannot be changed from .htaccess
+     * or runtime) on development machines and to 0 in production.
+     *
+     * @see https://wiki.php.net/rfc/expectations
+     */
+    assert_options(ASSERT_ACTIVE, TRUE);
+    \Drupal\Component\Assertion\Handle::register();
+
+    /**
+     * Enable local development services.
+     */
+    $settings['container_yamls'][] = DRUPAL_ROOT . '/sites/development.services.yml';
+
+    /**
+     * Show all error messages, with backtrace information.
+     *
+     * In case the error level could not be fetched from the database, as for
+     * example the database connection failed, we rely only on this value.
+     */
+    $config['system.logging']['error_level'] = 'verbose';
+
+    /**
+     * Disable CSS and JS aggregation.
+     */
+    $config['system.performance']['css']['preprocess'] = FALSE;
+    $config['system.performance']['js']['preprocess'] = FALSE;
+
+    /**
+     * Disable the render cache (this includes the page cache).
+     *
+     * Note: you should test with the render cache enabled, to ensure the correct
+     * cacheability metadata is present. However, in the early stages of
+     * development, you may want to disable it.
+     *
+     * This setting disables the render cache by using the Null cache back-end
+     * defined by the development.services.yml file above.
+     *
+     * Do not use this setting until after the site is installed.
+     */
+    # $settings['cache']['bins']['render'] = 'cache.backend.null';
+
+    /**
+     * Disable Dynamic Page Cache.
+     *
+     * Note: you should test with Dynamic Page Cache enabled, to ensure the correct
+     * cacheability metadata is present (and hence the expected behavior). However,
+     * in the early stages of development, you may want to disable it.
+     */
+    # $settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
+
+    /**
+     * Allow test modules and themes to be installed.
+     *
+     * Drupal ignores test modules and themes by default for performance reasons.
+     * During development it can be useful to install test extensions for debugging
+     * purposes.
+     */
+    $settings['extension_discovery_scan_tests'] = TRUE;
+
+    /**
+     * Enable access to rebuild.php.
+     *
+     * This setting can be enabled to allow Drupal php and database cached
+     * storage to be cleared via the rebuild.php page. Access to this page can also
+     * be gained by generating a query string from rebuild_token_calculator.sh and
+     * using these parameters in a request to rebuild.php.
+     */
+    $settings['rebuild_access'] = TRUE;
