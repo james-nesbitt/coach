@@ -45,7 +45,18 @@ func (operation *Operation_Run) Run() {
 
 	for _, target := range operation.nodes.GetTargets(operation.targets) {
 		target.node.log = operation.nodes.log.ChildLog("NODE:"+target.node.Name)
-		target.node.Run(operation.instance, operation.cmd)
+
+		target.node.log.Info(target.node.Name+": Running Node")
+		if target.node.InstanceType=="temporary" {
+			target.node.Run("", operation.cmd)
+		} else if len(target.instances)==0 {
+			target.node.log.Warning(target.node.Name+": Can't run node as no instances were specified")
+		} else {
+			for _, instance := range target.instances {
+				target.node.log.Info(target.node.Name+":"+instance.Name+": Running node instance")
+				target.node.Run(instance.Name, operation.cmd)
+			}
+		}
 	}
 }
 
@@ -58,7 +69,7 @@ func (node *Node) Run(instanceid string, cmd []string) bool {
 		switch node.InstanceType {
 			case "temporary":
 				if instanceid=="" {
-					instanceid = "run" // perhaps we should randomly generate this to allow for persistance run containers
+					instanceid = "run" // perhaps we should randomly generate this to allow for persistant run containers
 				}
 				// create a new temporary instance for a node
 				node.AddTemporaryInstance(instanceid)
@@ -74,13 +85,19 @@ func (node *Node) Run(instanceid string, cmd []string) bool {
 
 		if instance!=nil {
 			return instance.Run(cmd, persistant)
+		} else {
+			node.log.Warning(node.Name+": Can't run node as it the instance could not be found")
 		}
 
+	} else {
+		node.log.Warning(node.Name+": Can't run node as it is not run-able")
 	}
 	return false
 }
 
 func (instance *Instance) Run(cmd []string, persistant bool) bool {
+
+	instance.Node.log.Info("Instance RUN")
 
 	// Set up some additional settings for TTY commands
 	if instance.Config.Tty==true {
@@ -99,8 +116,12 @@ func (instance *Instance) Run(cmd []string, persistant bool) bool {
 	instance.Config.AttachStdout = true
 	instance.Config.AttachStderr = true
 
+	log := instance.Node.log
+	instance.Node.log = instance.Node.log.ChildLog("RUN:preparation")
+
   // trap any messages from the other intance operations
 	if instance.Node.log.Severity()==LOG_SEVERITY_MESSAGE {
+		log.Info("Hushing log while we create the run container")
 		instance.Node.log.Hush()
 		defer instance.Node.log.UnHush()
 	}
@@ -108,28 +129,38 @@ func (instance *Instance) Run(cmd []string, persistant bool) bool {
 	// 1. get the container for the instance (create it if needed)
 	hasContainer := instance.HasContainer(false)
 	if !hasContainer {
-		hasContainer = instance.Create(cmd, false)
+		log.Info("Creating new disposable RUN container")
+		if hasContainer = instance.Create(cmd, false); hasContainer {
+			log.Debug(LOG_SEVERITY_DEBUG, "Created disposable run container")
+			if !persistant {
+				// 5. [DEFERED] remove the container (if not instructed to keep it)
+				defer instance.Remove(true)
+			}
+		} else {
+			log.Error("Failed to create disposable run container")
+		}	
+	} else {
+		log.Info("Run container already exists")
 	}
+
 	if hasContainer {
 
 	// 3. start the container (set up a remove)
-		ok := instance.Start(false)
+	log.Info("Starting RUN container")
+	ok := instance.Start(false)
 
 	// 4. attach to the container
 		if ok {
-			if !persistant {
-				// 5. remove the container (if not instructed to keep it)
-				defer instance.Remove(true)
-			}
+			log.Info("Attaching to disposable RUN container")
 			instance.Attach()
 			return true
 		} else {
-			instance.Node.log.Error("Could not start RUN container")
+			log.Error("Could not start RUN container")
 			return false
 		}
 
 	} else {
-		instance.Node.log.Error("Could not create RUN container")
+		log.Error("Could not create RUN container")
 	}
 
 	return false
