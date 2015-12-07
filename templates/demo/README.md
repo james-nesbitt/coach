@@ -71,3 +71,24 @@ Features demonstrated:
 - singular service nodes
 - command nodes
 - source separation
+
+### Drupal8  : Drupal8 with composer
+
+This demo produces a project based on Drupal8, configured using composer, based on the 
+"Drupal on Composer" project.  The Drupal source code is not included in the demo, but 
+rather is cloned directly from the d8-composer repository.
+
+Before the demo is usable, you must run composer, which you can do using the composer
+command container included:
+
+    $/> coach @composer run update && coach @composer run install
+    
+The project runs using separate containers for nginx, php7 and mariadb.  The DB container
+includes an "mysql://app:app@db.app/app" database, with not tables.
+
+Installing Drupal is a bit tricky, as the entire Drupal source code is mounted into
+the FPM container as read-only.  There a couple of ways around this:
+  1. mounts a writeable settings.php over the source code, just during install;
+  2. use one of the avaialble Drupal patches that sidestep this issue
+  3. provision the DB by importing sql.
+ 
