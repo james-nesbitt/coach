@@ -28,10 +28,9 @@ To incorporate source, the source code from /app/source
 is mapped into a "source" container, which is used in
 the nginx and fpm containers.
 
-The Database is un-initialized, but an optional init
-build for a db has been included, and you can switch to
-it by removing the db node, and uncommenting the custom
-db node.
+The Database is un-initialized, but it is recommended that
+you include a local DB build, in which you create a DB, 
+and add access parameters as needed.
 
 All of the suggested images in this project are based on
 the wunder-base concept, which is used to provide a commong
