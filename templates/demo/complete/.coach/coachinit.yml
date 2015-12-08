@@ -1044,7 +1044,7 @@
   Url: https://github.com/drupal/drupal.git
 
 - Type: File
-  Path: app/www/active/index.php-fpm
+  Path: app/www/active/index.php
   Contents: |
     <?php
     /**
