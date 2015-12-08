@@ -44,15 +44,15 @@ The operation will also wipe nodes, if the correct flag is passed. Wiping
 means to also remove any built images.
 
 Syntax:
-    $/> coach {targets} clean
+	$/> coach {targets} clean
 
-    $/> coach {targets} clean --wipe   
-      also wipe any built images
+	$/> coach {targets} clean --wipe   
+	  also wipe any built images
 
-    - to eliminate any timeout delays on "docker stop" calls, use this Syntax
-    $/> coach {targets} clean --quick
+	- to eliminate any timeout delays on "docker stop" calls, use this Syntax
+	$/> coach {targets} clean --quick
 
-  {targets} what target node instances the operation should process ($/> coach help targets)
+	{targets} what target node instances the operation should process ($/> coach help targets)
 
 `)
 }

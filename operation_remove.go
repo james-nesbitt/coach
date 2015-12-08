@@ -29,12 +29,12 @@ func (operation *Operation_Remove) Help(topics []string) {
 Coach will attempt to remove all target node containers.
 
 SYNTAX:
-    $/> coach {targets} remove
+	$/> coach {targets} remove
 
 	{targets} what target node instances the operation should process ($/> coach help targets)
 
 ACCESS:
-  - only nodes with the "create" access are processed.  This excludes build and command nodes
+	- only nodes with the "create" access are processed.  This excludes build and command nodes
 `)
 }
 

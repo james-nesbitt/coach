@@ -26,16 +26,16 @@ The run operation follows the following steps:
 The process is ideal for running single commands in volatile containers, which can disappear after execution.
 
 SYNTAX:
-    $/> coach {target} run {cmd}
+	$/> coach {target} run {cmd}
 
 	{target} what target node instance the operation should process ($/> coach help targets)
 	{cmd} a list of flags to pass into the container.  These can be flags added passed to the container entrypoint, or full command replacement.
 
 NOTE:
-- Containers can be persistant, but such containers are generally not usefull, as the container command cannot be changed.  In most cases, command container volatility can still work, as long as persistant file and folder binds/maps are used to keep volatile information outside of the container.
+-	 Containers can be persistant, but such containers are generally not usefull, as the container command cannot be changed.  In most cases, command container volatility can still work, as long as persistant file and folder binds/maps are used to keep volatile information outside of the container.
 
 TODO:
-- Allow overriding of a container entrypoint via a flag?
+	- Allow overriding of a container entrypoint via a flag?
 `)
 }
 

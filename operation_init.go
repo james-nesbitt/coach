@@ -124,40 +124,41 @@ func (operation *Operation_Init) Help(topics []string) {
 Coach will attempt to initialize a new coach project in the current folder.
 
 SYNTAX:
-    $/> coach init [ {type} {type flags} ]
+	$/> coach init [ {type} {type flags} ]
 
 EXAMPLES:
 
-    $/> coach init
-    $/> coach init default
-    Populate the current path with default settings
+	$/> coach init
+	$/> coach init default
+	Populate the current path with default settings
 
-    $/> coach init user {template}
+	$/> coach init user {template}
 
-    Uses the contents of ~/.coach/templates to populate the current folder
+	Uses the contents of ~/.coach/templates to populate the current folder
 
-    $/> coach init git https://github.com/aleksijohansson/docker-drupal-coach.git
+	$/> coach init git https://github.com/aleksijohansson/docker-drupal-coach.git
 
-    Clones the target git URL to the current path
+	Clones the target git URL to the current path
 
-    There are also various demo inits:
-      $/> coach init demo lamp
+	There are also various demo inits:
+	
+		$/> coach init demo lamp
 
-      	creates a standard LAMP stack
+		creates a standard LAMP stack
 
-      $/> coach init demo lamp_monolithic
+		$/> coach init demo lamp_monolithic
 
-        creates a single container LAMP stack
+		creates a single container LAMP stack
 
-      $/> coach init demo lamp_multiplephps
+		$/> coach init demo lamp_multiplephps
 
-        creates a LAMP stack with multiple php servers to
+		creates a LAMP stack with multiple php servers to
 
-      $/> coach init demo lamp_scaling
+		$/> coach init demo lamp_scaling
 
-      $/> coach init demo complete
+		$/> coach init demo complete
 
-        creates a really full and noisy example of a project
+		creates a really full and noisy example of a project
 
 YAML base inits
 
@@ -171,9 +172,9 @@ and keep it on the internet, either in a repo, or a gist or even a pastebin.
 
 Then you can create a new project using :
   
-    $/> coach init yaml http://path.to.my/yaml.yml
+	$/> coach init yaml http://path.to.my/yaml.yml
 
-    (note that the path has to be a full body yml file)
+	(note that the path has to be a full body yml file)
 `)
 }
 

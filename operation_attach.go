@@ -22,15 +22,15 @@ func (operation *Operation_Attach) Help(topics []string) {
 Coach will attempt to attach to an existing container.
 
 SYNTAX:
-    $/> coach {target} attach
+	$/> coach {target} attach
 
-  {target} what target node instance the operation should process ($/> coach help targets)
+	{target} what target node instance the operation should process ($/> coach help targets)
 
 ACCESS:
-  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+	- This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
 
 NOTES:
-  - The attach operation is really meant to be used to attach to a single instance target, but it multiple instances are targeted, then the operation will attach to each container in sequence.  To target a specific container use an instance style target (for more help checkout $/> coach help target).
+	- The attach operation is really meant to be used to attach to a single instance target, but it multiple instances are targeted, then the operation will attach to each container in sequence.  To target a specific container use an instance style target (for more help checkout $/> coach help target).
 `)
 }
 

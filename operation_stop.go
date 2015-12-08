@@ -33,15 +33,15 @@ func (operation *Operation_Stop) Help(topics []string) {
 Coach will attempt to stop target node containers.
 
 SYNTAX:
-    $/> coach {targets} stop
+	$/> coach {targets} stop
 
-    $/> coach {targets} stop --quick
-      - makes docker stop the containers with --time=1
+	$/> coach {targets} stop --quick
+	- makes docker stop the containers with --time=1
 
 	{targets} what target node instances the operation should process ($/> coach help targets)
 
 ACCESS:
-  - This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+	- This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
 
 `)
 }

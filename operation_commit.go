@@ -55,15 +55,15 @@ func (operation *Operation_Commit) Help(topics []string) {
 Coach will attempt to commit a container to it's image.
 
 SYNTAX:
-    $/> coach {targets} commit [--tag {tag}] [--repo {repo}] [--message "{message}"]
+	$/> coach {targets} commit [--tag {tag}] [--repo {repo}] [--message "{message}"]
 
-  {targets} what target node instances the operation should process ($/> coach help targets)
-  --tag "{tag}" : what image tag to use (default: "latest")
-  --repo "{repo}" : what image repository to commit to (default: local)
-  --message "{message}" : what commit message to use
+	{targets} what target node instances the operation should process ($/> coach help targets)
+	--tag "{tag}" : what image tag to use (default: "latest")
+	--repo "{repo}" : what image repository to commit to (default: local)
+	--message "{message}" : what commit message to use
 
 ACCESS:
-  - only nodes with the "commit" access are processed.  This excludes build nodes
+	- only nodes with the "commit" access are processed.  This excludes build nodes
 
 `)
 }

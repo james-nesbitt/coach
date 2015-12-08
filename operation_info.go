@@ -26,9 +26,9 @@ func (operation *Operation_Info) Help(topics []string) {
 Coach will attempt to provide project information by investigating target images and containers.
 
 SYNTAX:
-    $/> coach {targets} info
+	$/> coach {targets} info
 
-  {targets} what target nodes the operation should process ($/> coach help targets)
+	{targets} what target nodes the operation should process ($/> coach help targets)
 
 `)
 }

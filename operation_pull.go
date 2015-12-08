@@ -43,15 +43,15 @@ Coach will attempt to pull any node images, for nodes that have no build setting
 
 
 SYNTAX:
-    $/> coach {targets} pull
+	$/> coach {targets} pull
 
-  {targets} what target nodes the operation should process ($/> coach help targets)
+	{targets} what target nodes the operation should process ($/> coach help targets)
 
 ACCESS:
-  - this operation processes only nodes with the "pull" access.  This includes only nodes without a Build: setting, but a Config: Image: setting.
+	- this operation processes only nodes with the "pull" access.  This includes only nodes without a Build: setting, but a Config: Image: setting.
 
 NOTES:
-  - Nodes that have build settings will not attempt to pull any images, as it is expected that those images will be created using the build operation.
+	- Nodes that have build settings will not attempt to pull any images, as it is expected that those images will be created using the build operation.
 `)
 }
 

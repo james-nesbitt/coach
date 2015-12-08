@@ -37,13 +37,13 @@ This operation is used to allow users to take a coach project
 from beginning to fully operational, with a single command.
 
 SYNTAX:
-    $/> coach {target} up
+	$/> coach {target} up
 
 TODO:
-- building images may take a long time, so maybe it should be optional;
-- pulling images may take a long time, so maybe it should be optional;
-- perhaps check if containers exist before creating them;
-- perhaps check if contaienrs are running before starting them.
+	- building images may take a long time, so maybe it should be optional;
+	- pulling images may take a long time, so maybe it should be optional;
+	- perhaps check if containers exist before creating them;
+	- perhaps check if contaienrs are running before starting them.
 `)
 }
 

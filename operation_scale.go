@@ -34,12 +34,12 @@ func (operation *Operation_Scale) Help(topics []string) {
 Coach will attempt to scale up or down, the number of running instances on a scaled node
 
 Syntax:
-    $/> coach {targets} scale
+	$/> coach {targets} scale
 
-  {targets} what target node instances the operation should process ($/> coach help targets)
+	{targets} what target node instances the operation should process ($/> coach help targets)
 
 Access:
-  - only scaled type nodes with the "start" access are processed.  This effectively limits it to service type nodes.
+	- only scaled type nodes with the "start" access are processed.  This effectively limits it to service type nodes.
 `)
 }
 

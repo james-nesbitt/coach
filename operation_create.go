@@ -32,12 +32,12 @@ func (operation *Operation_Create) Help(topics []string) {
 Coach will attempt to create any node containers that should be active.
 
 Syntax:
-    $/> coach {targets} create
+	$/> coach {targets} create
 
-  {targets} what target node instances the operation should process ($/> coach help targets)
+	{targets} what target node instances the operation should process ($/> coach help targets)
 
 Access:
-  - only nodes with the "create" access are processed.  This excludes build and command nodes
+	- only nodes with the "create" access are processed.  This excludes build and command nodes
 `)
 }
 

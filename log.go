@@ -28,8 +28,8 @@ func GetLog(writer io.Writer, severity int) Log {
 	return Log{
 		parents: []string{},
 		writer: writer,
-	  severity: severity,
-	  store: false,
+		severity: severity,
+		store: false,
 	}
 }
 
@@ -58,10 +58,10 @@ func (log *Log) ChildLog(topic string) Log {
 	return Log{
 		parents: append(log.parents, topic),
 		writer: log.writer,
-	  severity: log.severity,
-	  store: log.store, // store entries if the parent is storing
+		severity: log.severity,
+		store: log.store, // store entries if the parent is storing
 
-	  record: []LogEntry{},
+		record: []LogEntry{},
 	}
 }
 
@@ -149,8 +149,8 @@ func (log *Log) Record(severity int, elements ...string) {
 
 // write all recorded messages, and then remove them
 func (log *Log) Flush(severity int) {
-  log.write( log.record, log.severity )
-  log.record = []LogEntry{}
+	log.write( log.record, log.severity )
+	log.record = []LogEntry{}
 }
 
 // write passed entries to the log writer, if they are severe enough
@@ -163,11 +163,11 @@ func (log *Log) write(record []LogEntry, severity int) {
 		if log.hush {
 			switch entrySeverity {
 				case LOG_SEVERITY_WARNING:
-	  			elements = append(elements, "[HUSHED WARNING]")
-	  			entrySeverity = LOG_SEVERITY_INFO
-	  		case LOG_SEVERITY_MESSAGE:
-	  			elements = append(elements, "[HUSHED MESSAGE]")
-	  			entrySeverity = LOG_SEVERITY_INFO
+					elements = append(elements, "[HUSHED WARNING]")
+					entrySeverity = LOG_SEVERITY_INFO
+				case LOG_SEVERITY_MESSAGE:
+					elements = append(elements, "[HUSHED MESSAGE]")
+					entrySeverity = LOG_SEVERITY_INFO
 			}
 		}
 
@@ -175,27 +175,27 @@ func (log *Log) write(record []LogEntry, severity int) {
 			continue
 		}
 
-	  switch entrySeverity {
-	  	case LOG_SEVERITY_CRITICAL:
-	  		elements = append(elements, "[CRITICAL]", log.joinParents())
-	  	case LOG_SEVERITY_SEVERE:
-	  		elements = append(elements, "[SEVERE]", log.joinParents())
-	  	case LOG_SEVERITY_ERROR:
-	  		elements = append(elements, "[ERROR]", log.joinParents())
+		switch entrySeverity {
+			case LOG_SEVERITY_CRITICAL:
+				elements = append(elements, "[CRITICAL]", log.joinParents())
+			case LOG_SEVERITY_SEVERE:
+				elements = append(elements, "[SEVERE]", log.joinParents())
+			case LOG_SEVERITY_ERROR:
+				elements = append(elements, "[ERROR]", log.joinParents())
 
-	  	case LOG_SEVERITY_WARNING:
-	  		elements = append(elements, "[WARNING]")
+			case LOG_SEVERITY_WARNING:
+				elements = append(elements, "[WARNING]")
 
-	  	case LOG_SEVERITY_MESSAGE:
+			case LOG_SEVERITY_MESSAGE:
 
-	    case LOG_SEVERITY_INFO:  		
-        elements = append(elements, "-->")
+			case LOG_SEVERITY_INFO:  		
+				elements = append(elements, "-->")
 
-	  	default:
+			default:
 				elements = append( elements, "("+strconv.Itoa(severity)+")", log.joinParents())
-	  }
+		}
 
-	  elements = append(elements, entry.message...)
+		elements = append(elements, entry.message...)
 
 		output := strings.Join(elements, " ")+ "\n"
 		log.writer.Write( []byte(output) )
@@ -229,11 +229,11 @@ func (log *Log) DebugObject(severity int, message string, elements ...interface{
 	if log.hush {
 		switch entrySeverity {
 			case LOG_SEVERITY_WARNING:
-  			elements = append(elements, "[HUSHED WARNING]")
-  			entrySeverity = LOG_SEVERITY_INFO
-  		case LOG_SEVERITY_MESSAGE:
-  			elements = append(elements, "[HUSHED MESSAGE]")
-  			entrySeverity = LOG_SEVERITY_INFO
+				elements = append(elements, "[HUSHED WARNING]")
+				entrySeverity = LOG_SEVERITY_INFO
+			case LOG_SEVERITY_MESSAGE:
+				elements = append(elements, "[HUSHED MESSAGE]")
+				entrySeverity = LOG_SEVERITY_INFO
 		}
 	}
 
