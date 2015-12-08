@@ -287,7 +287,7 @@ The syntax for using your own local yaml file:
     
 or remote yaml
 
-    $/> coach init remoteyaml https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/drupal8/.coach/coachinit.yml
+    $/> coach init yaml https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/drupal8/.coach/coachinit.yml
 
 Take a look at the existing demos for the syntax:
 
