@@ -29,7 +29,7 @@ type Operation_Init struct {
 
 	root string						// Path to root
 
-	handler strings 			// which method to use to initialize
+	handler string 			// which method to use to initialize
 	source string					// which method variant to initialize
 
 	force bool
@@ -87,11 +87,11 @@ func (operation *Operation_Init) Flags(flags []string) {
 				}
 				operation.source = COACH_DEMO_URLS[operation.source]
 
-			case "user":
-				fallthrough
 			case "yaml":
 				fallthrough
 			case "remoteyaml":
+				fallthrough
+			case "user":
 				fallthrough
 			case "git":
 				fallthrough

@@ -136,7 +136,7 @@ func (instance *Instance) Create(overrideCmd []string, force bool) bool {
 
 	if (err!=nil) {
 
-		instance.Node.log.DebugObject(LOG_SEVERITY_DEBUGc, "CREATE FAIL CONTAINERS: ", err)
+		instance.Node.log.DebugObject(LOG_SEVERITY_DEBUG, "CREATE FAIL CONTAINERS: ", err)
 
 		/**
 			* There is a weird bug with the library, where sometimes it
