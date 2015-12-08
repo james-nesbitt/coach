@@ -872,9 +872,9 @@
     BLACKFIRE_SERVER_TOKEN: "{TOKEN}"
 
 - Type: File
-  Path: ./coach/docker/README.md
+  Path: .coach/docker/README.md
   Contents: |
-    # ./coach/docker
+    # .coach/docker
 
     An arbitrary place the we put custom Docker builds for the project.
 
@@ -1040,7 +1040,7 @@
 
 # Check out a git copy of the project source
 - Type: GitClone
-  Path: /app/source
+  Path: app/source
   Url: https://github.com/drupal/drupal.git
 
 - Type: File
