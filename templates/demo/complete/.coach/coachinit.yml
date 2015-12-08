@@ -36,7 +36,7 @@
 
 # Check out a git copy of the project source
 # - Type: GitClone
-#   Path: /app/source
+#   Path: app/source
 #   Url: https://github.com/drupal/drupal.git
 
 # Copy user git settings to the project settings
