@@ -2,134 +2,125 @@ package main
 
 
 type Operation_Clean struct {
-  log Log
+	log Log
 
-  nodes Nodes
-  targets []string
+	nodes Nodes
+	targets[] string
 
-  force bool
-  wipe bool
-  timeout uint
+	force bool
+	wipe bool
+	timeout uint
 }
-func (operation *Operation_Clean) Flags(flags []string) {
-  operation.force = false
-  operation.wipe = false
-  operation.timeout = 10
+func (operation * Operation_Clean) Flags(flags[] string) {
+	operation.force = false
+	operation.wipe = false
+	operation.timeout = 10
 
-  for _, flag := range flags {
-    switch flag {
-      case "-f":
-        fallthrough
-      case "--force":
-        operation.force = true
-      case "-w":
-        fallthrough
-      case "--wipe":
-        operation.wipe = true
-      case "-q":
-        fallthrough
-      case "--quick":
-        operation.timeout = 0
-    }
-  }
+	for _, flag := range flags {
+		switch flag {
+			case "-f":
+				fallthrough
+			case "--force":
+				operation.force = true
+			case "-w":
+				fallthrough
+			case "--wipe":
+				operation.wipe = true
+			case "-q":
+				fallthrough
+			case "--quick":
+				operation.timeout = 0
+		}
+	}
 }
 
-func (operation *Operation_Clean) Help(topics []string) {
-  operation.log.Note(`Operation: Clean
+func (operation * Operation_Clean) Help(topics[] string) {
+	operation.log.Note(`Operation: Clean
 
 Coach will attempt to Clean any node containers that are active.  Cleaning
-means to stop and remove any active containers.  Wiping means to also remove
-any built images.
+means to stop and remove any active containers.  
+
+The operation will also wipe nodes, if the correct flag is passed. Wiping 
+means to also remove any built images.
 
 Syntax:
-    $/> coach {targets} Clean
+    $/> coach {targets} clean
 
-    $/> coach {targets} Clean --wipe   
-      also remove any built images
+    $/> coach {targets} clean --wipe   
+      also wipe any built images
 
-    - to eliminate any timeout delays use this Syntax
-    $/> coach {targets} Clean --quick
+    - to eliminate any timeout delays on "docker stop" calls, use this Syntax
+    $/> coach {targets} clean --quick
 
   {targets} what target node instances the operation should process ($/> coach help targets)
 
 `)
 }
 
-func (operation *Operation_Clean) Run() {
-  operation.log.Info("running clean operation")
-  operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
+func (operation * Operation_Clean) Run() {
+	operation.log.Info("running clean operation")
+	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
-//  operation.Nodes.log = operation.log.ChildLog("OPERATION:CLEAN")
-  operation.nodes.Clean(operation.targets, operation.wipe, operation.force, operation.timeout)
+	//  operation.Nodes.log = operation.log.ChildLog("OPERATION:CLEAN")
+	operation.nodes.Clean(operation.targets, operation.wipe, operation.force, operation.timeout)
 }
 
 // Clean a nodes list
-func (nodes *Nodes) Clean(targets []string, wipe bool, force bool, timeout uint) {
-  for _, target := range nodes.GetTargets(targets) {
-    target.node.log.Message(target.node.Name+": Cleaning Node") 
+func (nodes * Nodes) Clean(targets[] string, wipe bool, force bool, timeout uint) {
+	for _, target := range nodes.GetTargets(targets) {
+		target.node.log.Message(target.node.Name + ": Cleaning Node")
 
-    for _, instance := range target.instances {
-      if instance.HasContainer(false) {
-        instance.Clean(force, timeout)
-      } else {
-        instance.Node.log.Info(instance.Node.Name+": skipping node instance clean, as it has no container")
-      }
-    }
+		for _, instance := range target.instances {
+			if instance.HasContainer(false) {
+				instance.Clean(force, timeout)
+			} else {
+				instance.Node.log.Info(instance.Node.Name + ": skipping node instance clean, as it has no container")
+			}
+		}
 
-    if wipe {
-      // trap any messages from the other intance operations
-      if target.node.log.Severity()==LOG_SEVERITY_MESSAGE {
-        target.node.log.Hush()
-        defer target.node.log.UnHush()
-      }
-
-      target.node.Destroy(false)
-      target.node.log.Info(target.node.Name+": node build cleaned") 
-    }
-  }
+		if target.node.Do("build") && wipe {
+			target.node.Destroy(false)
+			target.node.log.Message(target.node.Name + ": node build cleaned")
+		}
+	}
 }
 
 // Clean a node
-func (node *Node) Clean(filters []string, wipe bool, force bool, timeout uint) {
-  var instances []*Instance
+func (node * Node) Clean(filters[] string, wipe bool, force bool, timeout uint) {
+	var instances[] * Instance
 
-  if len(filters)==0 {
-    instances = node.GetInstances()
-  } else {
-    instances = node.FilterInstances(filters)
-  }
+	if len(filters) == 0 {
+		instances = node.GetInstances()
+	} else {
+		instances = node.FilterInstances(filters)
+	}
 
-  node.log.Message(node.Name+": Cleaning Node")
-node.log.DebugObject(LOG_SEVERITY_ERROR, "NODE INSTANCES:", instances)
-  for _, instance := range instances {
-    if instance.HasContainer(false) {
-      instance.Clean(force, timeout)
-    } else {
-      node.log.Info(node.Name+": skipping node instance clean, as it has no container")
-    }
-  }
+	node.log.Message(node.Name + ": Cleaning Node")
 
-  if wipe {
-    // trap any messages from the other intance operations
-    if node.log.Severity()==LOG_SEVERITY_MESSAGE {
-      node.log.Hush()
-      defer node.log.UnHush()
-    }
+	for _, instance := range instances {
+		instance.Clean(force, timeout)
+	}
 
-    node.Destroy(force)
-    node.log.Info(node.Name+": node build cleaned") 
-  }
+	if node.Do("build") && wipe {
+		node.Destroy(force)
+		node.log.Message(node.Name + ": node build cleaned")
+	}
 
 }
 
 //Clean a node instance
-func (instance *Instance) Clean(force bool, timeout uint) bool {
-  instance.Node.log.Message(instance.Node.Name+": cleaning node instance ["+instance.Name+"]")
+func (instance * Instance) Clean(force bool, timeout uint) bool {
 
-  if instance.HasContainer(true) {
-    if !instance.Stop(force, timeout) {
-      return false
-    }
-  }
-  return instance.Remove(force)
+	if !instance.HasContainer(false) {
+		instance.Node.log.Info(instance.Node.Name + ": Node instance has no container to clean [" + instance.Name + "]")
+	}
+
+	instance.Node.log.Message(instance.Node.Name + ": cleaning node instance [" + instance.Name + "]")
+
+	if instance.HasContainer(true) {
+		if !instance.Stop(force, timeout) {
+			return false
+		}
+	}
+	return instance.Remove(force)
 }

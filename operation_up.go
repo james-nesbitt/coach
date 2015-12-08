@@ -4,13 +4,25 @@ type Operation_Up struct {
 	log Log
 
 	nodes Nodes
-	targets []string
+	targets[] string
+
+	force bool
 }
-func (operation *Operation_Up) Flags(flags []string) {
+func(operation * Operation_Up) Flags(flags[] string) {
+	operation.force = false
+
+	for _, flag := range flags {
+		switch flag {
+			case "-f":
+				fallthrough
+			case "--force":
+				operation.force = true
+		}
+	}
 
 }
 
-func (operation *Operation_Up) Help(topics []string) {
+func(operation * Operation_Up) Help(topics[] string) {
 	operation.log.Note(`Operation: UP
 
 Coach will attempt to get all nodes operational and running.
@@ -35,33 +47,33 @@ TODO:
 `)
 }
 
-func (operation *Operation_Up) Run() {
+func (operation * Operation_Up) Run() {
 	operation.log.Message("running run operation")
 	operation.log.DebugObject(LOG_SEVERITY_DEBUG_LOTS, "Targets:", operation.targets)
 
 	targets := operation.nodes.GetTargets(operation.targets)
 
 	for _, target := range targets {
-		target.node.log = operation.nodes.log.ChildLog("NODE:"+target.node.Name)
+		target.node.log = operation.nodes.log.ChildLog("NODE:" + target.node.Name)
 
 		if target.node.Do("build") {
-			target.node.Build(false)
+			target.node.Build(operation.force)
 		}
 		if target.node.Do("pull") {
-			target.node.Pull("https://index.docker.io/v1/")
+			target.node.Pull("https://index.docker.io/v1/", operation.force)
 		}
 	}
 	for _, target := range targets {
 		for _, instance := range target.instances {
 			if instance.Node.Do("create") {
-				instance.Create([]string{}, false)
+				instance.Create([] string {}, operation.force)
 			}
 		}
 	}
 	for _, target := range targets {
 		for _, instance := range target.instances {
 			if instance.Node.Do("start") {
-				instance.Start(false)
+				instance.Start(operation.force)
 			}
 		}
 	}

@@ -66,13 +66,23 @@ func (nodes *Nodes) Build(targets []string, force bool) {
 }
 
 func (node *Node) Build(force bool) bool {
-	if node.Do("build") && node.BuildPath!="" {
+	if node.Do("build") {
+
+		image, tag := node.GetImageName()
+
+		if node.BuildPath=="" {
+			node.log.Warning(node.Name+": Node image ["+image+":"+tag+"] not built as an empty path was provided.  You must point Build: to a path inside .coach")
+			return false
+		}
+
+		if !force && node.hasImage() {
+			node.log.Info(node.Name+": Node image ["+image+":"+tag+"] not built as an image already exists.  You can force this operation to build this image")
+			return false
+		}
 
 		// determine an absolute buildPath to the build, for Docker to use.
 		buildPath, _ := node.conf.Path("build")
 		buildPath = path.Join(buildPath, node.BuildPath)
-
-		image, tag := node.GetImageName()
 
 		options := docker.BuildImageOptions{
 			Name: image+":"+tag,
@@ -81,7 +91,7 @@ func (node *Node) Build(force bool) bool {
 			OutputStream: os.Stdout,
 		}
 
-		node.log.Message(node.Name+": Building node image ["+image+"] From build path ["+buildPath+"]")
+		node.log.Info(node.Name+": Building node image ["+image+":"+tag+"] From build path ["+buildPath+"]")
 
 		// ask the docker client to build the image
 		err := node.client.BuildImage( options )
@@ -90,7 +100,7 @@ func (node *Node) Build(force bool) bool {
 			node.log.Error(node.Name+": Node build failed ["+node.Name+"] in build path ["+buildPath+"] => "+err.Error())
 			return false
 		} else {
-			node.log.Message(node.Name+": Node succesfully built image ["+image+"] From path ["+buildPath+"]")
+			node.log.Message(node.Name+": Node succesfully built image ["+image+":"+tag+"] From path ["+buildPath+"]")
 			return true
 		}
 

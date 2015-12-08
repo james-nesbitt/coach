@@ -321,7 +321,7 @@ func ConfigTokenReplace(config docker.Config, tokens map[string]string) docker.C
 
 	var newConfig docker.Config
 	json.Unmarshal([]byte(jsonbytes), &newConfig)
-  return newConfig
+	return newConfig
 }
 func HostConfigTokenReplace(config docker.HostConfig, tokens map[string]string) docker.HostConfig {
 	bytelist, _ := json.Marshal(config)
