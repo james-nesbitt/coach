@@ -1033,10 +1033,11 @@
   Content: |
     .gitkeep
 
-# Copy user git settings to the project settings
+# Copy user vim settings to the project settings
+# This will likely produce an error if it is missing
 - Type: FileCopy
-  Path: app/settings/git
-  Source: ~/.git
+  Path: app/settings/viminfo
+  Source: ~/.viminfo
 
 # Check out a git copy of the project source
 - Type: GitClone
