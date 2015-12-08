@@ -18,6 +18,9 @@ Coach allows:
 - some nodes run services in the background such as services
 - some nodes can be run from the host as utility commands,
 
+* coach has a stubbed out docker-compose.yml interpreter, that I just
+  never got around to fleshing out.
+
 Coach handles instances slightly differently:
 - some nodes can be considered "scalable"
 - some nodes can have only a single instance
@@ -56,6 +59,9 @@ Coach also gives you
 #### You can retrieve the coach source:
 
     $/> go get github.com/james-nesbitt/coach
+
+  * I will work on an installer when I get a chance, but currently you have to
+    use the go method.
 
 ### Starting a project
 Starting a coach project means defining a certain folder as being the root of
@@ -233,8 +239,6 @@ can target specific instances
 
   * This usually requires that a node in your nodes.yml file has "Instances:"
     defined.
-
-### Remote docker server
 
 ### Advanced operations
 As docker includes many more operations, coach also tries to implement them
