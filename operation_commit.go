@@ -27,22 +27,22 @@ func (operation *Operation_Commit) Flags(flags []string) {
 				fallthrough
 			case "--tag":
 				if !strings.HasPrefix(flags[index+1], "-") {
-					operation.tag = flags[index+1]
 					index++
+					operation.tag = flags[index]
 				}
 			case "-r":
 				fallthrough
 			case "--repo":
 				if !strings.HasPrefix(flags[index+1], "-") {
-					operation.repo = flags[index+1]
 					index++
+					operation.repo = flags[index]
 				}
 			case "-m":
 				fallthrough
 			case "--message":
 				if !strings.HasPrefix(flags[index+1], "-") {
-					operation.repo = flags[index+1]
 					index++
+					operation.repo = flags[index]
 				}
 		}
 	}
