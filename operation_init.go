@@ -141,7 +141,7 @@ EXAMPLES:
 	Clones the target git URL to the current path
 
 	There are also various demo inits:
-	
+
 		$/> coach init demo lamp
 
 		creates a standard LAMP stack
@@ -214,7 +214,7 @@ func (operation *Operation_Init) Run() {
 	}
 
 	operation.log = operation.log.ChildLog(strings.ToUpper(operation.handler))
-	tasks := InitTasks{log: operation.log.ChildLog("TASKS")}
+	tasks := InitTasks{root:targetPath, log: operation.log.ChildLog("TASKS")}
 
 	ok = true
 	switch operation.handler {

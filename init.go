@@ -2,8 +2,10 @@ package main
 
 import (
 	"os"
+	"os/user"
 	"path"
 	"io"
+  "strings"
 
 	"net/http"
 	"io/ioutil"
@@ -38,40 +40,40 @@ func (tasks *InitTasks) AddTask(task InitTask) {
 }
 
 func (tasks *InitTasks) AddFile(path string, contents string) {
-	tasks.AddTask(InitTask( & InitTaskFile {
+	tasks.AddTask(InitTask(&InitTaskFile {
 		root: tasks.root,
 		path: path,
 		contents: contents,
 	}))
 }
 func (tasks *InitTasks) AddRemoteFile(path string, url string) {
-	tasks.AddTask(InitTask( & InitTaskRemoteFile {
+	tasks.AddTask(InitTask(&InitTaskRemoteFile {
 		root: tasks.root,
 		path: path,
 		url: url,
 	}))
 }
 func (tasks *InitTasks) AddFileCopy(path string, source string) {
-	tasks.AddTask(InitTask( & InitTaskFileCopy {
+	tasks.AddTask(InitTask(&InitTaskFileCopy {
 		root: tasks.root,
 		path: path,
 		source: source,
 	}))
 }
 func (tasks *InitTasks) AddGitClone(path string, url string) {
-	tasks.AddTask(InitTask( & InitTaskGitClone {
+	tasks.AddTask(InitTask(&InitTaskGitClone {
 		root: tasks.root,
 		path: path,
 		url: url,
 	}))
 }
 func (tasks *InitTasks) AddMessage(message string) {
-	tasks.AddTask(InitTask( & InitTaskMessage {
+	tasks.AddTask(InitTask(&InitTaskMessage {
 		message: message,
 	}))
 }
 func (tasks *InitTasks) AddError(error string) {
-	tasks.AddTask(InitTask( & InitTaskError {
+	tasks.AddTask(InitTask(&InitTaskError {
 		error: error,
 	}))
 }
@@ -84,27 +86,68 @@ type InitTaskFileBase struct {
 	root string
 }
 
-func (task * InitTaskFileBase) MakeDir(log Log, makePath string, pathIsFile bool) bool {
-	pd := path.Join(task.root, makePath)
-	if pathIsFile {
-		pd = path.Dir(pd)
+func (task *InitTaskFileBase) absolutePath(targetPath string, addRoot bool) (string, bool) {
+	if strings.HasPrefix(targetPath, "~") {
+		return path.Join(task.userHomePath(), targetPath[1:]), !addRoot
+
+	// I am not sure how reliable this function is
+	// you passed an absolute path, so I can't add the root
+	// } else if path.isAbs(targetPath) {
+	// 	return targetPath, !addRoot
+
+	// you passed a relative path, and want me to add the root
+	} else if addRoot {
+		return path.Join(task.root, targetPath), true
+
+	// you passed path and don't want the root added (but is it already abs?)
+	} else if targetPath!="" {
+		return targetPath, true
+
+	// you passed an empty string, and don't want the root added?
+	} else {
+		return targetPath, false
+	}
+}
+func (task *InitTaskFileBase) userHomePath() (string) {
+	if currentUser,  err := user.Current(); err==nil {
+		return currentUser.HomeDir
+	} else {
+		return os.Getenv("HOME")
+	}
+}
+
+func (task *InitTaskFileBase) MakeDir(log Log, makePath string, pathIsFile bool) bool {	
+	if makePath=="" {
+		return true // it's already made
 	}
 
-	if err := os.MkdirAll(pd, 0777);err != nil {
+	if pathDirectory, ok := task.absolutePath(makePath, true); !ok {
+		log.Warning("Invalid directory path: " + pathDirectory)
+		return false
+	}
+	pathDirectory := path.Join(task.root, makePath)
+	if pathIsFile {
+		pathDirectory = path.Dir(pathDirectory)
+	}
+
+	if err := os.MkdirAll(pathDirectory, 0777);err != nil {
 		// @todo something log
 		return false
 	}
 	return true
 }
-func (task * InitTaskFileBase) MakeFile(log Log, destinationPath string, contents string) bool {
+func (task *InitTaskFileBase) MakeFile(log Log, destinationPath string, contents string) bool {
 	if !task.MakeDir(log, destinationPath, true) {
 		// @todo something log
 		return false
 	}
 
-	pd := path.Join(task.root, destinationPath)
+	if destinationPath, ok := task.absolutePath(destinationPath, true); !ok {
+		log.Warning("Invalid file destination path: " + destinationPath)
+		return false
+	}
 
-	fileObject, err := os.Create(pd)
+	fileObject, err := os.Create(destinationPath)
 	defer fileObject.Close()
 	if err != nil {
 		// @todo something log
@@ -119,8 +162,17 @@ func (task * InitTaskFileBase) MakeFile(log Log, destinationPath string, content
 	return true
 }
 
-func (task * InitTaskFileBase) CopyFile(log Log, destinationPath string, sourcePath string) bool {
+func (task *InitTaskFileBase) CopyFile(log Log, destinationPath string, sourcePath string) bool {
+	if destinationPath=="" || sourcePath=="" {
+		log.Warning("empty source or destination passed for copy")
+		return false
+	}
 
+	sourcePath, ok := task.absolutePath(sourcePath, false)
+	if !ok {
+		log.Warning("Invalid copy source path: " + destinationPath)
+		return false
+	}
 	sourceFile, err := os.Open(sourcePath)
 	if err != nil {
 		log.Warning("could not copy file as it does not exist [" + sourcePath + "] : " + err.Error())
@@ -128,47 +180,53 @@ func (task * InitTaskFileBase) CopyFile(log Log, destinationPath string, sourceP
 	}
 	defer sourceFile.Close()
 
-	destinationRootPath := path.Join(task.root, destinationPath)
-	if !task.MakeDir(log, destinationRootPath, true) {
+	if !task.MakeDir(log, destinationPath, true) {
 		// @todo something log
 		log.Warning("could not copy file as the path to the destination file could not be created [" + destinationPath + "]")
 		return false
 	}
-
-	destinationFile, err := os.Open(destinationRootPath)
-	if err == nil {
-		log.Warning("could not copy file as it already exists [" + destinationPath + "]")
-		defer destinationFile.Close()
+	destinationAbsPath, ok := task.absolutePath(destinationPath, true)
+	if !ok {
+		log.Warning("Invalid copy destination path: " + destinationPath)
 		return false
 	}
 
-	destinationFile, err = os.Create(destinationRootPath)
+	destinationFile, err := os.Open(destinationAbsPath)
+	if err == nil {
+		log.Warning("could not copy file as it already exists [" + destinationPath + "]")
+		destinationFile.Close()
+		return false
+	}
+
+	destinationFile, err = os.Create(destinationAbsPath)
 	if err != nil {
 		log.Warning("could not copy file as destination file could not be created [" + destinationPath + "] : " + err.Error())
 		return false
 	}
 
 	defer destinationFile.Close()
+	_, err = io.Copy(destinationFile, sourceFile)
 
-	_, err = io.Copy(sourceFile, destinationFile)
 	if err == nil {
 		sourceInfo, err := os.Stat(sourcePath)
 		if err == nil {
 			err = os.Chmod(destinationPath, sourceInfo.Mode())
 			return true
 		} else {
-			log.Warning("could not copy file as destination file could not be created [" + destinationPath + "] : " + err.Error())
+			log.Warning("could not copy file as destination file could not be created [" + destinationPath + "] : " + err.Error())	
 			return false
 		}
 	} else {
 		log.Warning("could not copy file as copy failed [" + destinationPath + "] : " + err.Error())
 	}
 
-
 	return true
 }
 
-func (task * InitTaskFileBase) CopyRemoteFile(log Log, destinationPath string, sourcePath string) bool {
+func (task *InitTaskFileBase) CopyRemoteFile(log Log, destinationPath string, sourcePath string) bool {
+	if destinationPath=="" || sourcePath=="" {
+		return false
+	}
 
 	response, err := http.Get(sourcePath)
 	if err != nil {
@@ -187,14 +245,18 @@ func (task * InitTaskFileBase) CopyRemoteFile(log Log, destinationPath string, s
 }
 
 
-func (task * InitTaskFileBase) CopyFileRecursive(log Log, path string, source string) bool {
-	return task.copyFileRecursive(log, path, source, "")
+func (task *InitTaskFileBase) CopyFileRecursive(log Log, path string, source string) bool {
+	sourceAbsPath, ok := task.absolutePath(source, false)
+	if !ok {
+		log.Warning("Couldn't find copy source "+source)
+		return false
+	}
+	return task.copyFileRecursive(log, path, sourceAbsPath, "")
 }
-func (task * InitTaskFileBase) copyFileRecursive(log Log, destinationRootPath string, sourceRootPath string, sourcePath string) bool {
-
+func (task *InitTaskFileBase) copyFileRecursive(log Log, destinationRootPath string, sourceRootPath string, sourcePath string) bool {
 	fullPath := sourceRootPath
 
-		if sourcePath != "" {
+	if sourcePath != "" {
 		fullPath = path.Join(fullPath, sourcePath)
 	}
 
@@ -203,6 +265,7 @@ func (task * InitTaskFileBase) copyFileRecursive(log Log, destinationRootPath st
 	err := os.Stat(fullPath)
 	if err != nil {
 		// @TODO do something log : source doesn't exist
+		log.Warning("File does not exist :"+fullPath)
 		return false
 	}
 
@@ -214,6 +277,7 @@ func (task * InitTaskFileBase) copyFileRecursive(log Log, destinationRootPath st
 
 		if err != nil {
 			// @TODO do something log : source doesn't exist
+			log.Warning("Could not open directory")
 			return false
 		}
 
@@ -221,7 +285,9 @@ func (task * InitTaskFileBase) copyFileRecursive(log Log, destinationRootPath st
 
 			//childSourcePath := source + "/" + obj.Name()
 			childSourcePath := path.Join(sourcePath, obj.Name())
-			task.copyFileRecursive(log, destinationRootPath, sourceRootPath, childSourcePath)
+			if !task.copyFileRecursive(log, destinationRootPath, sourceRootPath, childSourcePath) {
+  			log.Warning("Resursive copy failed")
+			}
 
 		}
 
@@ -248,7 +314,11 @@ type InitTaskFile struct {
 	path string
 	contents string
 }
-func (task * InitTaskFile) RunTask(log Log) bool {
+func (task *InitTaskFile) RunTask(log Log) bool {
+	if task.path=="" {
+		return false
+	}
+
 	if task.MakeFile(log, task.path, task.contents) {
 		log.Message("--> Created file : " + task.path)
 		return true
@@ -265,7 +335,11 @@ type InitTaskRemoteFile struct {
 	path string
 	url string
 }
-func (task * InitTaskRemoteFile) RunTask(log Log) bool {
+func (task *InitTaskRemoteFile) RunTask(log Log) bool {
+	if task.path=="" || task.root=="" || task.url=="" {
+		return false
+	}
+
 	if task.CopyRemoteFile(log, task.path, task.url) {
 		log.Message("--> Copied remote file : " + task.url + " -> " + task.path)
 		return true
@@ -282,7 +356,11 @@ type InitTaskFileCopy struct {
 	path string
 	source string
 }
-func (task * InitTaskFileCopy) RunTask(log Log) bool {
+func (task *InitTaskFileCopy) RunTask(log Log) bool {
+	if task.path=="" || task.root=="" || task.source=="" {
+		return false
+	}
+
 	if task.CopyFileRecursive(log, task.path, task.source) {
 		log.Message("--> Copied file : " + task.source + " -> " + task.path)
 		return true
@@ -299,16 +377,26 @@ type InitTaskGitClone struct {
 	path string
 	url string
 }
-func (task * InitTaskGitClone) RunTask(log Log) bool {
+func (task *InitTaskGitClone) RunTask(log Log) bool {
+	if task.root=="" || task.url=="" {
+log.Error("EMPTY ROOT PASSED TO GIT: "+task.root)
+		return false
+	}
 
-	destinationPath := path.Join(task.root, task.path)
+	destinationPath := task.path
 	url := task.url
 
 	if !task.MakeDir(log, destinationPath, false) {
 		return false
 	}
 
-	cmd := exec.Command("git", "clone", "--progress", url, destinationPath)
+	destinationAbsPath, ok := task.absolutePath(destinationPath , true)
+	if !ok {
+		log.Warning("Invalid copy destination path: " + destinationPath)
+		return false
+	}
+
+	cmd := exec.Command("git", "clone", "--progress", url, destinationAbsPath)
 	cmd.Stderr = log
 	err := cmd.Start()
 
@@ -331,7 +419,7 @@ func (task * InitTaskGitClone) RunTask(log Log) bool {
 type InitTaskError struct {
 	error string
 }
-func (task * InitTaskError) RunTask(log Log) bool {
+func (task *InitTaskError) RunTask(log Log) bool {
 	log.Error(task.error)
 	return true
 }
@@ -339,14 +427,14 @@ func (task * InitTaskError) RunTask(log Log) bool {
 type InitTaskMessage struct {
 	message string
 }
-func (task * InitTaskMessage) RunTask(log Log) bool {
+func (task *InitTaskMessage) RunTask(log Log) bool {
 	log.Message(task.message)
 	return true
 }
 
 
 /**
- * Getting tasks from YAML
+ *Getting tasks from YAML
  */
 
 func (tasks *InitTasks) AddTasksFromYaml(yamlSource[] byte) error {
@@ -373,42 +461,42 @@ func (tasks *InitTasks) AddTasksFromYaml(yamlSource[] byte) error {
 				var task InitTaskYaml_FileMake
 				if err := json.Unmarshal(json_task, & task);
 				err == nil {
-					taskAdder = TaskAdder( & task)
+					taskAdder = TaskAdder(&task)
 				}
 			case "RemoteFile":
 				json_task, _ := json.Marshal(task_struct)
 				var task InitTaskYaml_RemoteFileCopy
 				if err := json.Unmarshal(json_task, & task);
 				err == nil {
-					taskAdder = TaskAdder( & task)
+					taskAdder = TaskAdder(&task)
 				}
 			case "FileCopy":
 				json_task, _ := json.Marshal(task_struct)
 				var task InitTaskYaml_FileCopy
 				if err := json.Unmarshal(json_task, & task);
 				err == nil {
-					taskAdder = TaskAdder( & task)
+					taskAdder = TaskAdder(&task)
 				}
 			case "GitClone":
 				json_task, _ := json.Marshal(task_struct)
 				var task InitTaskYaml_GitClone
 				if err := json.Unmarshal(json_task, & task);
 				err == nil {
-					taskAdder = TaskAdder( & task)
+					taskAdder = TaskAdder(&task)
 				}
 			case "Message":
 				json_task, _ := json.Marshal(task_struct)
 				var task InitTaskYaml_Message
 				if err := json.Unmarshal(json_task, & task);
 				err == nil {
-					taskAdder = TaskAdder( & task)
+					taskAdder = TaskAdder(&task)
 				}
 			case "Error":
 				json_task, _ := json.Marshal(task_struct)
 				var task InitTaskYaml_Error
 				if err := json.Unmarshal(json_task, & task);
 				err == nil {
-					taskAdder = TaskAdder( & task)
+					taskAdder = TaskAdder(&task)
 				}
 
 			default:
@@ -437,7 +525,7 @@ type InitTaskYaml_FileMake struct {
 	Path string `json:"Path" yaml:"Path"`
 	Contents string `json:"Contents" yaml:"Contents"`
 }
-func (task * InitTaskYaml_FileMake) AddTask(tasks *InitTasks) {
+func (task *InitTaskYaml_FileMake) AddTask(tasks *InitTasks) {
 	tasks.AddFile(task.Path, task.Contents)
 }
 
@@ -445,7 +533,7 @@ type InitTaskYaml_RemoteFileCopy struct {
 	Path string `json:"Path" yaml:"Path"`
 	Url string `json:"Url" yaml:"Url"`
 }
-func (task * InitTaskYaml_RemoteFileCopy) AddTask(tasks *InitTasks) {
+func (task *InitTaskYaml_RemoteFileCopy) AddTask(tasks *InitTasks) {
 	tasks.AddRemoteFile(task.Path, task.Url)
 }
 
@@ -453,7 +541,7 @@ type InitTaskYaml_FileCopy struct {
 	Path string `json:"Path" yaml:"Path"`
 	Source string `json:"Source" yaml:"Source"`
 }
-func (task * InitTaskYaml_FileCopy) AddTask(tasks *InitTasks) {
+func (task *InitTaskYaml_FileCopy) AddTask(tasks *InitTasks) {
 	tasks.AddFileCopy(task.Path, task.Source)
 }
 
@@ -461,20 +549,20 @@ type InitTaskYaml_GitClone struct {
 	Path string `json:"Path" yaml:"Path"`
 	Url string `json:"Url" yaml:"Url"`
 }
-func (task * InitTaskYaml_GitClone) AddTask(tasks *InitTasks) {
+func (task *InitTaskYaml_GitClone) AddTask(tasks *InitTasks) {
 	tasks.AddGitClone(task.Path, task.Url)
 }
 
 type InitTaskYaml_Message struct {
 	Message string `json:"Message" yaml:"Message"`
 }
-func (task * InitTaskYaml_Message) AddTask(tasks *InitTasks) {
+func (task *InitTaskYaml_Message) AddTask(tasks *InitTasks) {
 	tasks.AddMessage(task.Message)
 }
 
 type InitTaskYaml_Error struct {
 	Error string `json:"Error" yaml:"Error"`
 }
-func (task * InitTaskYaml_Error) AddTask(tasks *InitTasks) {
+func (task *InitTaskYaml_Error) AddTask(tasks *InitTasks) {
 	tasks.AddError(task.Error)
 }
