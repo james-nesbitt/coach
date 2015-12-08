@@ -42,13 +42,13 @@ means to stop and remove any active containers.  Wiping means to also remove
 any built images.
 
 Syntax:
-    $/> coach {targets} Clean
+    $/> coach {targets} clean
 
-    $/> coach {targets} Clean --wipe   
+    $/> coach {targets} clean --wipe   
       also remove any built images
 
-    - to eliminate any timeout delays use this Syntax
-    $/> coach {targets} Clean --quick
+    - to eliminate any timeout delays on "docker stop" calls, use this Syntax
+    $/> coach {targets} clean --quick
 
   {targets} what target node instances the operation should process ($/> coach help targets)
 
@@ -76,15 +76,9 @@ func (nodes *Nodes) Clean(targets []string, wipe bool, force bool, timeout uint)
       }
     }
 
-    if wipe {
-      // trap any messages from the other intance operations
-      if target.node.log.Severity()==LOG_SEVERITY_MESSAGE {
-        target.node.log.Hush()
-        defer target.node.log.UnHush()
-      }
-
+    if target.node.Do("build") && wipe {
       target.node.Destroy(false)
-      target.node.log.Info(target.node.Name+": node build cleaned") 
+      target.node.log.Message(target.node.Name+": node build cleaned") 
     }
   }
 }
@@ -100,30 +94,25 @@ func (node *Node) Clean(filters []string, wipe bool, force bool, timeout uint) {
   }
 
   node.log.Message(node.Name+": Cleaning Node")
-node.log.DebugObject(LOG_SEVERITY_ERROR, "NODE INSTANCES:", instances)
+
   for _, instance := range instances {
-    if instance.HasContainer(false) {
-      instance.Clean(force, timeout)
-    } else {
-      node.log.Info(node.Name+": skipping node instance clean, as it has no container")
-    }
+    instance.Clean(force, timeout)
   }
 
-  if wipe {
-    // trap any messages from the other intance operations
-    if node.log.Severity()==LOG_SEVERITY_MESSAGE {
-      node.log.Hush()
-      defer node.log.UnHush()
-    }
-
+  if node.Do("build") && wipe {
     node.Destroy(force)
-    node.log.Info(node.Name+": node build cleaned") 
+    node.log.Message(node.Name+": node build cleaned") 
   }
 
 }
 
 //Clean a node instance
 func (instance *Instance) Clean(force bool, timeout uint) bool {
+
+  if !instance.HasContainer(false) {
+    instance.Node.log.Info(instance.Node.Name+": Node instance has no container to clean ["+instance.Name+"]")
+  }
+
   instance.Node.log.Message(instance.Node.Name+": cleaning node instance ["+instance.Name+"]")
 
   if instance.HasContainer(true) {

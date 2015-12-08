@@ -58,7 +58,10 @@ func (operation *Operation_Destroy) Run() {
 func (nodes *Nodes) Destroy(targets []string, force bool) {
 	for _, target := range nodes.GetTargets(targets) {
 		target.node.log = nodes.log.ChildLog("NODE:"+target.node.Name)
-		target.node.Destroy(force)
+
+		if target.node.hasImage() {
+			target.node.Destroy(force)
+		}
 	}
 }
 
@@ -70,6 +73,11 @@ func (node *Node) Destroy(force bool) bool {
 		if tag!="" {
 			image +=":"+tag
 		}
+
+		if !node.hasImage() {
+			node.log.Info(node.Name+": Node has no image to destroy ["+image+"]")
+			return false
+		}		
 
 		options := docker.RemoveImageOptions{
 			Force: force,
