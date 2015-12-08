@@ -63,7 +63,7 @@ Coach also gives you
   * I will work on an installer when I get a chance, but currently you have to
     use the go method.
 
-### Starting a project
+### Creating/Initializing a project
 Starting a coach project means defining a certain folder as being the root of
 your project.  Coach wants to see a .coach folder in that path. Coach has an
 operation that it can use to "initialize" a project root for you, similar to 
@@ -121,6 +121,35 @@ A kind of coach-feature demo that shows a number of configuration options:
 A drupal8 from composer demo, with working composer, drush and console commands
 
     $/> coach init demo drupal8
+
+### Configuring the created project
+Once you have a .coach folder in place, you can configure the project by editing the
+various files in the .coach folder.  The files created in the demos tend to have
+plenty of documentation in their example files.  More information can be found
+in the "coach help" and in the wiki.
+
+#### .coach/conf.yml
+This file contains various top level configurations, including a string map of tokens
+that you can use for string substitution in the other files
+
+#### .coach/secrets/secrets.yml
+A token string map, that can be used for substution in other files, that is kept
+separate from the conf.yml, so that it can container sensitive tokens, that you
+may want to keep out of a revisioning repositoty.
+
+#### .coach/nodes.yml
+A string map of coach "nodes"
+
+Each node maps together a node image, some container settings, and a host implementation
+to allow the creation of one or more local containers, called "instances".
+- In the case of build nodes, the node defines just a docker build
+- volume nodes define single containers that contain volumes, but will never be started
+- service nodes define scaleable containers that will run services
+- command nodes define disposable command-line run containers
+
+#### Other files
+- .coach/help.yml : a custom project string map of help topics
+- .coach/tools.yml : (read the wiki about tools)
 
 ### Daily Use
 Typically used by a developer or a sysadmin, the coach system allows the creation of a project layout that is both friendly to a developer, but also easily used in production environments.
