@@ -1,4 +1,16 @@
-# DEMO lamp
+# DEMO : Complete
+
+The /app folder is a central place into which to put all of your
+Application specific source code, configurations and assets, in
+such a manner that this folder can be a distribution target for 
+an application (keep this in git.)
+Think of this path as being the root of your actualy project,
+wheras the parent could be considered the root of the coach
+implementation.  /app should be something that could work no 
+matter which tool was being used to manage the project.
+
+If your project is generally a .coach folder, then you can also 
+keep that path in the same repository, but it is not compulsory.
 
 ## /app/www
 
@@ -33,3 +45,13 @@ for extra security
 
 An additional writeable path, into which the application
 could archive and backup data.
+
+Backup can be a target for manuall archivng, but it should be
+considered a part of any sysadmin tools, and should be used
+for scheduled and other automated backups.
+
+## /app/settings
+
+A place to put developer, or sysadmin configurations that may
+get mapped into command containers, or used in specific
+situations.

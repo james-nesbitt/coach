@@ -118,6 +118,7 @@ source:
 # The container has
 #  - assets : a Read-Write set of assets for the application
 #  - backup : a place for the application to dump archives and backups
+#  - /app/www/asctive/files : will be used to demonstrate RW overlay
 #
 # @note that the relational path between the bound paths remains the same
 #  inside the container as it is locally, which allows for relative sym-links
@@ -129,8 +130,12 @@ assets:
     Image: jamesnesbitt/wunder-base # RUn from a standard base image
   Host:
     Binds:
+      # you can flat include paths 
       - "app/assets:/app/assets" # map the application assets path
       - "app/backup:/app/backup" # map the application backup
+      # you can overlay volumes from one container onto another, 
+      # to get writeable on top of read only
+      - "app/assets/files:app/www/active/files"
 
 ###
 # Key-Value storage service using redis
@@ -200,7 +205,7 @@ blackfire:
 # TCP/IP.  The node has access to the source via the source container, and the db
 # using a docker link (accessible over TCP/IP at db.app)
 #
-# There are alternative PHP images that you could try, to test out HHVM or PHP7
+# There are alternative PHP images that you could try, to test out HHVM or PHP
 # But note that if you switch, you have to recreate the container.
 #
 # Note that the WWW node needs this container
@@ -209,7 +214,9 @@ fpm:
   Type: service
 
   Config:
-    Image: jamesnesbitt/wunder-php56fpm    # The FPM works, and should have blackfire working
+    #Image: jamesnesbitt/wunder-php56fpm    # The FPM works, and should have blackfire working
+    Image: jamesnesbitt/wunder-php7fpm    # The FPM works, and should have blackfire working
+    #Image: jamesnesbitt/wunder-hhvm    # The FPM works, and should have blackfire working
 
   Host:
     Links:
