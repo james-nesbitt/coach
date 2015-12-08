@@ -78,7 +78,7 @@ func (operation *Operation_Init) Flags(flags []string) {
 
 		switch handler {
 			case "demo":
-				operation.handler = "remoteyaml"
+				operation.handler = "yaml"
 				if len(remainingFlags)>0 {
 					operation.source = remainingFlags[0]
 					remainingFlags = remainingFlags[1:]
@@ -155,6 +155,10 @@ EXAMPLES:
 
       $/> coach init demo lamp_scaling
 
+      $/> coach init demo complete
+
+        creates a really full and noisy example of a project
+
 YAML base inits
 
 There is is a YAML file syntax that can be used to define an init,
@@ -167,7 +171,7 @@ and keep it on the internet, either in a repo, or a gist or even a pastebin.
 
 Then you can create a new project using :
   
-    $/> coach init remoteyaml http://path.to.my/yaml.yml
+    $/> coach init yaml http://path.to.my/yaml.yml
 
     (note that the path has to be a full body yml file)
 `)
@@ -217,10 +221,11 @@ func (operation *Operation_Init) Run() {
 			ok = operation.Init_User_Run(operation.source, &tasks)
 		case "git":
 			ok = operation.Init_Git_Run(operation.source, &tasks)
+		case "remoteyaml":
+			// deprecated as "yaml" now handles remote files as wells
+			fallthrough
 		case "yaml":
 			ok = operation.Init_Yaml_Run(operation.source, &tasks)
-		case "remoteyaml":
-			ok = operation.Init_RemoteYaml_Run(operation.source, &tasks)
 		case "default":
 			ok = operation.Init_Default_Run(operation.source, &tasks)
 		default:
@@ -308,15 +313,32 @@ func (operation *Operation_Init) Init_Git_Run(source string, tasks *InitTasks) b
 // Get tasks from remote YAML corresponding to a remote yaml file
 func (operation *Operation_Init) Init_Yaml_Run(path string, tasks *InitTasks) bool {
 
-	// read the config file
-	yamlSourceBytes, err := ioutil.ReadFile(path)
-	if err!=nil {
-		operation.log.Error("Could not read the YAML file ["+path+"]: "+err.Error())
-		return false
-	}
-	if len(yamlSourceBytes)==0 {
-		operation.log.Error("Yaml file ["+path+"] was empty")
-		return false
+  var yamlSourceBytes []byte
+  var err error
+
+  if strings.Contains(path, "://") {
+
+		resp, err := http.Get(path)
+		if err != nil {
+			operation.log.Error("Could not retrieve remote yaml init instructions ["+path+"] : "+err.Error())
+			return false
+		}
+		defer resp.Body.Close()
+		yamlSourceBytes, err = ioutil.ReadAll(resp.Body)
+
+	} else {
+
+		// read the config file
+		yamlSourceBytes, err = ioutil.ReadFile(path)
+		if err!=nil {
+			operation.log.Error("Could not read the local YAML file ["+path+"]: "+err.Error())
+			return false
+		}
+		if len(yamlSourceBytes)==0 {
+			operation.log.Error("Yaml file ["+path+"] was empty")
+			return false
+		}
+
 	}
 
 	tasks.AddMessage("Initializing using YAML Source ["+path+"] to local project folder")
@@ -326,28 +348,6 @@ func (operation *Operation_Init) Init_Yaml_Run(path string, tasks *InitTasks) bo
 
 	// Add some message items
 	tasks.AddFile(".coach/CREATEDFROM.md", "THIS PROJECT WAS CREATED A COACH YAML INSTALLER :"+path)
-
-	return true
-}
-
-// Get tasks from remote YAML corresponding to a remote yaml file
-func (operation *Operation_Init) Init_RemoteYaml_Run(url string, tasks *InitTasks) bool {
-
-	resp, err := http.Get(url)
-	if err != nil {
-		operation.log.Error("Could not retrieve remote yaml init instructions ["+url+"] : "+err.Error())
-		return false
-	}
-	defer resp.Body.Close()
-	yamlSourceBytes, err := ioutil.ReadAll(resp.Body)
-
-	tasks.AddMessage("Initializing using Remote YAML Source ["+url+"] to local project folder")
-
-	// get tasks from yaml
-	tasks.AddTasksFromYaml(yamlSourceBytes)
-
-	// Add some message items
-	tasks.AddFile(".coach/CREATEDFROM.md", "THIS PROJECT WAS CREATED A COACH YAML INSTALLER :"+url)
 
 	return true
 }
