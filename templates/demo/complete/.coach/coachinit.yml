@@ -1,64 +1,226 @@
+###
+# Complete DEMO initialization
+#
+# This YAML file contains a sequence of instructions passed to the
+# coach init operation, each of which will either output a meesage
+# or create some local project files.
+#
+###
+
+#
+# Examples
+#
+
+# Output a messge
+# - Type: Message
+#   Message: |
+#     Coach will now create a project, based on the "complete" demo.
+#
+#     The initialization process will create a number of files in the
+#     current path, including the required .coach/ files, and the
+#     application specific files.
+#     Each file should generate a message, and the git clone used to
+#     retrieve /app/source path will be explicit.
+#
+#     Once the init process is completed, you will want to:
+#
+#     - investigate, and maybe change the .coach files
+#     - initialize the project using the "coach up" operation
+
+# Create a file
+# - Type: File
+#   Path: README.md
+#   Contents: |
+#     Some Contents
+
+
+# Check out a git copy of the project source
+# - Type: GitClone
+#   Path: app/source
+#   Url: https://github.com/drupal/drupal.git
+
+# Copy user git settings to the project settings
+# - Type: FileCopy
+#   Path: app/settings/git
+#   Source: ~/.git
+
+#
+# Actual Init
+#
+
+- Type: Message
+  Message: |
+    Coach will now create a project, based on the "complete" demo.
+
+    The initialization process will create a number of files in the
+    current path, including the required .coach/ files, and the
+    application specific files.
+    Each file should generate a message, and the git clone used to
+    retrieve /app/source path will be explicit.
+
+    Once the init process is completed, you will want to:
+
+    - investigate, and maybe change the .coach files
+    - initialize the project using the "coach up" operation
+
+# Create a file
 - Type: File
   Path: README.md
   Contents: |
-    # Coach project conf
-    #
-    # Configurations for the coach project
-    #
-    # Project: project name, used to create container names
-    # Author: used for docker commits & pushes.
-    #   @note this needs to be valid for container names/images
-    #     so it can contain alpha-numeric & "_"
-    #
-    # Tokens: a string map for string substitutions elsewhere
-    #    by using the format %{key} in files loaded after this
-    #    one
-    #
-    # Paths: a string map of paths that you can use for 
-    #    things like docker builds and mounts.  Paths can be 
-    #    absolute or relative to the project root.
-    #    Note that you can override the following paths:
-    #      - usertemplates : path to users init templates
-    #      - usersecrets : path to user secrets
-    #      - projectsecrets : path to project secrets
-    #      - build : path to builds
-    #    Paths are also made available as tokens using the
-    #    format PATH_{UPPERCASEKEY}
-    #
+    # COACH DEMO: Complete Demo
 
-    # Project name
-    Project: complete
+    This coach demo offers a relatively full feature complete
+    demo of settings and features of a coach project.  It
+    contains an exhaustive set of features.
 
-    # if you are going to make docker commits, set this
-    Author: my.email@docker.com
+    THE GOAL OF THIS INIT IS NOT TO PROVIDE A WORKING SAMPLE
+    but rather to demonstrate settings.  I will try to keep 
+    things working, but I will not write exhaustive examples
+    of some functionality, such as source building.
 
-    # Do you use a remote docker service?
-    #
-    # @note that file binds don't work in remote docker
-    # services, all of your images have to build source 
-    # into the image.
-    #
-    #Docker:
-    #  Host: "tcp://192.168.72.8:4243"
+    This coach demo provides a standard LAMP stack:
 
-    # Some additional settings
-    Settings:
+    - Nginx service using jamesnesbitt/wunder-nginx
+    - PHP-FPM service using jamesnesbitt/wunder-php56fpm
+    - DB service using jamesnesbitt/wunder-mariadb
 
-      # this makes all user env variables available as tokens
-      UseEnvVariablesAsTokens: TRUE
+    To incorporate source, the source code from /app/source
+    is mapped into a "source" container, which is used in
+    the nginx and fpm containers.
 
-    # Custom Tokens
-    Tokens:
-      # A custom token that I may want to use inside the containers
-      INTERNAL_PROJECT_ID: Akkare3Rqr3
+    The Database is un-initialized, but an optional init
+    build for a db has been included, and you can switch to
+    it by removing the db node, and uncommenting the custom
+    db node.
 
-      # these tokens may hold sensitive data, so maybe you should put them
-      # into .coach/secrets/secrets.yml instead of here
-      BLACKFIRE_SERVER_ID: "{ID}"             # Replace {ID} with your actual ID
-      BLACKFIRE_SERVER_TOKEN: "{TOKEN}"       # Replace {TOKEN} with your actual token
+    All of the suggested images in this project are based on
+    the wunder-base concept, which is used to provide a commong
+    /app project folder, and similar users/OS, to keep access
+    privileges working better.
+    The builds are all CentOS7, EPEL and often REMI based builds.
 
-      # Set a container domain, which containers can pull in as ENV or box domains
-      CONTAINER_DOMAIN: demo.coach
+    # Components
+
+    ## Services
+
+    ### LAMP
+
+    This project offers a set of connected containers that provide
+    the LAMP stack, with nginx. php7-fpm and mariadb10 each connected
+    over tcp/ip
+
+    ### Additional services
+
+    Elasticsearch and Redis are also offered as standalone containers
+
+    ### Developer tools
+
+    There are numerous command nodes, which allow developers to
+    run coach as a CLI to run commands such as composer, drush
+    and the platformsh CLI.
+
+    # Getting Started:
+
+      You already did this:
+
+        #/> coach init demo complete
+
+      Now just do this:
+
+        $/> coach up
+
+      This should:
+
+        - download some images
+        - build any local images that were defined
+        - create a source container which will map ./app/source to /app/www/active
+
+        - start an nginx container, and fpm container and a db container
+
+      You should then have
+
+        - http access at host:8080, or directly on the container
+        - the http should point to the source code in /app/source
+
+    # Day to day use
+
+    ## starting and stopping
+
+        $/> coach stop
+        $/> coach start
+
+    ## starting a specific container
+
+      - start a specific node
+
+        $/> coach @www start
+
+      - start all service nodes
+
+        $/> coach %service start
+
+    ## rebuild any containers
+
+      1. stop any running containers
+
+        $/> coach stop
+
+      2. remove and created containers
+
+        $/> coach remove
+
+      3. recreate and containers
+
+        $/> coach create
+
+      4. start the new containers
+
+        $/> coach start
+
+    # Alterations that you should make
+
+    ## Custom DB
+
+    The nodes.yml file has a better DB image commented out which you could use to get
+    a DB container that has an already populated DB with specific access credentials.
+
+    ## Switch to PHP7 or HHVM
+
+    If you want to test out the latest PHP7 or HHVM builds, try changing nodes.yml, the
+    fpm node Image values.  There are instructions above the node.
+
+    Note that if you want to swap out fpm containers, you will need to stop and remove
+    both the fpm and nginx nodes, alter the nodes yml, and then start www and fpm again
+    (you do not need to stop the db container.)
+
+    Instructions:
+
+    1. Make changes to your nodes.yml (change the fpm image)
+
+    2. stop www and fpm
+
+      $/> coach @fpm @www stop
+
+    3. remove www and fpm containers
+
+      $/> coach @fpm @www remove
+
+    4. make sure that you have all needed images
+
+      $/> coach pull
+      $/> coach build
+
+    5. re-create www and fpm containers
+
+      $/> coach @fpm @www recreate
+
+    6. restart www and fpm containers
+
+      $/> coach @fpm @www start
+
+#
+# .coach configuration files
+#
 
 - Type: File
   Path: .coach/README.md
@@ -111,7 +273,6 @@
     An optional path that can be used to keep Docker builds that should be built
     automatically as a part of a node.  To use one of these, there must be a node
     that declares Build: docker/{build}
-
 
 - Type: File
   Path: .coach/conf.yml
@@ -174,45 +335,6 @@
 
       # Set a container domain, which containers can pull in as ENV or box domains
       CONTAINER_DOMAIN: demo.coach
-
-
-- Type: File
-  Path: .coach/help.yml
-  Contents: |
-    ###
-    # help.yml : project specific help handlers
-    #
-    # this file is a string:string map of help topics which 
-    # can be used to help developers orient themselves with 
-    # project specifics
-    #
-    # USAGE:
-    #   $/> coach help {key}
-    #
-    #      shows the contents of the {key} topic
-    #
-    ###
-
-    ###
-    # Show help for the shell tool
-    #
-    #
-    shell: |
-      HELP: Script: shell
-
-      The shell tool is a script based docker run, which often behaves
-      better than running terminal applications through the docker remote
-      API.
-
-      This script runs the jamesnesbitt/wunder-developershell image, and
-      links to all needed services, and pulls volumes as needed.
-
-      The image the runs a zsh shell, using the "app" user, to prevent any
-      permission issues.
-
-      USAGE:
-
-          $/> coach tool shell
 
 - Type: File
   Path: .coach/nodes.yml
@@ -337,6 +459,7 @@
     # The container has
     #  - assets : a Read-Write set of assets for the application
     #  - backup : a place for the application to dump archives and backups
+    #  - /app/www/asctive/files : will be used to demonstrate RW overlay
     #
     # @note that the relational path between the bound paths remains the same
     #  inside the container as it is locally, which allows for relative sym-links
@@ -348,8 +471,12 @@
         Image: jamesnesbitt/wunder-base # RUn from a standard base image
       Host:
         Binds:
+          # you can flat include paths 
           - "app/assets:/app/assets" # map the application assets path
           - "app/backup:/app/backup" # map the application backup
+          # you can overlay volumes from one container onto another, 
+          # to get writeable on top of read only
+          - "app/assets/files:app/www/active/files"
 
     ###
     # Key-Value storage service using redis
@@ -419,7 +546,7 @@
     # TCP/IP.  The node has access to the source via the source container, and the db
     # using a docker link (accessible over TCP/IP at db.app)
     #
-    # There are alternative PHP images that you could try, to test out HHVM or PHP7
+    # There are alternative PHP images that you could try, to test out HHVM or PHP
     # But note that if you switch, you have to recreate the container.
     #
     # Note that the WWW node needs this container
@@ -428,7 +555,9 @@
       Type: service
 
       Config:
-        Image: jamesnesbitt/wunder-php56fpm    # The FPM works, and should have blackfire working
+        #Image: jamesnesbitt/wunder-php56fpm    # The FPM works, and should have blackfire working
+        Image: jamesnesbitt/wunder-php7fpm    # The FPM works, and should have blackfire working
+        #Image: jamesnesbitt/wunder-hhvm    # The FPM works, and should have blackfire working
 
       Host:
         Links:
@@ -634,22 +763,6 @@
           - assets
           - dev
 
-
-- Type: File
-  Path: .coach/secrets/secrets.yml
-  Contents: |
-    # SECRET TOKENS
-    #
-    # Into this file, you should put tokens that may container 
-    # sensitive data, that you'd like to keep out of your project
-    # repository.
-    #
-    # @NOTE add this file to your .gitignore
-    #
-    PLATFORMSH_CLI_API_TOKEN: "{TOKEN}"
-    BLACKFIRE_SERVER_ID: "{ID}"
-    BLACKFIRE_SERVER_TOKEN: "{TOKEN}"
-
 - Type: File
   Path: .coach/help.yml
   Contents: |
@@ -674,7 +787,7 @@
     shell: |
       HELP: Script: shell
 
-      The shell tool is a script based docker run, which often behaves
+      The shell tool is a script based docker run, which often behaves 
       better than running terminal applications through the docker remote
       API.
 
@@ -690,7 +803,7 @@
 
 - Type: File
   Path: .coach/tools.yml
-  Contents: |    
+  Contents: |
     ###
     # tools.yml : project tools
     #
@@ -721,7 +834,7 @@
         Script: 
     # use this as the tool script
           - "sh"
-          - "~/.coach/tools/shell"
+          - ".coach/tools/shell"
 
         ENV:
     # Set what image is used for the shell
@@ -744,131 +857,33 @@
           - "BLACKFIRE_SERVER_TOKEN=%BLACKFIRE_SERVER_TOKEN"
 
 - Type: File
-  Path: .coach/tools/shell.sh
-  Contents: |    
-    #!/bin/bash
+  Path: .coach/secrets/secrets.yml
+  Contents: |
+    # SECRET TOKENS
     #
-    # Run a docker container zsh shell, that includes all the source
-    # assets, links to the needed containers, and includes developer
-    # settings.
+    # Into this file, you should put tokens that may container 
+    # sensitive data, that you'd like to keep out of your project
+    # repository.
     #
-    # This shell command runs docker locally, which produces better 
-    # tty/ansi interaction than the docker remote API
+    # @NOTE add this file to your .gitignore
     #
-
-    # What shell image to use
-    IMAGE="${IMAGE:-jamesnesbitt/wunder-developershell}"
-
-    # Project name, used for hostname, and to build container names
-    PROJECT_NAME="${PROJECT_NAME:-project}"
-    # Used to build container names
-    PROJECT_INSTANCE="${PROJECT_INSTANCE:-single}"
-
-    # Use some standard docker flags
-    DOCKER_FLAGS="${DOCKER_FLAGS:---rm --tty --interactive=true --hostname=${PROJECT_NAME}}"
-
-    # EACH ENTRY IS A CONTAINER NODE TO LINK TO
-    LINKS="${LINKS:-}"
-
-    # EACH ENTRY IS A CONTAINER TO MOUNT ALL VOLUMES FROM
-    VOLUMESFROM="${VOLUMESFROM:-}"
-    # These indicate ENVs that hold volume definitions
-    USE_VOLUMES="${USE_VOLUMES:-}"
-
-    # These ENVs will be added to the container
-    USE_ENVS="${USE_ENVS:-}"
-
-    # Process all of the above configs to make a docker run command
-
-    for LINK in ${LINKS}; do
-      DOCKER_FLAGS="${DOCKER_FLAGS} --link=${PROJECT_NAME}_${LINK}_${PROJECT_INSTANCE}:${LINK}.app"
-    done
-    for VOLUME in ${USE_VOLUMES}; do
-      DOCKER_FLAGS="${DOCKER_FLAGS} --volume=${!VOLUME}"
-    done
-    for VOLUMEFROM in ${VOLUMESFROM}; do
-      DOCKER_FLAGS="${DOCKER_FLAGS} --volumes-from=${PROJECT_NAME}_${VOLUMEFROM}_${PROJECT_INSTANCE}"
-    done
-    for ENV in ${USE_ENVS}; do
-      DOCKER_FLAGS="${DOCKER_FLAGS} --env=${ENV}=${!ENV}"
-    done
-
-    # Run Docker
-    docker run ${DOCKER_FLAGS} ${IMAGE} $@
+    PLATFORMSH_CLI_API_TOKEN: "{TOKEN}"
+    BLACKFIRE_SERVER_ID: "{ID}"
+    BLACKFIRE_SERVER_TOKEN: "{TOKEN}"
 
 - Type: File
-  Path: app/README.md
+  Path: .coach/docker/README.md
   Contents: |
-    # DEMO lamp
+    # .coach/docker
 
-    ## /app/www
+    An arbitrary place the we put custom Docker builds for the project.
 
-    The final web root to be used by most of the containers.
+    These custom builds are often small overrides of factory images used 
+    to make alterations, or to add content.
 
-    This gives a source build destination, as a subfolder to
-    a bound path, which can be deleted, copied and moved as a
-    part of any source build process.
-
-    This separates writeable source into elements that an be
-    considered read-only, which are used in the nginx and
-    fpm service.
-
-    ## /app/source
-
-    This folder contains any source files and scripts which
-    you may use to build your www path.
-    The build process may be run outside of the coach containers
-    (in which case there is no need to map it in) or it can
-    be mapped in, only to containers that build source.
-
-
-    ## /app/assets
-
-    This mapped folder contains all writeable assets that need
-    to be integrated into your application. This folder allows
-    us to mount the www folder as read-only, in served cases,
-    for extra security
-
-
-    ## /app/backup
-
-    An additional writeable path, into which the application
-    could archive and backup data.
-
-- Type: File
-  Path: app/www/active/index.php
-  Contents: |
-    <?php
-    /**
-     * Put your PHP source code here
-     *
-     * Not that in this demo project, only this folder gets mapped into
-     * the source container, so relative includes that point above will
-     * fail.  You can change the source node bind as needed.
-     */
-
-    phpinfo();
-
-- Type: File
-  Path: app/www/source/.gitkeep
-  Contents: |
-    #
-    # Keep this in git
-    #
-
-- Type: File
-  Path: app/www/assets/.gitkeep
-  Contents: |
-    #
-    # Keep this in git
-    #
-
-- Type: File
-  Path: app/www/backup/.gitkeep
-  Contents: |
-    #
-    # Keep this in git
-    #
+    If a node has a "Build: {path}" declaration, then a custom build should
+    be placed in .coach/{path}/Dockerfile. As a standard we have been using
+    .coach/docker/{build}/Dockerfile for that "Build: docker/{build}"
 
 - Type: File
   Path: .coach/docker/db/README.md
@@ -905,3 +920,153 @@
         mysql -uroot -e "FLUSH PRIVILEGES"
 
     ### /ProjectDB -------------------------------------------------------------------
+
+#
+# Application files
+#
+
+- Type: File
+  Path: app/README.md
+  Contents: |
+    # /app
+
+    The /app folder is a central place into which to put all of your
+    Application specific source code, configurations and assets, in
+    such a manner that this folder can be a distribution target for 
+    an application (keep this in git.)
+    Think of this path as being the root of your actualy project,
+    wheras the parent could be considered the root of the coach
+    implementation.  /app should be something that could work no 
+    matter which tool was being used to manage the project.
+
+    If your project is generally a .coach folder, then you can also 
+    keep that path in the same repository, but it is not compulsory.
+
+    ## /app/source
+
+    An example of where you could put revisionable source code
+    for your project.  This source code could just be put into 
+    the /app/www folder, but in many cases projects have a more
+    complicated build process, which might convert the source into
+    the web root.
+
+    This source code often does not need to be directly mounted into
+    any of the containers, whereas the www/active folder is usually
+    the nginx/fpm web root.
+
+    ## /app/www
+
+    The final web root to be used by most of the containers.
+
+    This gives a source build destination, as a subfolder to 
+    a bound path, which can be deleted, copied and moved as a
+    part of any source build process.
+
+    This separates writeable source into elements that an be
+    considered read-only, which are used in the nginx and 
+    fpm service.
+
+    The typical nginx approach used is to not target directly
+    the /app/www path, as the source code may need to be 
+    repeatedly built/compiled from source, and often the build
+    process moves or deletes it's root path.  For this reason
+    we typically use app/www/active as the web-root, and mount
+    /app/www into any containers, to prevent difficulties with
+    deleted binds etc.
+
+    ## /app/source
+
+    This folder contains any source files and scripts which 
+    you may use to build your www path.
+    The build process may be run outside of the coach containers
+    (in which case there is no need to map it in) or it can
+    be mapped in, only to containers that build source.
+
+
+    ## /app/assets
+
+    This mapped folder contains all writeable assets that need
+    to be integrated into your application. This folder allows
+    us to mount the www folder as read-only, in served cases,
+    for extra security
+
+
+    ## /app/backup
+
+    An additional writeable path, into which the application
+    could archive and backup data.
+
+    Backup can be a target for manuall archivng, but it should be
+    considered a part of any sysadmin tools, and should be used
+    for scheduled and other automated backups.
+
+    ## /app/settings
+
+    A place to put developer, or sysadmin configurations that may
+    get mapped into command containers, or used in specific
+    situations.
+
+- Type: File
+  Path: app/settings/README.md
+  Contents: |
+    # /app/settings
+
+    This path contains folders that be volume targets for configurations, typically
+    only used in developer or sysadmin cases.
+
+    This provides distributable application configuration as a part of your app,
+    but keeps the files out of the source code, and not-mounted when they are not
+    needed.
+
+- Type: File
+  Path: app/settings/console/.gitkeep
+  Content: |
+    .gitkeep
+
+- Type: File
+  Path: app/settings/drush/.gitkeep
+  Content: |
+    .gitkeep
+
+- Type: File
+  Path: app/settings/platformsh/.gitkeep
+  Content: |
+    .gitkeep
+
+# Copy user git settings to the project settings
+- Type: FileCopy
+  Path: app/settings/git
+  Source: ~/.git
+
+# Check out a git copy of the project source
+- Type: GitClone
+  Path: app/source
+  Url: https://github.com/drupal/drupal.git
+
+- Type: File
+  Path: app/www/active/index.php-fpm
+  Contents: |
+    <?php
+    /**
+     * Put your Web Root here
+     *
+     * This is just a placeholder that will show you if
+     * your web-root is properly setup up and connected
+     */
+
+    phpinfo();
+
+- Type: File
+  Path: app/www/active/renderable/.gitkeep
+  Contents: |
+    .gitkeep
+
+- Type: File
+  Path: app/assets/files/.gitkeep
+  Contents: |
+    .gitkeep
+
+- Type: File
+  Path: app/backup/.gitkeep
+  Contents: |
+    .gitkeep
