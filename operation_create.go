@@ -102,7 +102,13 @@ func (node *Node) Create(filters []string, cmdOverride []string, onlyDefault boo
  * Create a container for a node
  */
 func (instance *Instance) Create(overrideCmd []string, force bool) bool {
+
 	node := instance.Node
+
+	if !force && instance.HasContainer(false) {
+		node.log.Info(node.Name+"["+instance.Name+"]: Skipping node instance, which already has a container")
+		return false
+	}
 
 	/**
 		* Transform node data, into a format that can be used
