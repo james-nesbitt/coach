@@ -39,6 +39,8 @@ from beginning to fully operational, with a single command.
 SYNTAX:
 	$/> coach {target} up
 
+	{targets} what target node instances the operation should process ($/> coach help targets)
+
 TODO:
 	- building images may take a long time, so maybe it should be optional;
 	- pulling images may take a long time, so maybe it should be optional;
