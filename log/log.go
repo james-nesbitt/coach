@@ -3,20 +3,18 @@ package log
 import (
 	"fmt"
 	"io"
-	"os"
 	"strconv"
-	"unicode/utf8"
 	"strings"
+	"unicode/utf8"
 )
 
 // Log verbosity enum
 const (
-	VERBOSITY_CRITICAL = iota // STOP and DIE
-	VERBOSITY_SEVERE          // Notify that a serious error has occured
-	VERBOSITY_ERROR           // Inform the user that an error has occured
-	VERBOSITY_WARNING         // Warn the user about something, usually a mild failure
-	VERBOSITY_MESSAGE         // Display a message to the user
-	VERBOSITY_INFO            // a superflous message
+	VERBOSITY_FATAL   = iota // STOP and DIE
+	VERBOSITY_ERROR          // Inform the user that an error has occured
+	VERBOSITY_WARNING        // Warn the user about something, usually a mild failure
+	VERBOSITY_MESSAGE        // Display a message to the user
+	VERBOSITY_INFO           // a superflous message
 
 	VERBOSITY_DEBUG        // Debug: start to display lots of debug details
 	VERBOSITY_DEBUG_LOTS   // Debug: display lots of debug stuff
@@ -24,46 +22,58 @@ const (
 	VERBOSITY_DEBUG_STAAAP // Debug: ridiculous debugging verbosity
 )
 
-// Log factory method
-func GetLog(name string, verbosity int) Log {
-	return Log(&CoachLog{
-		writer:    os.Stdout,
-		targets:   []string{name},
-		verbosity: verbosity,
-	})
-}
-
 // Log output handler for coach
 type Log interface {
-	Target() string // get the name of the log
+	Name() string // get the name of the log
 
 	Verbosity() int             // get the verbosity of the log
 	SetVerbosity(verbosity int) // set a new verbosity for the log
 
 	MakeChild(target string) Log
 
-	Hush()
-	UnHush()
-	IsHushed() bool
+	Hush()          // Hush a log to make warnings, and messages less verbose
+	UnHush()        // Un hush the log
+	IsHushed() bool // is the log hushed
 
-	Critical(messages ...string)
-	Error(messages ...string)
-	Warning(messages ...string)
-	Message(messages ...string)
-	Info(messages ...string)
-	Debug(verbosity int, message string, object ...interface{})
+	Fatal(messages ...string)                                   // Fatal error has occured. Execution should be stopped
+	Error(messages ...string)                                   // A signigicant error has occured, and the user should be warned
+	Warning(messages ...string)                                 // An error has occured, but execution can continue without worry
+	Message(messages ...string)                                 // A user notification
+	Info(messages ...string)                                    // Verbose gratuitous information messages for a user
+	Debug(verbosity int, message string, object ...interface{}) // Debugging output that should only be shown if requested
 }
 
-// CoachLog default logging handler
-type CoachLog struct {
+/**
+ * CoachLog is the default coach logger
+ */
+
+// Log factory method
+func MakeCoachLog(name string, writer io.Writer, verbosity int) Log {
+	return Log(&CoachLog{
+		CoachLogSettings: CoachLogSettings{
+			writer:    writer,
+			stack:     []string{name},
+			verbosity: verbosity,
+			hush:      false,
+		},
+	})
+}
+
+// Configuration struct for a CoachLog
+type CoachLogSettings struct {
 	writer    io.Writer // a log writing target
-	targets   []string  // Target name stack
+	stack     []string  // patent name stack
 	verbosity int       // current verbosity for this log object
 	hush      bool      // if true, and verbosity is standard, then make the log quieter
 }
 
-func (log *CoachLog) Target() string {
-	return log.targets[len(log.targets)]
+// CoachLog default logging handler
+type CoachLog struct {
+	CoachLogSettings
+}
+
+func (log *CoachLog) Name() string {
+	return log.stack[len(log.stack)]
 }
 func (log *CoachLog) Verbosity() int {
 	return log.verbosity
@@ -73,8 +83,12 @@ func (log *CoachLog) SetVerbosity(verbosity int) {
 }
 func (log *CoachLog) MakeChild(target string) Log {
 	return Log(&CoachLog{
-		targets:   append(log.targets, target),
-		verbosity: log.verbosity,
+		CoachLogSettings: CoachLogSettings{
+			writer:    log.writer,
+			stack:     append(log.stack, target),
+			verbosity: log.verbosity,
+			hush:      log.hush,
+		},
 	})
 }
 
@@ -89,8 +103,9 @@ func (log *CoachLog) UnHush() {
 }
 
 // Implement a Critical error
-func (log *CoachLog) Critical(messages ...string) {
-	log.writeLog(VERBOSITY_CRITICAL, messages...)
+func (log *CoachLog) Fatal(messages ...string) {
+	log.writeLog(VERBOSITY_FATAL, messages...)
+	panic("Execution halted on FATAL error")
 }
 
 // Implement an error
@@ -116,8 +131,9 @@ func (log *CoachLog) Info(messages ...string) {
 // Debug message and data
 func (log *CoachLog) Debug(verbosity int, message string, objects ...interface{}) {
 	log.writeLog(verbosity, message)
-	if objects!=nil {
-		fmt.Fprintln(log, objects)
+	if verbosity <= log.verbosity && objects != nil {
+		fmt.Print("	")
+		fmt.Fprintln(log, objects...)
 	}
 }
 
@@ -142,12 +158,10 @@ func (log *CoachLog) writeLog(verbosity int, messages ...string) {
 	}
 
 	switch verbosity {
-	case VERBOSITY_CRITICAL:
-		elements = append(elements, "[CRITICAL]", log.joinTargets())
-	case VERBOSITY_SEVERE:
-		elements = append(elements, "[SEVERE]", log.joinTargets())
+	case VERBOSITY_FATAL:
+		elements = append(elements, "[FATAL]", log.joinStack())
 	case VERBOSITY_ERROR:
-		elements = append(elements, "[ERROR]", log.joinTargets())
+		elements = append(elements, "[ERROR]", log.joinStack())
 
 	case VERBOSITY_WARNING:
 		elements = append(elements, "[WARNING]")
@@ -158,7 +172,7 @@ func (log *CoachLog) writeLog(verbosity int, messages ...string) {
 		elements = append(elements, "-->")
 
 	default:
-		elements = append(elements, "("+strconv.Itoa(verbosity)+")", log.joinTargets())
+		elements = append(elements, "("+strconv.Itoa(verbosity)+")", log.joinStack())
 	}
 
 	elements = append(elements, messages...)
@@ -169,10 +183,10 @@ func (log *CoachLog) writeLog(verbosity int, messages ...string) {
 }
 
 // joins the log targets into a printable string for message prefixing
-func (log *CoachLog) joinTargets() string {
+func (log *CoachLog) joinStack() string {
 	output := ""
-	if len(log.targets) > 0 {
-		output += "[" + strings.Join(log.targets, "][") + "]"
+	if len(log.stack) > 0 {
+		output += "[" + strings.Join(log.stack, "][") + "]"
 	}
 	length := utf8.RuneCountInString(output)
 	if length < 25 {

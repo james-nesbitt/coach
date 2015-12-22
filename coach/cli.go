@@ -1,18 +1,13 @@
 package main
 
 import (
+	"os"
 
-	"github.com/james-nesbitt/coach-tools/client"
-	"github.com/james-nesbitt/coach-tools/project"
+	"github.com/james-nesbitt/coach-tools/conf"
 	"github.com/james-nesbitt/coach-tools/log"
-	"github.com/james-nesbitt/coach-tools/node"
 
+	"github.com/james-nesbitt/coach-tools/libs"
 	"github.com/james-nesbitt/coach-tools/operation"
-)
-
-const (
-	USER_COACH_SUBFOLDER = ".coach" // most apps these days use ~/.config/
-  PROJECT_COACH_SUBFOLDER = ".coach" // this subfolder marks the root of a coach project
 )
 
 var (
@@ -21,10 +16,8 @@ var (
 	globalFlags    map[string]string
 	operationFlags []string
 
-	mainLog    log.Log // Logger interface for tracking messages
-	mainProject   *project.Project
-	mainClient *client.Client
-	mainNodes  *node.Nodes
+	logger  log.Log       // Logger interface for tracking messages
+	project *conf.Project // project configuration
 )
 
 func init() {
@@ -33,67 +26,60 @@ func init() {
 
 	// verbosity
 	var verbosity int = log.VERBOSITY_MESSAGE
-	if globalFlags["verbosity"]!="" {
+	if globalFlags["verbosity"] != "" {
 		switch globalFlags["verbosity"] {
-			case "message":
-				verbosity = log.VERBOSITY_MESSAGE
-			case "info":
-				verbosity = log.VERBOSITY_INFO
-			case "warning":
-				verbosity = log.VERBOSITY_WARNING
-			case "verbose":
-				verbosity = log.VERBOSITY_DEBUG_LOTS
-			case "debug":
-				verbosity = log.VERBOSITY_DEBUG_WOAH
-			case "staaap":
-				verbosity = log.VERBOSITY_DEBUG_STAAAP
+		case "message":
+			verbosity = log.VERBOSITY_MESSAGE
+		case "info":
+			verbosity = log.VERBOSITY_INFO
+		case "warning":
+			verbosity = log.VERBOSITY_WARNING
+		case "verbose":
+			verbosity = log.VERBOSITY_DEBUG_LOTS
+		case "debug":
+			verbosity = log.VERBOSITY_DEBUG_WOAH
+		case "staaap":
+			verbosity = log.VERBOSITY_DEBUG_STAAAP
 		}
 	}
 
-	mainLog = log.GetLog("coach", verbosity)
+	logger = log.MakeCoachLog("coach", os.Stdout, verbosity)
+	logger.Debug(log.VERBOSITY_DEBUG, "Reporting initialization", logger.Verbosity())
 
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Reporting initialization", nil)
+	workingDir, _ := os.Getwd()
+	logger.Debug(log.VERBOSITY_DEBUG, "Working Directory", workingDir)
 
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Main Logger generated", mainLog.Verbosity())
+	project = conf.MakeCoachProject(logger.MakeChild("conf"), workingDir)
+	logger.Debug(log.VERBOSITY_DEBUG, "Project configuration", *project)
 
-	mainLog.Debug(log.VERBOSITY_DEBUG, "Generating main Project confiugration")
-	mainProject = conf.GetProject(mainLog.MakeChild("Project"))
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Main Project configuration", *mainProject)
-
-	mainLog.Debug(log.VERBOSITY_DEBUG, "Generating main Client")
-	mainClient = client.GetClient()
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Main Client", *mainClient)
-
-	mainLog.Debug(log.VERBOSITY_DEBUG, "Collecting Node List")
-	mainNodes = node.GetNodes()
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Main Nodes list", *mainNodes)
-
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Finished initialization", nil)
+	logger.Debug(log.VERBOSITY_DEBUG, "Finished initialization", nil)
 }
 
 func main() {
 
-  if !mainProject.Valid() {
-  	mainLog.Critical("Coach configuration is not processable.  Execution halted.")
-  	return
+	if !project.IsValid(logger.MakeChild("Sanity Check")) {
+		logger.Error("Coach project configuration is not processable.  Execution halted.")
+		return
 	}
 
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Starting CLI Processing", nil)
+	logger.Debug(log.VERBOSITY_DEBUG, "Starting CLI Processing", nil)
 
-	fmt.Println("OPERATIONNAME:", operationName)
-	fmt.Println("TARGETS:", mainTargets)
-	fmt.Println("FALGS:GLOBAL:", globalFlags)
-	fmt.Println("FALGS:OPERATION:", operationFlags)
+	logger.Debug(log.VERBOSITY_DEBUG, "Creating client factories", nil)
 
+	clientFactories := libs.MakeClientFactories(logger.MakeChild("client-factories"), project)
+	logger.Debug(log.VERBOSITY_DEBUG, "Factories", *clientFactories)
 
+	nodes := libs.MakeNodes(logger.MakeChild("nodes"), project, clientFactories)
+	logger.Debug(log.VERBOSITY_DEBUG, "Nodes", *nodes)
 
+	logger.Debug(log.VERBOSITY_DEBUG, "OPERATIONNAME:", operationName)
+	logger.Debug(log.VERBOSITY_DEBUG, "TARGETS:", mainTargets)
+	logger.Debug(log.VERBOSITY_DEBUG, "FLAGS:GLOBAL:", globalFlags)
+	logger.Debug(log.VERBOSITY_DEBUG, "FLAGS:OPERATION:", operationFlags)
 
-	fmt.Println("LOG:", mainLog)
-	fmt.Println("PROJECT:", mainProject)
-	fmt.Println("CLIENT:", mainClient)
-	fmt.Println("NODES:", mainNodes)
+	logger.Debug(log.VERBOSITY_DEBUG, "LOG:", logger)
 
-  mainLog.Debug(log.VERBOSITY_DEBUG, "Finished CLI Processing", true)
+	logger.Debug(log.VERBOSITY_DEBUG, "Finished CLI Processing", true)
 }
 
 /**
