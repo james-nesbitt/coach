@@ -56,6 +56,7 @@ func (clientFactories *ClientFactories) from_ClientFactoriesYamlBytes(logger log
 	for name, client_struct := range yaml_clients {
 		clientType := ""
 		client_json, _ := json.Marshal(client_struct)
+		logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Single client JSON:", string(client_json))
 
 		if clientType_struct, ok := client_struct["Type"]; ok {
 			clientType, _ = clientType_struct.(string)
@@ -68,22 +69,18 @@ func (clientFactories *ClientFactories) from_ClientFactoriesYamlBytes(logger log
 			fallthrough
 		case "fsouza":
 
-			var clientFactorySettings Client_DockerFSouzaFactorySettings
-			err := json.Unmarshal(client_json, &clientFactorySettings)
+			clientFactorySettings := &Client_DockerFSouzaFactorySettings{}
+			err := json.Unmarshal(client_json, clientFactorySettings)
 
-			if err != nil {
-				logger.Warning("Factory definition failed to configure client factory")
+			if err!=nil {
+				logger.Warning("Factory definition failed to configure client factory :"+err.Error())
+				logger.Debug(log.VERBOSITY_DEBUG, "Factory configuration json: ", string(client_json), clientFactorySettings)
 				continue
 			}
 
-			factory := Client_DockerFSouzaFactory{
-				Client_DockerFSouzaFactorySettings: clientFactorySettings,
-				log: logger.MakeChild(clientType),
-			}
-
-			factory.client, err = factory.makeFsouzaClient(logger.MakeChild("fsouza"))
-			if err != nil {
-				logger.Error("Failed to create actual FSouza Docker client from client factory configuration: " + err.Error())
+			factory := Client_DockerFSouzaFactory{}
+			if !factory.Init(logger.MakeChild(clientType), ClientFactorySettings(clientFactorySettings)) {
+				logger.Error("Failed to initialize FSouza factory from client factory configuration: " + err.Error())
 				continue
 			}
 

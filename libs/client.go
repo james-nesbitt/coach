@@ -1,8 +1,19 @@
 package libs
 
-type NodeClientSettings interface {
-	FindRelatedNodes(nodes Nodes)           // Match and retain any node dependencies that the client thinks it may need
-	MakeInstanceSettings(instance Instance) // Make an instance of the client for a Node Instance, from the Node configuration
+import (
+	"github.com/james-nesbitt/coach-tools/log"
+)
+
+type ClientSettings interface {
+	Settings() interface{}
+}
+
+type Client interface {
+	Init(logger log.Log, settings ClientSettings) bool
+	Prepare(logger log.Log, nodes *Nodes, node Node) bool
+
+	NodeClient(node Node) NodeClient
+	InstanceClient(instance Instance) InstanceClient
 }
 
 /**
@@ -12,8 +23,6 @@ type NodeClientSettings interface {
  * when needed.
  */
 type NodeClient interface {
-	TakeNodeSettings(settings NodeClientSettings)
-
 	HasImage() bool // Has this Node got an built or pulled image?
 
 	Info() bool
@@ -23,17 +32,11 @@ type NodeClient interface {
 	Pull() bool
 }
 
-type InstanceClientSettings interface {
-	FindRelatedNodes(nodes Nodes) // Match and retain any node dependencies that the client thinks it may need
-}
-
 /*
  * IntancsClient gives a configured client ready to handle
  * client actions for an Instance, without further configuration
  */
 type InstanceClient interface {
-	TakeInstanceSettings(settings InstanceClientSettings)
-
 	HasContainer() bool // Does this instance have a matching container
 	IsRunning() bool    // Is this instance container running
 

@@ -1,17 +1,38 @@
 package libs
 
-type Instances interface {
+import (
+	"github.com/james-nesbitt/coach-tools/log"
+)
+
+type Instance interface {
+	Id() string
+	MachineName() string
+
 	Can(action string) bool
-	Client() *Client
+
+	Log() log.Log
+	Client() InstanceClient
 }
 
-type BaseInstances struct {
-	Settings *InstanceSettings
-	Client *InstanceClient
+type BaseInstance struct {
+	id string
+	machineName string
+
+	log log.Log
+	client InstanceClient
+}
+func (instance *BaseInstance) Id() string {
+	return instance.id
+}
+func (instance *BaseInstance) MachineName() string {
+	return instance.machineName
 }
 func (instance *BaseInstance) Can(action string) bool {
 	return true
 }
-func (instance *BaseInstance) Client() *Client {
-	return instance.Client
+func (instance *BaseInstance) Log() log.Log {
+	return instance.log
+}
+func (instance *BaseInstance) Client() InstanceClient {
+	return instance.client
 }

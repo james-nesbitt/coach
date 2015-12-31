@@ -72,6 +72,24 @@ func main() {
 	nodes := libs.MakeNodes(logger.MakeChild("nodes"), project, clientFactories)
 	logger.Debug(log.VERBOSITY_DEBUG, "Nodes", *nodes)
 
+	/**
+	 * prepare the whole node set
+	 *
+	 * this means that the nodes building is completed, and now any 
+	 * dependencies and settings should already be included. The prepare
+	 * should now connect pieces together down the chain.
+	 */
+	nodes.Prepare(logger.MakeChild("nodes"))
+
+for name, node := range nodes.NodesMap {
+	nodeLogger := logger.MakeChild(name)
+
+	nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "node", node)
+	nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "instances", node.Instances())
+	nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "client", node.NodeClient())
+}
+
+
 	logger.Debug(log.VERBOSITY_DEBUG, "OPERATIONNAME:", operationName)
 	logger.Debug(log.VERBOSITY_DEBUG, "TARGETS:", mainTargets)
 	logger.Debug(log.VERBOSITY_DEBUG, "FLAGS:GLOBAL:", globalFlags)

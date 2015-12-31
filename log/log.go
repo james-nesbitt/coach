@@ -131,7 +131,7 @@ func (log *CoachLog) Info(messages ...string) {
 // Debug message and data
 func (log *CoachLog) Debug(verbosity int, message string, objects ...interface{}) {
 	log.writeLog(verbosity, message)
-	if verbosity <= log.verbosity && objects != nil {
+	if objects != nil {
 		fmt.Print("	")
 		fmt.Fprintln(log, objects...)
 	}

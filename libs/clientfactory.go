@@ -8,6 +8,7 @@ import (
 // Generate a factory set from a project
 func MakeClientFactories(logger log.Log, project *conf.Project) *ClientFactories {
 	factories := &ClientFactories{
+		log: logger,
 		orderedClientFactories: []ClientFactory{},
 	}
 
@@ -40,6 +41,7 @@ func (clientFactories *ClientFactories) from_Default(logger log.Log) {
 
 // ClientFactories An ordered collection of NodeClient/InstanceCLient factories
 type ClientFactories struct {
+	log log.Log
 	orderedClientFactories []ClientFactory
 }
 
@@ -47,13 +49,17 @@ func (clientFactories *ClientFactories) AddClientFactory(ID string, client Clien
 	clientFactories.orderedClientFactories = append(clientFactories.orderedClientFactories, client)
 }
 
-func (clientFactories *ClientFactories) MatchClientFactory(requirements FactoryMatchRequirements) ClientFactory {
+func (clientFactories *ClientFactories) MatchClientFactory(requirements FactoryMatchRequirements) (ClientFactory, bool) {
 	for _, clientFactory := range clientFactories.orderedClientFactories {
 		if clientFactory.Match(requirements) {
-			return clientFactory
+			clientFactories.log.Debug(log.VERBOSITY_DEBUG, "Matched client factory: "+clientFactory.Id(), nil)					
+			return clientFactory, true
 		}
 	}
-	return nil
+
+	clientFactories.log.Error("Failed to match client factory")
+	clientFactories.log.Debug(log.VERBOSITY_DEBUG, "Requirements", requirements)
+	return nil, false
 }
 
 // HasFactories is an empty test for the factories set
@@ -68,8 +74,14 @@ type FactoryMatchRequirements struct {
 }
 
 type ClientFactory interface {
+	Id() string
 	Match(requirements FactoryMatchRequirements) bool
 
-	MakeNodeClient(logger log.Log, configJson string) NodeClient
-	MakeInstanceClient(logger log.Log, configJson string) InstanceClient
+	Init(logger log.Log, settings ClientFactorySettings) bool
+
+	MakeClient(logger log.Log, settings ClientSettings) (Client, bool)
+}
+
+type ClientFactorySettings interface {
+	Settings() interface{}
 }
