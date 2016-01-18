@@ -41,7 +41,7 @@ func (clientFactories *ClientFactories) from_Default(logger log.Log) {
 
 // ClientFactories An ordered collection of NodeClient/InstanceCLient factories
 type ClientFactories struct {
-	log log.Log
+	log                    log.Log
 	orderedClientFactories []ClientFactory
 }
 
@@ -52,7 +52,7 @@ func (clientFactories *ClientFactories) AddClientFactory(ID string, client Clien
 func (clientFactories *ClientFactories) MatchClientFactory(requirements FactoryMatchRequirements) (ClientFactory, bool) {
 	for _, clientFactory := range clientFactories.orderedClientFactories {
 		if clientFactory.Match(requirements) {
-			clientFactories.log.Debug(log.VERBOSITY_DEBUG, "Matched client factory: "+clientFactory.Id(), nil)					
+			clientFactories.log.Debug(log.VERBOSITY_DEBUG, "Matched client factory: "+clientFactory.Id(), nil)
 			return clientFactory, true
 		}
 	}
@@ -77,7 +77,7 @@ type ClientFactory interface {
 	Id() string
 	Match(requirements FactoryMatchRequirements) bool
 
-	Init(logger log.Log, settings ClientFactorySettings) bool
+	Init(logger log.Log, project *conf.Project, settings ClientFactorySettings) bool
 
 	MakeClient(logger log.Log, settings ClientSettings) (Client, bool)
 }

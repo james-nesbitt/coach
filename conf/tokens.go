@@ -1,5 +1,14 @@
 package conf
 
+import (
+	"strings"
+)
+
+const (
+	TOKEN_KEY_PREFIX = "%"
+	TOKEN_KEY_SUFFIX = ""
+)
+
 func MakeTokens() Tokens {
 	return Tokens{}
 }
@@ -13,5 +22,9 @@ func (tokens Tokens) SetToken(key string, value string) {
 
 // Replce any tokens in the string with tokens from the token map
 func (tokens *Tokens) TokenReplace(text string) string {
+	for key, value := range *tokens {
+		key = TOKEN_KEY_PREFIX+key+TOKEN_KEY_SUFFIX
+		text = strings.Replace(text, key, value, -1)
+	}
 	return text
 }

@@ -5,6 +5,8 @@ import (
 )
 
 type Instance interface {
+	Init(logger log.Log, id string, machineName string, client Client) bool
+
 	Id() string
 	MachineName() string
 
@@ -15,12 +17,25 @@ type Instance interface {
 }
 
 type BaseInstance struct {
-	id string
+	id          string
 	machineName string
 
-	log log.Log
-	client InstanceClient
+	log    log.Log
+	client Client
 }
+
+func (instance *BaseInstance) Init(logger log.Log, id string, machineName string, client Client) bool {
+	instance.id = id
+	instance.machineName = machineName
+	instance.log = logger
+	instance.client = client
+
+	return true
+}
+func (instance *BaseInstance) Prepare() bool {
+	return true
+}
+
 func (instance *BaseInstance) Id() string {
 	return instance.id
 }
@@ -34,5 +49,5 @@ func (instance *BaseInstance) Log() log.Log {
 	return instance.log
 }
 func (instance *BaseInstance) Client() InstanceClient {
-	return instance.client
+	return instance.client.InstanceClient(instance)
 }

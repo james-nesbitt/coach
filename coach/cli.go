@@ -66,38 +66,38 @@ func main() {
 
 	logger.Debug(log.VERBOSITY_DEBUG, "Creating client factories", nil)
 
+	// get a list of client factories that we can use for nodes
 	clientFactories := libs.MakeClientFactories(logger.MakeChild("client-factories"), project)
 	logger.Debug(log.VERBOSITY_DEBUG, "Factories", *clientFactories)
 
+	// Build our list of nodes
 	nodes := libs.MakeNodes(logger.MakeChild("nodes"), project, clientFactories)
 	logger.Debug(log.VERBOSITY_DEBUG, "Nodes", *nodes)
 
 	/**
 	 * prepare the whole node set
 	 *
-	 * this means that the nodes building is completed, and now any 
+	 * this means that the nodes building is completed, and now any
 	 * dependencies and settings should already be included. The prepare
 	 * should now connect pieces together down the chain.
 	 */
 	nodes.Prepare(logger.MakeChild("nodes"))
 
-for name, node := range nodes.NodesMap {
-	nodeLogger := logger.MakeChild(name)
+	/**
+	 * convert the target string list from the arguments into a target set
+	 */
+	targets := nodes.Targets(logger.MakeChild("targets"), mainTargets)
+	logger.Debug(log.VERBOSITY_DEBUG, "Sorted Targets", mainTargets, targets)
 
-	nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "node", node)
-	nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "instances", node.Instances())
-	nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "client", node.NodeClient())
-}
+	/**
+	 * Create an operation set
+	 */
+	operations := operation.MakeOperation(logger.MakeChild("operations"), operationName, operationFlags, targets)
+	logger.Debug(log.VERBOSITY_DEBUG, "OPERATION:", operationName, operationFlags, operations)
 
+	operations.Run(logger.MakeChild("operation"))
 
-	logger.Debug(log.VERBOSITY_DEBUG, "OPERATIONNAME:", operationName)
-	logger.Debug(log.VERBOSITY_DEBUG, "TARGETS:", mainTargets)
-	logger.Debug(log.VERBOSITY_DEBUG, "FLAGS:GLOBAL:", globalFlags)
-	logger.Debug(log.VERBOSITY_DEBUG, "FLAGS:OPERATION:", operationFlags)
-
-	logger.Debug(log.VERBOSITY_DEBUG, "LOG:", logger)
-
-	logger.Debug(log.VERBOSITY_DEBUG, "Finished CLI Processing", true)
+	logger.Debug(log.VERBOSITY_DEBUG, "Finished CLI Processing", nil)
 }
 
 /**
@@ -135,7 +135,6 @@ func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers [
 			fallthrough
 		case "--staaap":
 			globalFlags["verbosity"] = "staaap"
-			fallthrough
 
 		case "--all": // this is default anyway
 			targetIdentifiers = append(targetIdentifiers, "$all")
@@ -162,7 +161,7 @@ func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers [
 
 			default: // operation
 
-				// if we recognize the next argument as an operation, then set it,
+				// if we recognize the subsequent argument as an operation, then set it,
 				// otherwise we assume a default operation, and that op args have started
 				// @TODO there has got to be a better way of doing this.
 				if operation.IsValidOperationName(arg) {
@@ -181,6 +180,11 @@ func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers [
 			operationFlags = flags[index:]
 			break
 		}
+	}
+
+	// if not targets were specifiec, then use all the targets
+	if len(targetIdentifiers) == 0 {
+		targetIdentifiers = []string{"$all"}
 	}
 
 	// return is handles via named arguments

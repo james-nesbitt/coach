@@ -5,23 +5,27 @@ import (
 )
 
 type FixedInstancesSettings struct {
-	Names []string 
+	Names []string
 }
+
 func (settings FixedInstancesSettings) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return unmarshal(&settings.Names)
 }
-func (settings FixedInstancesSettings) UnSerialize() interface{} {
+func (settings FixedInstancesSettings) Settings() interface{} {
 	return settings
 }
 
 type FixedInstances struct {
-	log log.Log
-	settings FixedInstancesSettings
-	instances map[string]*FixedInstance
-}
-func (instances *FixedInstances) Init(logger log.Log, client Client, settings InstancesSettings) bool {
+	BaseInstances
 
-	switch asserted := settings.UnSerialize().(type) {
+	log      log.Log
+	settings FixedInstancesSettings
+}
+
+func (instances *FixedInstances) Init(logger log.Log, machineName string, client Client, settings InstancesSettings) bool {
+	instances.BaseInstances.Init(logger, machineName, client, settings)
+
+	switch asserted := settings.Settings().(type) {
 	case FixedInstancesSettings:
 		instances.settings = asserted
 	}
@@ -30,14 +34,26 @@ func (instances *FixedInstances) Init(logger log.Log, client Client, settings In
 }
 func (instances *FixedInstances) Prepare(logger log.Log, client Client, nodes *Nodes, node Node) bool {
 	logger.Debug(log.VERBOSITY_DEBUG_WOAH, "Prepare: Fixed Instances")
+
+	for _, name := range instances.settings.Names {
+		machineName := instances.MachineName() + "_" + name
+		instance := Instance(&FixedInstance{})
+
+		if instance.Init(logger.MakeChild(name), name, machineName, client) {
+			instances.instancesMap[name] = instance
+			instances.instancesOrder = append(instances.instancesOrder, name)
+		}
+	}
+
 	return true
 }
-func (instances *FixedInstances) Instance(id string) (instance Instance, ok bool) {
 
-	return nil, true
+// Give a filterable instances for this instances object
+func (instances *FixedInstances) FilterableInstances() (FilterableInstances, bool) {
+	filterableInstances := BaseFilterableInstances{Instances: Instances(instances), filters: []string{}}
+	return FilterableInstances(&filterableInstances), true
 }
 
-
 type FixedInstance struct {
-
+	BaseInstance
 }

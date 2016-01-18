@@ -41,6 +41,8 @@ type Log interface {
 	Message(messages ...string)                                 // A user notification
 	Info(messages ...string)                                    // Verbose gratuitous information messages for a user
 	Debug(verbosity int, message string, object ...interface{}) // Debugging output that should only be shown if requested
+
+	Write(message []byte) (int, error)	
 }
 
 /**
@@ -131,7 +133,7 @@ func (log *CoachLog) Info(messages ...string) {
 // Debug message and data
 func (log *CoachLog) Debug(verbosity int, message string, objects ...interface{}) {
 	log.writeLog(verbosity, message)
-	if objects != nil {
+	if +verbosity <= log.verbosity && len(objects)>0 && objects[0]!=nil {
 		fmt.Print("	")
 		fmt.Fprintln(log, objects...)
 	}
@@ -167,7 +169,11 @@ func (log *CoachLog) writeLog(verbosity int, messages ...string) {
 		elements = append(elements, "[WARNING]")
 
 	case VERBOSITY_MESSAGE:
-
+		prefix := log.stack[len(log.stack)-1]+": "
+		if length := utf8.RuneCountInString(prefix); length < 25 {
+			prefix += strings.Repeat("-", 15-length)
+		}
+		elements = append(elements, prefix)
 	case VERBOSITY_INFO:
 		elements = append(elements, "-->")
 

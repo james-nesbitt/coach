@@ -23,12 +23,12 @@ const (
 func (clientFactories *ClientFactories) from_ClientFactoriesYaml(logger log.Log, project *conf.Project) {
 	for _, yamlConfFilePath := range project.Paths.GetConfSubPaths(COACH_CONF_CLIENTSFILE) {
 		logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Looking for YAML clients file: "+yamlConfFilePath)
-		clientFactories.from_ClientFactoriesYamlFilePath(logger, yamlConfFilePath)
+		clientFactories.from_ClientFactoriesYamlFilePath(logger, project, yamlConfFilePath)
 	}
 }
 
 // Try to configure factories by parsing yaml from a conf file
-func (clientFactories *ClientFactories) from_ClientFactoriesYamlFilePath(logger log.Log, yamlFilePath string) bool {
+func (clientFactories *ClientFactories) from_ClientFactoriesYamlFilePath(logger log.Log, project *conf.Project, yamlFilePath string) bool {
 	// read the config file
 	yamlFile, err := ioutil.ReadFile(yamlFilePath)
 	if err != nil {
@@ -36,7 +36,7 @@ func (clientFactories *ClientFactories) from_ClientFactoriesYamlFilePath(logger 
 		return false
 	}
 
-	if !clientFactories.from_ClientFactoriesYamlBytes(logger.MakeChild(yamlFilePath), yamlFile) {
+	if !clientFactories.from_ClientFactoriesYamlBytes(logger.MakeChild(yamlFilePath), project, yamlFile) {
 		logger.Warning("YAML marshalling of the YAML clients file failed [" + yamlFilePath + "]: " + err.Error())
 		return false
 	}
@@ -44,7 +44,12 @@ func (clientFactories *ClientFactories) from_ClientFactoriesYamlFilePath(logger 
 }
 
 // Try to configure factories by parsing yaml from a byte stream
-func (clientFactories *ClientFactories) from_ClientFactoriesYamlBytes(logger log.Log, yamlBytes []byte) bool {
+func (clientFactories *ClientFactories) from_ClientFactoriesYamlBytes(logger log.Log, project *conf.Project, yamlBytes []byte) bool {
+	// token replace
+	tokens := &project.Tokens
+	yamlBytes = []byte( tokens.TokenReplace(string(yamlBytes)) )
+	logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Tokenized Bytes", string(yamlBytes))	
+
 	var yaml_clients map[string]map[string]interface{}
 	err := yaml.Unmarshal(yamlBytes, &yaml_clients)
 	if err != nil {
@@ -69,17 +74,17 @@ func (clientFactories *ClientFactories) from_ClientFactoriesYamlBytes(logger log
 			fallthrough
 		case "fsouza":
 
-			clientFactorySettings := &Client_DockerFSouzaFactorySettings{}
+			clientFactorySettings := &FSouza_ClientFactorySettings{}
 			err := json.Unmarshal(client_json, clientFactorySettings)
 
-			if err!=nil {
-				logger.Warning("Factory definition failed to configure client factory :"+err.Error())
+			if err != nil {
+				logger.Warning("Factory definition failed to configure client factory :" + err.Error())
 				logger.Debug(log.VERBOSITY_DEBUG, "Factory configuration json: ", string(client_json), clientFactorySettings)
 				continue
 			}
 
-			factory := Client_DockerFSouzaFactory{}
-			if !factory.Init(logger.MakeChild(clientType), ClientFactorySettings(clientFactorySettings)) {
+			factory := FSouza_ClientFactory{}
+			if !factory.Init(logger.MakeChild(clientType), project, ClientFactorySettings(clientFactorySettings)) {
 				logger.Error("Failed to initialize FSouza factory from client factory configuration: " + err.Error())
 				continue
 			}

@@ -1,30 +1,30 @@
 package libs
 
 import (
-	"strings"
 	"io/ioutil"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/james-nesbitt/coach-tools/log"
 	"github.com/james-nesbitt/coach-tools/conf"
+	"github.com/james-nesbitt/coach-tools/log"
 )
 
 const (
-	COACH_NODES_YAMLFILE = "nodes.yml" // nodes are kept in the nodes.yml file
-	NODES_YAML_DEFAULTNODETYPE = "service" // by default we assume that a node is a service node
+	COACH_NODES_YAMLFILE       = "nodes.yml" // nodes are kept in the nodes.yml file
+	NODES_YAML_DEFAULTNODETYPE = "service"   // by default we assume that a node is a service node
 )
 
 // Look for nodes configurations inside the project confpaths
 func (nodes *Nodes) from_NodesYaml(logger log.Log, project *conf.Project, clientFactories *ClientFactories, overwrite bool) {
 	for _, yamlNodesFilePath := range project.Paths.GetConfSubPaths(COACH_NODES_YAMLFILE) {
 		logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Looking for YAML nodes file: "+yamlNodesFilePath)
-		nodes.from_NodesYamlFilePath(logger, clientFactories, yamlNodesFilePath, overwrite)
+		nodes.from_NodesYamlFilePath(logger, project, clientFactories, yamlNodesFilePath, overwrite)
 	}
 }
 
 // Try to configure a project by parsing yaml from a conf file
-func (nodes *Nodes) from_NodesYamlFilePath(logger log.Log, clientFactories *ClientFactories, yamlFilePath string, overwrite bool) bool {
+func (nodes *Nodes) from_NodesYamlFilePath(logger log.Log, project *conf.Project, clientFactories *ClientFactories, yamlFilePath string, overwrite bool) bool {
 	// read the config file
 	yamlFile, err := ioutil.ReadFile(yamlFilePath)
 	if err != nil {
@@ -32,7 +32,7 @@ func (nodes *Nodes) from_NodesYamlFilePath(logger log.Log, clientFactories *Clie
 		return false
 	}
 
-	if !nodes.from_NodesYamlBytes(logger.MakeChild(yamlFilePath), clientFactories, yamlFile, overwrite) {
+	if !nodes.from_NodesYamlBytes(logger.MakeChild(yamlFilePath), project, clientFactories, yamlFile, overwrite) {
 		logger.Warning("YAML marshalling of the YAML nodes file failed [" + yamlFilePath + "]: " + err.Error())
 		return false
 	}
@@ -40,7 +40,12 @@ func (nodes *Nodes) from_NodesYamlFilePath(logger log.Log, clientFactories *Clie
 }
 
 // Try to configure factories by parsing yaml from a byte stream
-func (nodes *Nodes) from_NodesYamlBytes(logger log.Log, clientFactories *ClientFactories, yamlBytes []byte, overwrite bool) bool {
+func (nodes *Nodes) from_NodesYamlBytes(logger log.Log, project *conf.Project, clientFactories *ClientFactories, yamlBytes []byte, overwrite bool) bool {
+	// token replace
+	tokens := &project.Tokens
+	yamlBytes = []byte( tokens.TokenReplace(string(yamlBytes)) )
+	logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Tokenized Bytes", string(yamlBytes))	
+
 	var nodes_yaml map[string]node_yaml_v2
 	err := yaml.Unmarshal(yamlBytes, &nodes_yaml)
 	if err != nil {
@@ -49,65 +54,68 @@ func (nodes *Nodes) from_NodesYamlBytes(logger log.Log, clientFactories *ClientF
 	}
 	logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "YAML source:", nodes_yaml)
 
-	NodesListLoop:
-		for name, node_yaml := range nodes_yaml {
-			nodeLogger := logger.MakeChild(name)
+NodesListLoop:
+	for name, node_yaml := range nodes_yaml {
 
-			if _, exists := nodes.Node(name); exists && !overwrite {
-				nodeLogger.Warning("YAML node key already exists")
-				continue NodesListLoop
-			}
-			if node_yaml.Disabled {
-				nodeLogger.Warning("YAML node key is marked as disabled")
-				continue NodesListLoop
-			}
+		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Yaml Node:", name, node_yaml)
 
-			var node Node 
-			// Start off assuming a default type
-			nodeType := NODES_YAML_DEFAULTNODETYPE
+		nodeLogger := logger.MakeChild(name)
 
-			// if the node conf has a type, then use it
-			if explicitType, ok := node_yaml.Type(); ok {
-				nodeType = explicitType
-			}
-
-			switch strings.ToLower(nodeType) {
-			case "build":
-				node = Node(&BuildNode{})
-			case "volume":
-				node = Node(&VolumeNode{})
-			case "service":
-				node = Node(&ServiceNode{})
-			case "command":
-				node = Node(&CommandNode{})
-			default:
-				nodeLogger.Warning("YAML node is an unknown type '"+nodeType)
-				continue NodesListLoop
-			}
-
-			if node!=nil {
-				var client Client
-				var instances Instances
-
-				var ok bool
-
-				if client, ok = node_yaml.GetClient(nodeLogger, clientFactories); !ok {
-					nodeLogger.Error("Invalid Client configuration in node ")
-				}
-				if instances, ok = node_yaml.GetInstances(nodeLogger, client); !ok {
-					nodeLogger.Error("Invalid Instances configuration in node")
-				}
-
-				nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Building node from components:", client, instances)
-
-				// run the node initializaer with the collected obkjects
-				if node.Init(nodeLogger, client, instances) {
-					nodeLogger.Debug(log.VERBOSITY_DEBUG_LOTS, "Adding node to nodes list:", name, node)
-					nodes.SetNode(name, node, true)
-				}
-			}
-
+		if _, exists := nodes.Node(name); exists && !overwrite {
+			nodeLogger.Warning("YAML node key already exists")
+			continue NodesListLoop
 		}
+		if node_yaml.Disabled {
+			nodeLogger.Warning("YAML node key is marked as disabled")
+			continue NodesListLoop
+		}
+
+		var node Node
+
+		// Start off assuming a default type
+		nodeType := NODES_YAML_DEFAULTNODETYPE
+		// if the node conf has a type, then use it
+		if explicitType, ok := node_yaml.Type(); ok {
+			nodeType = explicitType
+		}
+
+		switch strings.ToLower(strings.TrimSpace(nodeType)) {
+		case "command":
+			node = Node(&CommandNode{})
+		case "build":
+			node = Node(&BuildNode{})
+		case "volume":
+			node = Node(&VolumeNode{})
+		case "service":
+			node = Node(&ServiceNode{})
+		default:
+			nodeLogger.Warning("YAML node is an unknown type: " + nodeType)
+			continue NodesListLoop
+		}
+
+		if node != nil {
+			var client Client
+			var instancesSettings InstancesSettings
+
+			var ok bool
+
+			if client, ok = node_yaml.GetClient(nodeLogger, clientFactories); !ok {
+				nodeLogger.Error("Invalid Client configuration in node ")
+			}
+			if instancesSettings, ok = node_yaml.GetInstancesSettings(nodeLogger); !ok {
+				nodeLogger.Error("Invalid Instances configuration in node")
+			}
+
+			nodeLogger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Building node from components:", client, instancesSettings)
+
+			// run the node initializaer with the collected obkjects
+			if node.Init(nodeLogger, name, project, client, instancesSettings) {
+				nodeLogger.Debug(log.VERBOSITY_DEBUG_LOTS, "Adding node to nodes list:", name, node)
+				nodes.SetNode(name, node, true)
+			}
+		}
+
+	}
 
 	return true
 }
@@ -122,7 +130,7 @@ type node_yaml_v1 struct {
 
 	Instances string `yaml:"Instances,omitempty"`
 
-	Docker Client_DockerFSouzaSettings `yaml:"Docker,omitempty"`
+	Docker FSouza_ClientSettings `yaml:"Docker,omitempty"`
 
 	Requires []string `yaml:"Requires,omitempty"`
 }
@@ -130,58 +138,53 @@ type node_yaml_v1 struct {
 // 2. V2 Coach yaml format, with fixed fields
 type node_yaml_v2 struct {
 	Disabled bool   `yaml:"Disabled,omitempty"`
-	NodeType     string `yaml:"Type,omitempty"`
+	NodeType string `yaml:"Type,omitempty"`
 
 	ScaledInstances ScaledInstancesSettings `yaml:"Scale,omitempty"`
-	FixedInstances FixedInstancesSettings `yaml:"Instances,omitempty"`
-	TempInstances bool `yaml:"Disposable,omitempty"`
+	FixedInstances  FixedInstancesSettings  `yaml:"Instances,omitempty"`
+	SingleInstances bool                    `yaml:"Single,omitempty"`
+	TempInstances   bool                    `yaml:"Disposable,omitempty"`
 
-	Docker Client_DockerFSouzaSettings `yaml:"Docker,omitempty"`
+	Docker FSouza_ClientSettings `yaml:"Docker,omitempty"`
 
 	Requires map[string][]string `yaml:"Requires,omitempty"`
 }
 
 func (node *node_yaml_v2) Type() (string, bool) {
-	return node.NodeType, node.NodeType!=""
+	return node.NodeType, node.NodeType != ""
 }
 func (node *node_yaml_v2) GetClient(logger log.Log, clientFactories *ClientFactories) (Client, bool) {
 
 	// if a docker client was configured then try to take it.
 	// if !(node.Docker.Config.Image=="" && node.Docker.BuildPath=="") {
-		if factory, ok := clientFactories.MatchClientFactory( FactoryMatchRequirements{Type:"docker"} ); ok {
-			if client, ok := factory.MakeClient(logger, ClientSettings(&node.Docker)); ok {
-				return client, true
-			}
-		} else {
-			logger.Debug(log.VERBOSITY_DEBUG_STAAAP,"Failed to match client factory:", factory)
+	if factory, ok := clientFactories.MatchClientFactory(FactoryMatchRequirements{Type: "docker"}); ok {
+		if client, ok := factory.MakeClient(logger, ClientSettings(&node.Docker)); ok {
+			return client, true
 		}
+	} else {
+		logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Failed to match client factory:", factory)
+	}
 	// }
 
 	logger.Warning("Invalid YAML node settings: improper client configuration")
 	return nil, false
 }
-func (node *node_yaml_v2) GetInstances(logger log.Log, client Client) (Instances, bool) {
-
+func (node *node_yaml_v2) GetInstancesSettings(logger log.Log) (InstancesSettings, bool) {
 	var instancesSettings InstancesSettings
-	var instances Instances
 
-	if node.ScaledInstances.Maximum>0 {
+	if node.ScaledInstances.Maximum > 0 {
 		instancesSettings = InstancesSettings(&node.ScaledInstances)
-		instances = Instances(&ScaledInstances{})
-	} else if len([]string(node.FixedInstances.Names))>0 {
+	} else if len([]string(node.FixedInstances.Names)) > 0 {
 		instancesSettings = InstancesSettings(&node.FixedInstances)
-		instances = Instances(&FixedInstances{})
 	} else if bool(node.TempInstances) {
 		instancesSettings = InstancesSettings(&TemporaryInstancesSettings{"run"})
-		instances = Instances(&TemporaryInstances{})
+	} else if bool(node.SingleInstances) {
+		instancesSettings = InstancesSettings(&SingleInstancesSettings{Name: "single"})
 	} else {
-		instancesSettings = InstancesSettings(&SingleInstancesSettings{Name:"single"})
-		instances = Instances(&SingleInstances{})
+		instancesSettings = InstancesSettings(&NullInstancesSettings{})
 	}
 
-	instances.Init(logger.MakeChild("instances"), client, instancesSettings)
-
-	return instances, true
+	return instancesSettings, true
 }
 
 // 3. Dynamic map based format for yaml nodes
