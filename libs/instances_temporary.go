@@ -2,13 +2,19 @@ package libs
 
 import (
 	"github.com/james-nesbitt/coach-tools/log"
+
 	"math/rand"
+	"time"
 )
 
 const (
 	INSTANCE_RANDOM_MACHINENAMESUFFIXLENGTH = 8
 	INSTANCE_RANDOM_MACHINENAMECHARS        = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 type TemporaryInstancesSettings struct {
 	Name string
@@ -39,8 +45,22 @@ func (instances *TemporaryInstances) Prepare(logger log.Log, client Client, node
 	return true
 }
 func (instances *TemporaryInstances) Instance(id string) (instance Instance, ok bool) {
+	if instance, ok = instances.instancesMap[id]; ok {
+		return instance, ok
+	}
 
-	return nil, false
+	if id == "" {
+		id = instances.randMachineName()
+	}
+
+	machineName := instances.MachineName() + "_" + id
+
+	instance = Instance(&TemporaryInstance{})
+	instance.Init(instances.log.MakeChild(id), id, machineName, instances.client)
+
+	instances.instancesMap[id] = instance
+	instances.instancesOrder = append(instances.instancesOrder, id)
+	return instance, true
 }
 
 // Give a filterable instances for this instances object
@@ -49,15 +69,14 @@ func (instances *TemporaryInstances) FilterableInstances() (FilterableInstances,
 	return FilterableInstances(&filterableInstances), true
 }
 
-type TemporaryInstance struct {
-	Id          string
-	MachineName string
-}
-
-func (instance *TemporaryInstance) randMachineName() string {
+func (instances *TemporaryInstances) randMachineName() string {
 	b := make([]byte, INSTANCE_RANDOM_MACHINENAMESUFFIXLENGTH)
 	for i := range b {
 		b[i] = INSTANCE_RANDOM_MACHINENAMECHARS[rand.Int63()%int64(len(INSTANCE_RANDOM_MACHINENAMECHARS))]
 	}
-	return instance.Id + string(b)
+	return string(b)
+}
+
+type TemporaryInstance struct {
+	BaseInstance
 }

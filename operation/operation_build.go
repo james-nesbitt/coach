@@ -49,7 +49,7 @@ NOTES:
 func (operation *BuildOperation) Run(logger log.Log) bool {
 	logger.Message("RUNNING BUILD OPERATION")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
-	
+
 	for _, targetID := range operation.targets.TargetOrder() {
 		target, targetExists := operation.targets.Target(targetID)
 		if !targetExists {

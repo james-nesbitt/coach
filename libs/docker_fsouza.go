@@ -106,13 +106,17 @@ func (clientFactory *FSouza_ClientFactory) MakeClient(logger log.Log, settings C
 
 // FSouza client settings struct
 type FSouza_ClientSettings struct {
-	log log.Log
+	log          log.Log
 	conf         *conf.Project
 	dependencies *Dependencies
 
-	BuildPath string            `json:"Build,omitempty" yaml:"Build,omitempty"`
-	Config    docker.Config     `json:"Config,omitempty" yaml:"Config,omitempty"`
-	Host      docker.HostConfig `json:"Host,omitempty" yaml:"Host,omitempty"`
+	Author     string `json:"Author,omitempty" yaml:"Author,omitempty"`
+	Repository string `json:"Repo,omitempty" yaml:"Repo,omitempty"`
+
+	BuildPath string `json:"Build,omitempty" yaml:"Build,omitempty"`
+
+	Config docker.Config     `json:"Config,omitempty" yaml:"Config,omitempty"`
+	Host   docker.HostConfig `json:"Host,omitempty" yaml:"Host,omitempty"`
 }
 
 func (settings *FSouza_ClientSettings) Init(logger log.Log, project *conf.Project) bool {
@@ -129,7 +133,7 @@ func (settings *FSouza_ClientSettings) Prepare(logger log.Log, nodes *Nodes) boo
 	 * - any relative path is remapped to be from the project root
 	 * - any path starting with ~ is remapped to the user home flder
 	 * - any absolute paths are left as is
-	 */	 
+	 */
 	if settings.Host.Binds != nil {
 		var binds []string
 		for index, bind := range settings.Host.Binds {
@@ -161,7 +165,7 @@ func (settings *FSouza_ClientSettings) dependenciesFromConfig(logger log.Log, no
 	if config != nil {
 		for _, item := range config {
 			name := strings.SplitN(item, ":", 3)[0]
-			if node, ok := nodes.Node(name); ok {			
+			if node, ok := nodes.Node(name); ok {
 				settings.dependencies.SetDependency(name, Dependency(&NodeDependency{Node: node}))
 			}
 		}
@@ -172,7 +176,10 @@ func (settings *FSouza_ClientSettings) Settings() interface{} {
 	return settings
 }
 func (settings *FSouza_ClientSettings) nodeSettings(client *FSouza_Client, node Node) FSouza_ClientSettings {
-	copy := settings.copy(nil)
+	tokens := conf.Tokens{}
+	tokens.SetToken("NODE", node.Id())
+	tokens.SetToken("NODEMACHINE", node.MachineName())
+	copy := settings.copy(tokens)
 
 	return copy
 }
@@ -183,10 +190,9 @@ func (settings *FSouza_ClientSettings) instanceSettings(client *FSouza_Client, i
 	tokens := conf.Tokens{}
 	tokens.SetToken("INSTANCE", instance.Id())
 	tokens.SetToken("INSTANCEMACHINE", instance.MachineName())
-
 	copy := settings.copy(tokens)
 
-	if settings.Host.Links!=nil && len(settings.Host.Links)>0 {
+	if settings.Host.Links != nil && len(settings.Host.Links) > 0 {
 		newLinks := []string{}
 		for _, link := range settings.Host.Links {
 			linkSplit := strings.SplitN(link, ":", 2)
@@ -194,7 +200,7 @@ func (settings *FSouza_ClientSettings) instanceSettings(client *FSouza_Client, i
 				for _, transformed := range transformedSet {
 					linkSplit[0] = transformed
 					linkSplit[1] = strings.Replace(linkSplit[1], "%SOURCE", transformed, -1)
-					newLinks = append(newLinks, strings.Join(linkSplit, ":"))					
+					newLinks = append(newLinks, strings.Join(linkSplit, ":"))
 				}
 			} else {
 				newLinks = append(newLinks, link)
@@ -202,20 +208,20 @@ func (settings *FSouza_ClientSettings) instanceSettings(client *FSouza_Client, i
 		}
 		copy.Host.Links = newLinks
 	}
-	if settings.Host.VolumesFrom!=nil && len(settings.Host.VolumesFrom)>0 {
+	if settings.Host.VolumesFrom != nil && len(settings.Host.VolumesFrom) > 0 {
 		newVolumesFrom := []string{}
 		for _, volumeFrom := range settings.Host.VolumesFrom {
-			volumeFromSplit := strings.SplitN(volumeFrom, ":", 2)			
+			volumeFromSplit := strings.SplitN(volumeFrom, ":", 2)
 			if transformedSet, found := settings.dependencies.DependencyIdTranform(volumeFromSplit[0]); found {
-				for _, transformed := range transformedSet {					
+				for _, transformed := range transformedSet {
 					volumeFromSplit[0] = transformed
-					newVolumesFrom = append(newVolumesFrom, strings.Join(volumeFromSplit, ":"))					
+					newVolumesFrom = append(newVolumesFrom, strings.Join(volumeFromSplit, ":"))
 				}
 			} else {
 				newVolumesFrom = append(newVolumesFrom, volumeFrom)
 			}
 		}
-		copy.Host.VolumesFrom = newVolumesFrom			
+		copy.Host.VolumesFrom = newVolumesFrom
 	}
 
 	return copy
@@ -322,7 +328,7 @@ func (client *FSouza_Client) InstancesClient(instances Instances) InstancesClien
 }
 func (client *FSouza_Client) InstanceClient(instance Instance) InstanceClient {
 	instanceClient := &FSouza_InstanceClient{}
-	instanceClient.Init(client, instance)	
+	instanceClient.Init(client, instance)
 	return InstanceClient(instanceClient)
 }
 
@@ -649,10 +655,6 @@ func (client *FSouza_InstanceClient) IsRunning() bool {
  * NodeClient interface: Operation Methods
  */
 
-func (client *FSouza_InstanceClient) Attach(logger log.Log, force bool) bool {
-	return false
-}
-
 func (client *FSouza_NodeClient) Build(logger log.Log, force bool) bool {
 	image, tag := client.GetImageName()
 
@@ -701,8 +703,32 @@ func (client *FSouza_NodeClient) Build(logger log.Log, force bool) bool {
 
 }
 
-func (client *FSouza_NodeClient) Destroy(logger log.Log) bool {
-	return false
+func (client *FSouza_NodeClient) Destroy(logger log.Log, force bool) bool {
+	// Get the image name
+	image, tag := client.GetImageName()
+	if tag != "" {
+		image += ":" + tag
+	}
+
+	if !client.HasImage() {
+		logger.Warning("Node has no image to destroy [" + image + "]")
+		return false
+	}
+
+	options := docker.RemoveImageOptions{
+		Force: force,
+	}
+
+	// ask the docker client to remove the image
+	err := client.backend.RemoveImageExtended(image, options)
+
+	if err != nil {
+		logger.Error("Node image removal failed [" + image + "] => " + err.Error())
+		return false
+	} else {
+		logger.Message("Node image was removed [" + image + "]")
+		return true
+	}
 }
 
 func (client *FSouza_NodeClient) Pull(logger log.Log, force bool) bool {
@@ -747,6 +773,43 @@ func (client *FSouza_NodeClient) Pull(logger log.Log, force bool) bool {
 		return false
 	} else {
 		logger.Message("Node image pulled: " + image + ":" + tag)
+		return true
+	}
+}
+
+/**
+ * InstanceClient : Action methods
+ */
+
+func (client *FSouza_InstanceClient) Attach(logger log.Log) bool {
+	id := client.instance.MachineName()
+
+	// build options for the docker attach operation
+	options := docker.AttachToContainerOptions{
+		Container:    id,
+		InputStream:  os.Stdin,
+		OutputStream: os.Stdout,
+		ErrorStream:  logger,
+
+		Logs:   true, // Get container logs, sending it to OutputStream.
+		Stream: true, // Stream the response?
+
+		Stdin:  true, // Attach to stdin, and use InputStream.
+		Stdout: true, // Attach to stdout, and use OutputStream.
+		Stderr: true,
+
+		//Success chan struct{}
+
+		RawTerminal: client.settings.Config.Tty, // Use raw terminal? Usually true when the container contains a TTY.
+	}
+
+	logger.Message("Attaching to instance container [" + id + "]")
+	err := client.backend.AttachToContainer(options)
+	if err != nil {
+		logger.Error("Failed to attach to instance container [" + id + "] =>" + err.Error())
+		return false
+	} else {
+		logger.Message("Disconnected from instance container [" + id + "]")
 		return true
 	}
 }
@@ -842,40 +905,143 @@ func (client *FSouza_InstanceClient) Start(logger log.Log, force bool) bool {
 	// ask the docker client to start the instance container
 	err := client.backend.StartContainer(id, &Host)
 
-	if err!= nil {
-		logger.Error("Failed to start node container ["+id+"] => "+err.Error())
+	if err != nil {
+		logger.Error("Failed to start node container [" + id + "] => " + err.Error())
 		return false
 	} else {
-		logger.Message("Node instance started ["+id+"]")
+		logger.Message("Node instance started [" + id + "]")
 		return true
 	}
 }
 
 func (client *FSouza_InstanceClient) Stop(logger log.Log, force bool, timeout uint) bool {
 	id := client.instance.MachineName()
-	err := client.backend.StopContainer(id, timeout)
 
-	if err!= nil {
-		logger.Error("Failed to stop node container ["+id+"] => "+err.Error())
+	err := client.backend.StopContainer(id, timeout)
+	if err != nil {
+		logger.Error("Failed to stop node container [" + id + "] => " + err.Error())
 		return false
 	} else {
-		logger.Message("Node instance stopped ["+id+"]")
+		logger.Message("Node instance stopped [" + id + "]")
 		return true
 	}
 }
 
-func (client *FSouza_Client) Pause(logger log.Log) bool {
-	return false
+func (client *FSouza_InstanceClient) Pause(logger log.Log) bool {
+	id := client.instance.MachineName()
+
+	err := client.backend.PauseContainer(id)
+	if err != nil {
+		logger.Error("Failed to pause intance [" + client.instance.Id() + "] Container [" + id + "] =>" + err.Error())
+		return false
+	} else {
+		logger.Message("Paused instance [" + client.instance.Id() + "] Container [" + id + "]")
+		return true
+	}
 }
 
-func (client *FSouza_Client) Unpause(logger log.Log) bool {
-	return false
+func (client *FSouza_InstanceClient) Unpause(logger log.Log) bool {
+	id := client.instance.MachineName()
+
+	err := client.backend.UnpauseContainer(id)
+	if err != nil {
+		logger.Error("Failed to unpause Instance [" + client.instance.Id() + "] Container [" + id + "] =>" + err.Error())
+		return false
+	} else {
+		logger.Message("Unpaused Instance [" + client.instance.Id() + "] Container [" + id + "]")
+		return true
+	}
 }
 
-func (client *FSouza_Client) Commit(logger log.Log) bool {
-	return false
+func (client *FSouza_InstanceClient) Commit(logger log.Log, tag string, message string) bool {
+	id := client.instance.MachineName()
+	config := client.settings.Config
+	repo := client.settings.Repository
+	author := client.settings.Author
+
+	if repo == "" {
+		repo, _ = client.GetImageName()
+	}
+
+	options := docker.CommitContainerOptions{
+		Container:  id,
+		Repository: repo,
+		Tag:        tag,
+		Run:        &config,
+	}
+
+	if message != "" {
+		options.Message = message
+	}
+	if author != "" {
+		author = client.conf.Author
+	}
+
+	_, err := client.backend.CommitContainer(options)
+	if err != nil {
+		logger.Warning("Failed to commit container changes to an image [" + client.instance.Id() + ":" + id + "] : " + tag)
+		return false
+	} else {
+		logger.Message("Committed container changes to an image [" + client.instance.Id() + ":" + id + "] : " + tag)
+		return true
+	}
 }
 
-func (client *FSouza_Client) Run(logger log.Log, cmdOverride []string) bool {
+func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []string) bool {
+	instance := client.instance
+
+	// Set up some additional settings for TTY commands
+	if client.settings.Config.Tty == true {
+
+		// set a default hostname to make a prettier prompt
+		if client.settings.Config.Hostname == "" {
+			client.settings.Config.Hostname = instance.Id()
+		}
+
+		// make sure that all tty runs have openstdin
+		client.settings.Config.OpenStdin = true
+	}
+
+	client.settings.Config.AttachStdin = true
+	client.settings.Config.AttachStdout = true
+	client.settings.Config.AttachStderr = true
+
+	// 1. get the container for the instance (create it if needed)
+	hasContainer := client.HasContainer()
+	if !hasContainer {
+		logger.Info("Creating new disposable RUN container")
+
+		if hasContainer = client.Create(logger, cmd, false); hasContainer {
+			logger.Debug(log.VERBOSITY_DEBUG, "Created disposable run container")
+			if !persistant {
+				// 5. [DEFERED] remove the container (if not instructed to keep it)
+				defer client.Remove(logger, true)
+			}
+		} else {
+			logger.Error("Failed to create disposable run container")
+		}
+	} else {
+		logger.Info("Run container already exists")
+	}
+
+	if hasContainer {
+
+		// 3. start the container (set up a remove)
+		logger.Info("Starting RUN container")
+		ok := client.Start(logger, false)
+
+		// 4. attach to the container
+		if ok {
+			logger.Info("Attaching to disposable RUN container")
+			client.Attach(logger)
+			return true
+		} else {
+			logger.Error("Could not start RUN container")
+			return false
+		}
+
+	} else {
+		logger.Error("Could not create RUN container")
+	}
 	return false
 }

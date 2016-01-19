@@ -7,6 +7,7 @@ import (
 
 type Node interface {
 	Type() string
+	Id() string
 	MachineName() string
 
 	Init(logger log.Log, name string, project *conf.Project, client Client, instancesSettings InstancesSettings) bool
@@ -31,6 +32,9 @@ type BaseNode struct {
 // Declare node type
 func (node *BaseNode) Type() string {
 	return "base"
+}
+func (node *BaseNode) Id() string {
+	return node.name
 }
 func (node *BaseNode) MachineName() string {
 	return node.conf.Name + "_" + node.name
@@ -75,7 +79,7 @@ func (node *BaseNode) Prepare(logger log.Log, nodes *Nodes) (success bool) {
 
 	node.log = logger
 
-	logger.Debug(log.VERBOSITY_DEBUG_WOAH, "Preparing Client", nil)	
+	logger.Debug(log.VERBOSITY_DEBUG_WOAH, "Preparing Client", nil)
 	success = success && node.client.Prepare(logger.MakeChild("client"), nodes, node)
 
 	logger.Debug(log.VERBOSITY_DEBUG_WOAH, "Preparing Instances", nil)

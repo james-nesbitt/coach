@@ -15,7 +15,7 @@ const (
 // Load tokens from any conf subpath
 func (project *Project) from_SecretsYaml(logger log.Log) {
 	for _, yamlSecretsFilePath := range project.Paths.GetConfSubPaths(COACH_CONF_SECRETS_SUBPATH) {
-		logger.Debug(log.VERBOSITY_DEBUG_STAAAP,"Looking for YAML secrets file: "+yamlSecretsFilePath)
+		logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Looking for YAML secrets file: "+yamlSecretsFilePath)
 		project.from_SecretsYamlFilePath(logger, yamlSecretsFilePath)
 	}
 }
@@ -24,13 +24,13 @@ func (project *Project) from_SecretsYaml(logger log.Log) {
 func (project *Project) from_SecretsYamlFilePath(logger log.Log, yamlFilePath string) bool {
 	// read the config file
 	yamlFile, err := ioutil.ReadFile(yamlFilePath)
-	if err!=nil {
-		logger.Debug(log.VERBOSITY_DEBUG_LOTS,"Could not read a YAML secrets file: "+err.Error())
+	if err != nil {
+		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Could not read a YAML secrets file: "+err.Error())
 		return false
 	}
 
 	if !project.from_SecretsYamlBytes(logger.MakeChild(yamlFilePath), yamlFile) {
-		logger.Warning("YAML marshalling of the YAML secrets file failed ["+yamlFilePath+"]: "+err.Error())
+		logger.Warning("YAML marshalling of the YAML secrets file failed [" + yamlFilePath + "]: " + err.Error())
 		return false
 	}
 	return true
@@ -41,19 +41,20 @@ func (project *Project) from_SecretsYamlBytes(logger log.Log, yamlBytes []byte) 
 	// parse the config file contents as a ConfSource_projectyaml object
 	source := new(secrets_Yaml)
 
-	if err := yaml.Unmarshal(yamlBytes, source); err!=nil {
-		logger.Warning("YAML parsing error : "+err.Error())
+	if err := yaml.Unmarshal(yamlBytes, source); err != nil {
+		logger.Warning("YAML parsing error : " + err.Error())
 		return false
 	}
-	logger.Debug(log.VERBOSITY_DEBUG_STAAAP,"YAML secrets source:", *source)
+	logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "YAML secrets source:", *source)
 
 	return source.configureProject(logger, project)
 }
 
 // Secrets in Yaml format
 type secrets_Yaml struct {
-	Secrets map[string]string 
+	Secrets map[string]string
 }
+
 func (secrets *secrets_Yaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return unmarshal(&secrets.Secrets)
 }

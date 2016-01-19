@@ -1,8 +1,8 @@
 package conf
 
 import (
-	"strings"
 	"io/ioutil"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
@@ -16,7 +16,7 @@ const (
 // Look for project configurations inside the project confpaths
 func (project *Project) from_ConfYaml(logger log.Log) {
 	for _, yamlConfFilePath := range project.Paths.GetConfSubPaths(COACH_CONF_YAMLFILE) {
-		logger.Debug(log.VERBOSITY_DEBUG_STAAAP,"Looking for YAML conf file: "+yamlConfFilePath)
+		logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "Looking for YAML conf file: "+yamlConfFilePath)
 		project.from_ConfYamlFilePath(logger, yamlConfFilePath)
 	}
 }
@@ -25,13 +25,13 @@ func (project *Project) from_ConfYaml(logger log.Log) {
 func (project *Project) from_ConfYamlFilePath(logger log.Log, yamlFilePath string) bool {
 	// read the config file
 	yamlFile, err := ioutil.ReadFile(yamlFilePath)
-	if err!=nil {
-		logger.Debug(log.VERBOSITY_DEBUG_LOTS,"Could not read a YAML file: "+err.Error())
+	if err != nil {
+		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Could not read a YAML file: "+err.Error())
 		return false
 	}
 
 	if !project.from_ConfYamlBytes(logger.MakeChild(yamlFilePath), yamlFile) {
-		logger.Warning("YAML marshalling of the YAML conf file failed ["+yamlFilePath+"]: "+err.Error())
+		logger.Warning("YAML marshalling of the YAML conf file failed [" + yamlFilePath + "]: " + err.Error())
 		return false
 	}
 	return true
@@ -41,35 +41,35 @@ func (project *Project) from_ConfYamlFilePath(logger log.Log, yamlFilePath strin
 func (project *Project) from_ConfYamlBytes(logger log.Log, yamlBytes []byte) bool {
 	// parse the config file contents as a ConfSource_projectyaml object
 	source := new(conf_Yaml)
-	if err := yaml.Unmarshal(yamlBytes, source); err!=nil {
-		logger.Warning("YAML parsing error : "+err.Error())
+	if err := yaml.Unmarshal(yamlBytes, source); err != nil {
+		logger.Warning("YAML parsing error : " + err.Error())
 		return false
 	}
-	logger.Debug(log.VERBOSITY_DEBUG_STAAAP,"YAML source:", *source)
+	logger.Debug(log.VERBOSITY_DEBUG_STAAAP, "YAML source:", *source)
 
 	return source.configureProject(logger, project)
 }
 
 // A project configuration from Yaml
 type conf_Yaml struct {
-	Project string							`yaml:"Project,omitempty"`
-	Author string								`yaml:"Author,omitempty"`
+	Project string `yaml:"Project,omitempty"`
+	Author  string `yaml:"Author,omitempty"`
 
-	Paths map[string]string			`yaml:"Paths,omitempty"`
-	
-	Tokens map[string]string		`yaml:"Tokens,omitempty"`
+	Paths map[string]string `yaml:"Paths,omitempty"`
 
-	Settings map[string]string	`yaml:"Settings,omitempty"`
+	Tokens map[string]string `yaml:"Tokens,omitempty"`
+
+	Settings map[string]string `yaml:"Settings,omitempty"`
 }
 
 // Make a Yaml Conf apply configuration to a project object
 func (conf *conf_Yaml) configureProject(logger log.Log, project *Project) bool {
-	// set a project name 
-	if conf.Project!="" {
+	// set a project name
+	if conf.Project != "" {
 		project.Name = conf.Project
 	}
-	// set a author name 
-	if conf.Author!="" {
+	// set a author name
+	if conf.Author != "" {
 		project.Author = conf.Author
 	}
 

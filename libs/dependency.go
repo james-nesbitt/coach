@@ -67,13 +67,13 @@ func (dependency *NodeDependency) Match(id string) ([]string, bool) {
 			return matches, true
 
 		case "random":
-			if instancesOrder := instances.InstancesOrder(); len(instancesOrder)>0 {
+			if instancesOrder := instances.InstancesOrder(); len(instancesOrder) > 0 {
 				instanceID := instancesOrder[rand.Intn(len(instancesOrder))]
 				instance, _ := instances.Instance(instanceID)
 				return []string{instance.MachineName()}, true
 			}
 		case "first":
-			if instancesOrder := instances.InstancesOrder(); len(instancesOrder)>0 {
+			if instancesOrder := instances.InstancesOrder(); len(instancesOrder) > 0 {
 				instanceID := instancesOrder[0]
 				instance, _ := instances.Instance(instanceID)
 				return []string{instance.MachineName()}, true

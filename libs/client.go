@@ -35,7 +35,7 @@ type NodeClient interface {
 	NodeInfo(logger log.Log)
 
 	Build(logger log.Log, force bool) bool
-	Destroy(logger log.Log) bool
+	Destroy(logger log.Log, force bool) bool
 	Pull(logger log.Log, force bool) bool
 }
 
@@ -58,13 +58,15 @@ type InstanceClient interface {
 	HasContainer() bool // Does this instance have a matching container
 	IsRunning() bool    // Is this instance container running
 
-	Attach(logger log.Log, force bool) bool
+	Attach(logger log.Log) bool
 	Create(logger log.Log, overrideCmd []string, force bool) bool
-	Commit(logger log.Log) bool
 	Remove(logger log.Log, force bool) bool
 	Start(logger log.Log, force bool) bool
 	Stop(logger log.Log, force bool, timeout uint) bool
 	Pause(logger log.Log) bool
 	Unpause(logger log.Log) bool
-	Run(logger log.Log, overrideCmd []string) bool
+
+	Commit(logger log.Log, tag string, message string) bool
+
+	Run(logger log.Log, persistant bool, overrideCmd []string) bool
 }

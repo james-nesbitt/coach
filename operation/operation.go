@@ -1,6 +1,7 @@
 package operation
 
 import (
+	"github.com/james-nesbitt/coach-tools/conf"
 	"github.com/james-nesbitt/coach-tools/libs"
 	"github.com/james-nesbitt/coach-tools/log"
 )
@@ -9,7 +10,7 @@ const (
 	DEFAULT_OPERATION = "<default operation>"
 )
 
-func MakeOperation(logger log.Log, name string, flags []string, targets *libs.Targets) *Operations {
+func MakeOperation(logger log.Log, project *conf.Project, name string, flags []string, targets *libs.Targets) *Operations {
 	operations := Operations{}
 	operations.Init(logger, OperationsSettings{}, targets)
 
@@ -21,6 +22,8 @@ func MakeOperation(logger log.Log, name string, flags []string, targets *libs.Ta
 		operation = Operation(&InfoOperation{log: opLogger, targets: targets})
 	case "build":
 		operation = Operation(&BuildOperation{log: opLogger, targets: targets})
+	case "destroy":
+		operation = Operation(&DestroyOperation{log: opLogger, targets: targets})
 	case "create":
 		operation = Operation(&CreateOperation{log: opLogger, targets: targets})
 	case "start":
@@ -31,6 +34,19 @@ func MakeOperation(logger log.Log, name string, flags []string, targets *libs.Ta
 		operation = Operation(&PullOperation{log: opLogger, targets: targets})
 	case "remove":
 		operation = Operation(&RemoveOperation{log: opLogger, targets: targets})
+	case "pause":
+		operation = Operation(&PauseOperation{log: opLogger, targets: targets})
+	case "unpause":
+		operation = Operation(&UnpauseOperation{log: opLogger, targets: targets})
+	case "commit":
+		operation = Operation(&CommitOperation{log: opLogger, targets: targets})
+
+	case "help":
+		operation = Operation(&HelpOperation{log: opLogger, conf: project})
+
+	case "run":
+		operation = Operation(&RunOperation{log: opLogger, targets: targets})
+
 	default:
 		operation = Operation(&UnknownOperation{id: name})
 	}
@@ -82,6 +98,7 @@ type Operation interface {
 	Id() string
 	Flags(flags []string) bool
 	Run(log.Log) bool
+	Help(topics []string)
 }
 
 func ListOperations() []string {
@@ -128,6 +145,9 @@ func (operation *UnknownOperation) Id() string {
 }
 func (operation *UnknownOperation) Flags(flags []string) bool {
 	return true
+}
+func (operation *UnknownOperation) Help(flags []string) {
+	return
 }
 func (operation *UnknownOperation) Run(logger log.Log) bool {
 	logger.Error("Unknown operation: " + operation.id)

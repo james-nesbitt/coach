@@ -92,7 +92,7 @@ func main() {
 	/**
 	 * Create an operation set
 	 */
-	operations := operation.MakeOperation(logger.MakeChild("operations"), operationName, operationFlags, targets)
+	operations := operation.MakeOperation(logger.MakeChild("operations"), project, operationName, operationFlags, targets)
 	logger.Debug(log.VERBOSITY_DEBUG, "OPERATION:", operationName, operationFlags, operations)
 
 	operations.Run(logger.MakeChild("operation"))

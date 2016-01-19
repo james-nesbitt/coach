@@ -14,8 +14,19 @@ func (operation *InfoOperation) Id() string {
 	return "info"
 }
 func (operation *InfoOperation) Flags(flags []string) bool {
-
 	return true
+}
+func (operation *InfoOperation) Help(flags []string) {
+	operation.log.Message(`Operation: INFO
+
+Coach will attempt to provide project information by investigating target images and containers.
+
+SYNTAX:
+	$/> coach {targets} info
+
+	{targets} what target nodes the operation should process ($/> coach help targets)
+
+`)
 }
 func (operation *InfoOperation) Run(logger log.Log) bool {
 	logger.Message("RUNNING INFO OPERATION")

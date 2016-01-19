@@ -5,44 +5,35 @@ import (
 	"github.com/james-nesbitt/coach-tools/log"
 )
 
-type StartOperation struct {
+type PauseOperation struct {
 	log     log.Log
 	targets *libs.Targets
-
-	force bool
 }
 
-func (operation *StartOperation) Id() string {
-	return "start"
+func (operation *PauseOperation) Id() string {
+	return "pause"
 }
-func (operation *StartOperation) Flags(flags []string) bool {
-	for _, flag := range flags {
-		switch flag {
-		case "-f":
-			fallthrough
-		case "--force":
-			operation.force = true
-		}
-	}
+func (operation *PauseOperation) Flags(flags []string) bool {
 	return true
 }
+func (operation *PauseOperation) Help(topics []string) {
+	operation.log.Message(`Operation: Pause
 
-func (operation *StartOperation) Help(topics []string) {
-	operation.log.Message(`Operation: Start
 
-Coach will attempt to start target node containers.
+Coach will attempt to pause any target containers.
 
 SYNTAX:
-	$/> coach {targets} start
+	$/> coach {targets} pause
 
 	{targets} what target node instances the operation should process ($/> coach help targets)
 
 ACCESS:
-	- This operation processed only nodes with the "start" access.  This excludes build, volume and command containers.
+	- This operation processed only nodes with the "start" access.  This excludes build, volume and command containers
+
 `)
 }
-func (operation *StartOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING Start OPERATION")
+func (operation *PauseOperation) Run(logger log.Log) bool {
+	logger.Message("RUNNING PAUSE OPERATION")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -60,15 +51,15 @@ func (operation *StartOperation) Run(logger log.Log) bool {
 
 		if !hasNode {
 			nodeLogger.Warning("No node [" + node.MachineName() + "]")
-		} else if !node.Can("start") {
-			nodeLogger.Info("Node doesn't Start [" + node.MachineName() + ":" + node.Type() + "]")
+		} else if !node.Can("pause") {
+			nodeLogger.Info("Node doesn't Pause [" + node.MachineName() + ":" + node.Type() + "]")
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Starting instance containers")
+			nodeLogger.Message("Pausing instance containers")
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)
-				instance.Client().Start(logger, operation.force)
+				instance.Client().Pause(logger)
 			}
 		}
 	}

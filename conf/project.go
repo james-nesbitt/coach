@@ -9,14 +9,14 @@ import (
 // MakeCoachProject Project constructor for building a project based on a project path
 func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
 	project = &Project{
-		Paths: MakePaths(),   // empty typesafe paths object
-		Tokens: MakeTokens(), // empty tokens object
+		Paths:        MakePaths(),        // empty typesafe paths object
+		Tokens:       MakeTokens(),       // empty tokens object
 		ProjectFlags: MakeProjectFlags(), // empty flags object
 	}
 
 	/**
-	 * 1. try to get some base default configuration, seeing if there is a 
-	 *    project .coach folder above the workingdir (or in it) or maybe 
+	 * 1. try to get some base default configuration, seeing if there is a
+	 *    project .coach folder above the workingdir (or in it) or maybe
 	 *		there's a user's ~/.coach
 	 */
 	project.from_DefaultPaths(logger.MakeChild("defaults"), workingDir)
@@ -41,7 +41,7 @@ func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
 
 // Project settings handler for coach, used to centralize and validate settings for a project
 type Project struct {
-	Name string
+	Name   string
 	Author string
 
 	Paths
@@ -57,7 +57,7 @@ func (project *Project) IsValid(logger log.Log) bool {
 	 * 1. do we have a project coach folder, and does it exist.
 	 */
 	if projectCoachPath, ok := project.Path("project-coach"); ok {
-		if _, err := os.Stat(projectCoachPath); err!=nil {
+		if _, err := os.Stat(projectCoachPath); err != nil {
 			logger.Warning(`Could not find a project root .coach folder:  
 - At the root of any coach prpject, must be a .coach folder;
 - This folder can container project configurations;
@@ -73,7 +73,7 @@ func (project *Project) IsValid(logger log.Log) bool {
 	 *
 	 * This is important as it gets used to make image and container names
 	 */
-	if project.Name=="" {
+	if project.Name == "" {
 		logger.Warning(`Coach project has no Name.  
 - A project name can be set in the .coach/conf.yml file.  
 - The Name is used as a base for image and container names.`)

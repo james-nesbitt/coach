@@ -9,7 +9,7 @@ type StopOperation struct {
 	log     log.Log
 	targets *libs.Targets
 
-	force bool
+	force   bool
 	timeout uint
 }
 
@@ -18,16 +18,16 @@ func (operation *StopOperation) Id() string {
 }
 
 func (operation *StopOperation) Flags(flags []string) bool {
-  operation.timeout=10
+	operation.timeout = 10
 
-	for index:=0; index<len(flags); index++ {
-		flag:= flags[index]
+	for index := 0; index < len(flags); index++ {
+		flag := flags[index]
 
 		switch flag {
-			case "-q":
-				fallthrough
-			case "--quick":
-				operation.timeout=1
+		case "-q":
+			fallthrough
+		case "--quick":
+			operation.timeout = 1
 
 		}
 	}
@@ -55,7 +55,7 @@ ACCESS:
 func (operation *StopOperation) Run(logger log.Log) bool {
 	logger.Message("RUNNING Stop OPERATION")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
-	
+
 	for _, targetID := range operation.targets.TargetOrder() {
 		target, targetExists := operation.targets.Target(targetID)
 		if !targetExists {

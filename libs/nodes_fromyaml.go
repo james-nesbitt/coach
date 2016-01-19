@@ -41,10 +41,12 @@ func (nodes *Nodes) from_NodesYamlFilePath(logger log.Log, project *conf.Project
 
 // Try to configure factories by parsing yaml from a byte stream
 func (nodes *Nodes) from_NodesYamlBytes(logger log.Log, project *conf.Project, clientFactories *ClientFactories, yamlBytes []byte, overwrite bool) bool {
-	// token replace
-	tokens := &project.Tokens
-	yamlBytes = []byte( tokens.TokenReplace(string(yamlBytes)) )
-	logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Tokenized Bytes", string(yamlBytes))	
+	if project != nil {
+		// token replace
+		tokens := &project.Tokens
+		yamlBytes = []byte(tokens.TokenReplace(string(yamlBytes)))
+		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Tokenized Bytes", string(yamlBytes))
+	}
 
 	var nodes_yaml map[string]node_yaml_v2
 	err := yaml.Unmarshal(yamlBytes, &nodes_yaml)

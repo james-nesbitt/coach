@@ -18,16 +18,16 @@ func (operation *PullOperation) Id() string {
 func (operation *PullOperation) Flags(flags []string) bool {
 	operation.force = false
 
-	for index:=0; index<len(flags); index++ {
-		flag:= flags[index]
+	for index := 0; index < len(flags); index++ {
+		flag := flags[index]
 
 		switch flag {
-			case "-f":
-				fallthrough
-			case "--force":
-				operation.force = true
+		case "-f":
+			fallthrough
+		case "--force":
+			operation.force = true
 		}
-	}	
+	}
 	return true
 }
 func (operation *PullOperation) Help(topics []string) {
