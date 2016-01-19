@@ -55,7 +55,6 @@ func (operation *CreateOperation) Run(logger log.Log) bool {
 
 		node, hasNode := target.Node()
 		instances, hasInstances := target.Instances()
-
 		nodeLogger := logger.MakeChild(targetID)
 
 		if !hasNode {
