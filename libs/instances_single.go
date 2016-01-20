@@ -31,8 +31,8 @@ func (instances *SingleInstances) MachineName() string {
 func (instances *SingleInstances) Init(logger log.Log, machineName string, client Client, settings InstancesSettings) bool {
 	instances.log = logger
 	instances.machineName = machineName
-	instances.client = client
 
+	instances.client = client
 	switch asserted := settings.Settings().(type) {
 	case SingleInstancesSettings:
 		instances.settings = asserted
@@ -64,7 +64,8 @@ func (instances *SingleInstances) InstancesOrder() []string {
 
 // Give a filterable instances for this instances object
 func (instances *SingleInstances) FilterableInstances() (FilterableInstances, bool) {
-	filterableInstances := BaseFilterableInstances{Instances: Instances(instances), filters: []string{}}
+	filterableInstances := BaseFilterableInstances{}
+	filterableInstances.Init(Instances(instances), instances.InstancesOrder())
 	return FilterableInstances(&filterableInstances), true
 }
 

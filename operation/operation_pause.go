@@ -33,7 +33,7 @@ ACCESS:
 `)
 }
 func (operation *PauseOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING PAUSE OPERATION")
+	logger.Info("Running operation: pause")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -56,10 +56,25 @@ func (operation *PauseOperation) Run(logger log.Log) bool {
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Pausing instance containers")
+			nodeLogger.Message("Pausing instances")
+
+			if !instances.IsFiltered() {
+				nodeLogger.Info("Switching to using all instances")
+				instances.UseAll()
+			}
+
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)
-				instance.Client().Pause(logger)
+
+				if !instance.IsRunning() {
+					if !instance.IsReady() {
+						nodeLogger.Info("Instance will not be paused as it is not ready :" + id)
+					} else {
+						nodeLogger.Info("Instance will not be paused as it is not running :" + id)
+					}
+				} else {
+					instance.Client().Pause(logger)
+				}
 			}
 		}
 	}

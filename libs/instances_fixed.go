@@ -37,8 +37,8 @@ func (instances *FixedInstances) Prepare(logger log.Log, client Client, nodes *N
 
 	for _, name := range instances.settings.Names {
 		machineName := instances.MachineName() + "_" + name
-		instance := Instance(&FixedInstance{})
 
+		instance := Instance(&FixedInstance{})
 		if instance.Init(logger.MakeChild(name), name, machineName, client) {
 			instances.instancesMap[name] = instance
 			instances.instancesOrder = append(instances.instancesOrder, name)
@@ -50,7 +50,8 @@ func (instances *FixedInstances) Prepare(logger log.Log, client Client, nodes *N
 
 // Give a filterable instances for this instances object
 func (instances *FixedInstances) FilterableInstances() (FilterableInstances, bool) {
-	filterableInstances := BaseFilterableInstances{Instances: Instances(instances), filters: []string{}}
+	filterableInstances := BaseFilterableInstances{}
+	filterableInstances.Init(Instances(instances), instances.InstancesOrder())
 	return FilterableInstances(&filterableInstances), true
 }
 

@@ -11,7 +11,10 @@ type ScaleOperation struct {
 	log     log.Log
 	targets *libs.Targets
 
-	scale int
+	force         bool
+	scale         int
+	timeout       uint
+	removeStopped bool
 }
 
 func (operation *ScaleOperation) Id() string {
@@ -20,11 +23,14 @@ func (operation *ScaleOperation) Id() string {
 func (operation *ScaleOperation) Flags(flags []string) bool {
 	// default scale value
 	operation.scale = 1
+	operation.force = true
+	operation.timeout = 5
+	operation.removeStopped = true
 
-	if len(flags)>0 {
-		if flags[0]=="up" {
+	if len(flags) > 0 {
+		if flags[0] == "up" {
 			operation.scale = 1
-		} else if flags[0]=="down" {
+		} else if flags[0] == "down" {
 			operation.scale = -1
 		}
 	}
@@ -45,10 +51,10 @@ Access:
 `)
 }
 func (operation *ScaleOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING Scale OPERATION")
+	logger.Info("Running operation: scale")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
-	if operation.scale==0 {
+	if operation.scale == 0 {
 		operation.log.Warning("scale operation was told to scale to 0")
 		return false
 	}
@@ -69,28 +75,28 @@ func (operation *ScaleOperation) Run(logger log.Log) bool {
 		} else if !node.Can("scale") {
 			nodeLogger.Info("Node doesn't Scale [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Scaling node")
+			nodeLogger.Message("Scaling node " + node.Id())
 
-			if operation.scale>0 {
+			if operation.scale > 0 {
 				count := operation.ScaleUpNumber(nodeLogger, node.Instances(), operation.scale)
-				
-				if count==0 {
+
+				if count == 0 {
 					nodeLogger.Warning("Scale operation could not scale up any new instances of node")
-				} else if count<operation.scale {
-					nodeLogger.Warning("Scale operation could not scale up all of the requested instances of node. "+strconv.FormatInt(int64(count+1), 10)+" started.")
+				} else if count < operation.scale {
+					nodeLogger.Warning("Scale operation could not scale up all of the requested instances of node. " + strconv.FormatInt(int64(count+1), 10) + " started.")
 				} else {
-					nodeLogger.Message("Scale operation scaled up "+strconv.FormatInt(int64(count), 10)+" instances")
+					nodeLogger.Message("Scale operation scaled up " + strconv.FormatInt(int64(count), 10) + " instances")
 				}
 
 			} else {
 				count := operation.ScaleDownNumber(nodeLogger, node.Instances(), -operation.scale)
 
-				if count==0 {
+				if count == 0 {
 					nodeLogger.Warning("Scale operation could not scale down any new instances of node")
-				} else if count<(-operation.scale) {
-					nodeLogger.Warning("Scale operation could not scale down all of the requested instances of node. "+strconv.FormatInt(int64(count+1), 10)+" stopped.")
+				} else if count < (-operation.scale) {
+					nodeLogger.Warning("Scale operation could not scale down all of the requested instances of node. " + strconv.FormatInt(int64(count+1), 10) + " stopped.")
 				} else {
-					nodeLogger.Message("Scale operation scaled down "+strconv.FormatInt(int64(count), 10)+" instances")
+					nodeLogger.Message("Scale operation scaled down " + strconv.FormatInt(int64(count), 10) + " instances")
 				}
 			}
 
@@ -104,7 +110,7 @@ func (operation *ScaleOperation) ScaleUpNumber(logger log.Log, instances libs.In
 	count := 0
 	instancesOrder := instances.InstancesOrder()
 
-	InstanceScaleReturn:
+InstanceScaleReturn:
 	for _, instanceId := range instancesOrder {
 		if instance, ok := instances.Instance(instanceId); ok {
 			client := instance.Client()
@@ -116,7 +122,7 @@ func (operation *ScaleOperation) ScaleUpNumber(logger log.Log, instances libs.In
 				client.Create(logger, []string{}, false)
 			}
 
-			logger.Info("Node Scaling up. Starting instance :"+instanceId)
+			logger.Info("Node Scaling up. Starting instance :" + instanceId)
 			client.Start(logger, false)
 
 			count++
@@ -125,16 +131,20 @@ func (operation *ScaleOperation) ScaleUpNumber(logger log.Log, instances libs.In
 			}
 		}
 	}
-	
+
 	return count
 }
+
 // scale a node down a certain number of instances
 func (operation *ScaleOperation) ScaleDownNumber(logger log.Log, instances libs.Instances, number int) int {
 
 	count := 0
-	instancesOrder := instances.InstancesOrder()
+	instancesOrder := []string{}
+	for _, instanceId := range instances.InstancesOrder() {
+		instancesOrder = append([]string{instanceId}, instancesOrder...)
+	}
 
-	InstanceScaleReturn:
+InstanceScaleReturn:
 	for _, instanceId := range instancesOrder {
 		if instance, ok := instances.Instance(instanceId); ok {
 			client := instance.Client()
@@ -143,8 +153,12 @@ func (operation *ScaleOperation) ScaleDownNumber(logger log.Log, instances libs.
 				continue InstanceScaleReturn
 			}
 
-			logger.Info("Node Scaling down. Stopping instance :"+instanceId)
-			client.Stop(logger, false, 10)
+			logger.Info("Node Scaling down. Stopping instance :" + instanceId)
+			client.Stop(logger, operation.force, operation.timeout)
+
+			if operation.removeStopped {
+				client.Remove(logger, operation.force)
+			}
 
 			count++
 			if count >= number {
@@ -152,6 +166,6 @@ func (operation *ScaleOperation) ScaleDownNumber(logger log.Log, instances libs.
 			}
 		}
 	}
-	
+
 	return count
 }

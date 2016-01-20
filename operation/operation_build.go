@@ -47,7 +47,7 @@ NOTES:
 `)
 }
 func (operation *BuildOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING BUILD OPERATION")
+	logger.Info("Running operation: build")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {

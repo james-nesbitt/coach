@@ -22,7 +22,7 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 		operation = Operation(&InfoOperation{log: opLogger, targets: targets})
 
 	case "pull":
-		operation = Operation(&PullOperation{log: opLogger, targets: targets})		
+		operation = Operation(&PullOperation{log: opLogger, targets: targets})
 	case "build":
 		operation = Operation(&BuildOperation{log: opLogger, targets: targets})
 	case "destroy":
@@ -31,13 +31,13 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 	case "create":
 		operation = Operation(&CreateOperation{log: opLogger, targets: targets})
 	case "remove":
-		operation = Operation(&RemoveOperation{log: opLogger, targets: targets})		
+		operation = Operation(&RemoveOperation{log: opLogger, targets: targets})
 	case "start":
 		operation = Operation(&StartOperation{log: opLogger, targets: targets})
 	case "stop":
 		operation = Operation(&StopOperation{log: opLogger, targets: targets})
 	case "scale":
-		operation = Operation(&ScaleOperation{log: opLogger, targets: targets})			
+		operation = Operation(&ScaleOperation{log: opLogger, targets: targets})
 	case "pause":
 		operation = Operation(&PauseOperation{log: opLogger, targets: targets})
 	case "unpause":
@@ -47,9 +47,9 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 		operation = Operation(&CommitOperation{log: opLogger, targets: targets})
 
 	case "up":
-		operation = Operation(&UpOperation{log: opLogger, targets: targets})		
+		operation = Operation(&UpOperation{log: opLogger, targets: targets})
 	case "clean":
-		operation = Operation(&CleanOperation{log: opLogger, targets: targets})		
+		operation = Operation(&CleanOperation{log: opLogger, targets: targets})
 
 	case "run":
 		operation = Operation(&RunOperation{log: opLogger, targets: targets})
@@ -118,6 +118,7 @@ func ListOperations() []string {
 		"tool",
 		"pull",
 		"build",
+		"clean",
 		"destroy",
 		"run",
 		"up",

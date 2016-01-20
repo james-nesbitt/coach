@@ -103,8 +103,6 @@ func (targets *Targets) addNodeTarget(name string, node Node, instanceFilters []
 		// The target node has already been added, so we just need to confirm instances
 		if len(instanceFilters) > 0 {
 			instances.AddFilters(instanceFilters...)
-		} else {
-			instances.UseAll()
 		}
 	}
 }

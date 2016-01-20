@@ -31,7 +31,7 @@ ACCESS:
 `)
 }
 func (operation *UnpauseOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING Unpause OPERATION")
+	logger.Info("Running operation: unpause")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -55,9 +55,18 @@ func (operation *UnpauseOperation) Run(logger log.Log) bool {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
 			nodeLogger.Message("UnPausing instance containers")
+
+			if !instances.IsFiltered() {
+				nodeLogger.Message("Switching to using all instances")
+				instances.UseAll()
+			}
+
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)
-				instance.Client().Unpause(logger)
+
+				if instance.IsRunning() {
+					instance.Client().Unpause(logger)
+				}
 			}
 		}
 	}

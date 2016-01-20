@@ -87,7 +87,7 @@ The first topic passed in is assumed to be a help operation.
 `)
 }
 func (operation *HelpOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING HELP OPERATION")
+	logger.Info("Running operation: info")
 
 	helpTopicName := "help"
 	helpTopicFlags := []string{}

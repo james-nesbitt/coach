@@ -48,7 +48,7 @@ TODO:
 `)
 }
 func (operation *RunOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING Run OPERATION")
+	logger.Info("Running operation: run")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {

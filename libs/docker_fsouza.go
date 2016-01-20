@@ -644,11 +644,21 @@ func (client *FSouza_InstancesClient) Containers(running bool) []docker.APIConta
 		return containers
 	}
 }
+func (client *FSouza_InstanceClient) Containers(running bool) []docker.APIContainers {
+	instance := client.instance
+	matchString := instance.MachineName()
+	if matchString == INSTANCES_NULL_MACHINENAME {
+		return []docker.APIContainers{}
+	} else {
+		containers, _ := client.backend.MatchContainers(matchString, running)
+		return containers
+	}
+}
 func (client *FSouza_InstanceClient) HasContainer() bool {
-	return false
+	return len(client.Containers(false)) > 0
 }
 func (client *FSouza_InstanceClient) IsRunning() bool {
-	return false
+	return len(client.Containers(true)) > 0
 }
 
 /**

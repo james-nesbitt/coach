@@ -53,7 +53,7 @@ ACCESS:
 `)
 }
 func (operation *StopOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING Stop OPERATION")
+	logger.Info("Running operation: stop")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -77,9 +77,20 @@ func (operation *StopOperation) Run(logger log.Log) bool {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
 			nodeLogger.Message("Stopping instance containers")
+
+			if !instances.IsFiltered() {
+				nodeLogger.Info("Switching to using all instances")
+				instances.UseAll()
+			}
+
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)
-				instance.Client().Stop(logger, operation.force, operation.timeout)
+
+				if instance.IsRunning() {
+					instance.Client().Stop(logger, operation.force, operation.timeout)
+				} else {
+					nodeLogger.Info("Instance [" + id + "] is not running")
+				}
 			}
 		}
 	}

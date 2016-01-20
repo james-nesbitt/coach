@@ -62,7 +62,7 @@ ACCESS:
 `)
 }
 func (operation *CommitOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING COMMIT OPERATION")
+	logger.Info("Running operation: commit")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {

@@ -49,7 +49,7 @@ NOTES:
 `)
 }
 func (operation *PullOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING PULL OPERATION")
+	logger.Info("Running operation: pull")
 
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 	for _, targetID := range operation.targets.TargetOrder() {

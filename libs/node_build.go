@@ -1,6 +1,8 @@
 package libs
 
 import (
+	"strings"
+
 	"github.com/james-nesbitt/coach-tools/conf"
 	"github.com/james-nesbitt/coach-tools/log"
 )
@@ -53,8 +55,10 @@ func (node *BuildNode) defaultInstances(logger log.Log, client Client, instances
 
 // Build Nodes can only build
 func (node *BuildNode) Can(action string) bool {
-	switch action {
+	switch strings.ToLower(action) {
 	case "destroy":
+		fallthrough
+	case "clean":
 		fallthrough
 	case "build":
 		return true

@@ -5,8 +5,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/james-nesbitt/coach-tools/log"
 	"github.com/james-nesbitt/coach-tools/conf"
+	"github.com/james-nesbitt/coach-tools/log"
 )
 
 const (
@@ -15,8 +15,8 @@ const (
 
 // Ummarshaller interface : pass incoming yaml into the topics
 func (help *Help) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	help.log.Debug(log.VERBOSITY_MESSAGE, "UNMARSHALL:",help.topics)
-	return unmarshal( &help.topics )
+	help.log.Debug(log.VERBOSITY_MESSAGE, "UNMARSHALL:", help.topics)
+	return unmarshal(&help.topics)
 }
 
 // Look for help from the default core help, which is kept as yaml
@@ -50,7 +50,7 @@ func (help *Help) from_HelpYamlFilePath(logger log.Log, project *conf.Project, y
 
 // Try to configure help by parsing yaml from a byte stream
 func (help *Help) from_HelpYamlBytes(logger log.Log, project *conf.Project, yamlBytes []byte) bool {
-	if project!=nil {
+	if project != nil {
 		// token replace
 		tokens := &project.Tokens
 		yamlBytes = []byte(tokens.TokenReplace(string(yamlBytes)))

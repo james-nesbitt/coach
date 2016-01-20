@@ -65,7 +65,8 @@ func (instances *TemporaryInstances) Instance(id string) (instance Instance, ok 
 
 // Give a filterable instances for this instances object
 func (instances *TemporaryInstances) FilterableInstances() (FilterableInstances, bool) {
-	filterableInstances := BaseFilterableInstances{Instances: Instances(instances), filters: []string{}}
+	filterableInstances := BaseFilterableInstances{}
+	filterableInstances.Init(Instances(instances), []string{""}) // default to dealing with a new temporary instance
 	return FilterableInstances(&filterableInstances), true
 }
 

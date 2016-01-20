@@ -1,15 +1,15 @@
 package help
 
 import (
-	"github.com/james-nesbitt/coach-tools/log"
 	"github.com/james-nesbitt/coach-tools/conf"
+	"github.com/james-nesbitt/coach-tools/log"
 )
 
 type Help struct {
 	conf *conf.Project
-	log log.Log
+	log  log.Log
 
-	topics map[string]string   `yaml:"Topics,omitempty"`
+	topics map[string]string `yaml:"Topics,omitempty"`
 }
 
 func (helper *Help) Init(logger log.Log, project *conf.Project) {
@@ -17,22 +17,22 @@ func (helper *Help) Init(logger log.Log, project *conf.Project) {
 	helper.log = logger
 	helper.topics = map[string]string{}
 
-  // add the core help
-  helper.from_CoreHelpYaml(logger)
+	// add the core help
+	helper.from_CoreHelpYaml(logger)
 
-  // Add the Yaml file help
-  helper.from_HelpYaml(logger, project)
+	// Add the Yaml file help
+	helper.from_HelpYaml(logger, project)
 }
 
 func (helper *Help) merge(merge Help) {
-	if helper.topics==nil {
+	if helper.topics == nil {
 		helper.topics = map[string]string{}
 	}
-  for key, topic := range merge.topics {
-  	if _, ok := helper.topics[key]; !ok {
-  		helper.topics[key] = topic
-  	}
-  }
+	for key, topic := range merge.topics {
+		if _, ok := helper.topics[key]; !ok {
+			helper.topics[key] = topic
+		}
+	}
 }
 func (helper *Help) Topic(name string, flags []string) (topic string, ok bool) {
 	topic, ok = helper.topics[name]

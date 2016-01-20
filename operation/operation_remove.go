@@ -42,7 +42,7 @@ ACCESS:
 `)
 }
 func (operation *RemoveOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING REMOVE OPERATION")
+	logger.Info("Running operation: remove")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -66,6 +66,12 @@ func (operation *RemoveOperation) Run(logger log.Log) bool {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
 			nodeLogger.Message("Removing instance containers")
+
+			if !instances.IsFiltered() {
+				nodeLogger.Info("Switching to using all instances")
+				instances.UseAll()
+			}
+
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)
 				instance.Client().Remove(logger, operation.force)

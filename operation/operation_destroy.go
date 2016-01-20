@@ -45,7 +45,7 @@ NOTE:
 `)
 }
 func (operation *DestroyOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING Destroy OPERATION")
+	logger.Info("Running operation: destroy")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {

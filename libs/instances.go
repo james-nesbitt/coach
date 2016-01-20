@@ -4,11 +4,6 @@ import (
 	"github.com/james-nesbitt/coach-tools/log"
 )
 
-const (
-	INSTANCES_FILTER_DEFAULT = "$default"
-	INSTANCES_FILTER_ALL     = "$all"
-)
-
 type InstancesSettings interface {
 	Settings() interface{}
 }
@@ -28,8 +23,16 @@ type Instances interface {
 
 // A Filterable set of instances from an Instances object
 type FilterableInstances interface {
-	AddFilters(...string)
+	Init(coreInstances Instances, defaultIds []string) bool
+
 	UseAll()
+	IsAll() bool
+
+	UseDefault()
+	IsDefault() bool
+
+	AddFilters(...string)
+	IsFiltered() bool
 
 	Instance(id string) (Instance, bool)
 	InstancesOrder() []string
@@ -85,15 +88,31 @@ func (instances *BaseInstances) FilterableInstances() (FilterableInstances, bool
 // Extend the BaseInstances with a set of filters
 type BaseFilterableInstances struct {
 	Instances
+
+	useAll bool
+
+	defaultFilters []string
+	useDefault     bool
+
 	filters []string // Ordered string filters, usually instance ids
+}
+
+// Initialize filterable instances
+func (instances *BaseFilterableInstances) Init(coreInstances Instances, defaultFilters []string) bool {
+	instances.Instances = coreInstances
+	instances.defaultFilters = defaultFilters
+	instances.filters = []string{}
+
+	instances.useDefault = true
+	instances.useAll = false
+
+	return true
 }
 
 // add a filter
 func (instances *BaseFilterableInstances) AddFilters(newfilters ...string) {
-	// check to see if we have been to take all instances
-	if len(instances.filters) > 0 && instances.filters[0] == INSTANCES_FILTER_ALL {
-		return
-	}
+	instances.useDefault = false
+	instances.useAll = false
 
 	// remove existing filters from the new list
 	for _, existingFilter := range instances.filters {
@@ -109,19 +128,43 @@ func (instances *BaseFilterableInstances) AddFilters(newfilters ...string) {
 		instances.filters = append(instances.filters, newfilters...)
 	}
 }
+func (instances *BaseFilterableInstances) IsFiltered() bool {
+	return len(instances.filters) > 0
+}
 
 // remove all filters
 func (instances *BaseFilterableInstances) UseAll() {
-	instances.filters = []string{INSTANCES_FILTER_ALL}
+	instances.filters = []string{}
+	instances.useAll = true
+	instances.useDefault = false
+}
+func (instances *BaseFilterableInstances) IsAll() bool {
+	return instances.useAll
+}
+
+// use only default filters
+func (instances *BaseFilterableInstances) UseDefault() {
+	instances.filters = []string{}
+	instances.useAll = false
+	instances.useDefault = true
+}
+func (instances *BaseFilterableInstances) IsDefault() bool {
+	return instances.useDefault
 }
 
 // Retrieve a single Instance if it matches a filtered value
 func (instances *BaseFilterableInstances) Instance(id string) (Instance, bool) {
-	if len(instances.filters) > 0 && instances.filters[0] == INSTANCES_FILTER_ALL {
+	if instances.useAll {
 		instance, ok := instances.Instances.Instance(id)
 		return instance, ok
 	} else {
-		for _, filter := range instances.filters {
+		var filters []string
+		if instances.useDefault {
+			filters = instances.defaultFilters
+		} else {
+			filters = instances.filters
+		}
+		for _, filter := range filters {
 			if id == filter {
 				instance, ok := instances.Instances.Instance(id)
 				return instance, ok
@@ -133,15 +176,20 @@ func (instances *BaseFilterableInstances) Instance(id string) (Instance, bool) {
 
 // Give a filtered ordered list of string instance IDs for this instances object
 func (instances *BaseFilterableInstances) InstancesOrder() []string {
-	// get the full instance list from the parent Instances object
-	instancesOrder := instances.Instances.InstancesOrder()
-
-	// now filter the full list
-	if len(instances.filters) > 0 && instances.filters[0] == INSTANCES_FILTER_ALL {
-		return instancesOrder
+	if instances.useAll {
+		return instances.Instances.InstancesOrder()
 	} else {
+		var filters []string
+		if instances.useDefault {
+			filters = instances.defaultFilters
+		} else {
+			filters = instances.filters
+		}
+
+		// get the full instance list from the parent Instances object
+		instancesOrder := instances.Instances.InstancesOrder()
 		filteredOrder := []string{}
-		for _, filter := range instances.filters {
+		for _, filter := range filters {
 			for _, instance := range instancesOrder {
 				if instance == filter {
 					filteredOrder = append(filteredOrder, instance)

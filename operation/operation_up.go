@@ -5,6 +5,11 @@ import (
 	"github.com/james-nesbitt/coach-tools/log"
 )
 
+const (
+	COACH_OPERATION_UP_BUILT  = iota
+	COACH_OPERATION_UP_PULLED = iota
+)
+
 type UpOperation struct {
 	log     log.Log
 	targets *libs.Targets
@@ -53,7 +58,7 @@ TODO:
 `)
 }
 func (operation *UpOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING UP OPERATION")
+	logger.Info("Running operation: up")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -79,26 +84,28 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 			nodeLogger.Message("Uping node")
 
 			if node.Can("build") {
+				nodeClient := node.Client()
 				nodeLogger.Message("Building node image")
-				node.Client().Build(nodeLogger, operation.force)
+				nodeClient.Build(nodeLogger, operation.force)
 			}
 			if node.Can("pull") {
+				nodeClient := node.Client()
 				nodeLogger.Message("Pulling node image")
-				node.Client().Pull(nodeLogger, operation.force)
+				nodeClient.Pull(nodeLogger, operation.force)
 			}
-	
+
 			if hasInstances && (create || start) {
 				for _, id := range instances.InstancesOrder() {
 					instance, _ := instances.Instance(id)
 					instanceClient := instance.Client()
 
 					if create {
-						nodeLogger.Message("Creating node instance container : "+id)
+						nodeLogger.Message("Creating node instance container : " + id)
 						instanceClient.Create(nodeLogger, []string{}, operation.force)
 					}
 					if start {
-						nodeLogger.Message("Starting node instance container : "+id)
-						instanceClient.Start(nodeLogger, operation.force)					
+						nodeLogger.Message("Starting node instance container : " + id)
+						instanceClient.Start(nodeLogger, operation.force)
 					}
 				}
 			}

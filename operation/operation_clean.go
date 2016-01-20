@@ -9,33 +9,39 @@ type CleanOperation struct {
 	log     log.Log
 	targets *libs.Targets
 
-	force bool
-	wipe bool
-	timeout uint
+	defaultOnly bool
+	force       bool
+	wipe        bool
+	timeout     uint
 }
 
 func (operation *CleanOperation) Id() string {
 	return "clean"
 }
 func (operation *CleanOperation) Flags(flags []string) bool {
+	operation.defaultOnly = false
 	operation.force = false
 	operation.wipe = false
 	operation.timeout = 10
 
 	for _, flag := range flags {
 		switch flag {
-			case "-f":
-				fallthrough
-			case "--force":
-				operation.force = true
-			case "-w":
-				fallthrough
-			case "--wipe":
-				operation.wipe = true
-			case "-q":
-				fallthrough
-			case "--quick":
-				operation.timeout = 0
+		case "-d":
+			fallthrough
+		case "--default":
+			operation.defaultOnly = true
+		case "-f":
+			fallthrough
+		case "--force":
+			operation.force = true
+		case "-w":
+			fallthrough
+		case "--wipe":
+			operation.wipe = true
+		case "-q":
+			fallthrough
+		case "--quick":
+			operation.timeout = 0
 		}
 	}
 	return true
@@ -63,7 +69,7 @@ Syntax:
 `)
 }
 func (operation *CleanOperation) Run(logger log.Log) bool {
-	logger.Message("RUNNING CLEAN OPERATION")
+	logger.Info("Running operation: clean")
 	logger.Debug(log.VERBOSITY_DEBUG, "Run:Targets", operation.targets.TargetOrder())
 
 	for _, targetID := range operation.targets.TargetOrder() {
@@ -75,31 +81,40 @@ func (operation *CleanOperation) Run(logger log.Log) bool {
 		}
 
 		node, hasNode := target.Node()
-		instances, hasInstances := target.Instances()		
+		instances, hasInstances := target.Instances()
 		nodeLogger := logger.MakeChild(targetID)
 
 		if !hasNode {
 			nodeLogger.Info("No node [" + node.MachineName() + "]")
-		} else if !node.Can("Clean") {
+		} else if !node.Can("clean") {
 			nodeLogger.Info("Node doesn't Clean [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Cleaning node")
+			nodeLogger.Message("Cleaning node [" + node.Id() + "]")
 
 			if hasInstances {
-				for _, id := range instances.InstancesOrder() {
-					instance, _ := instances.Instance(id)
-					instanceClient := instance.Client()
+				if !(operation.defaultOnly || instances.IsFiltered()) {
+					nodeLogger.Info("Switching to using all instances")
+					instances.UseAll()
+				}
 
-					if instanceClient.HasContainer() {
-						if instanceClient.IsRunning() {
-							instanceClient.Stop(logger, operation.force, operation.timeout)
+				instanceIds := instances.InstancesOrder()
+				if len(instanceIds) > 0 {
+					for _, id := range instanceIds {
+						instance, _ := instances.Instance(id)
+						instanceClient := instance.Client()
+
+						if instanceClient.HasContainer() {
+							if instanceClient.IsRunning() {
+								instanceClient.Stop(logger, operation.force, operation.timeout)
+							}
+							instanceClient.Remove(logger, operation.force)
+							nodeLogger.Message("Cleaning node instance [" + id + "]")
+						} else {
+							nodeLogger.Info("Node instance has no container to clean [" + id + "]")
 						}
-						instanceClient.Remove(logger, operation.force)
-						nodeLogger.Message("Cleaning node instance [" + id + "]")						
-					} else {
-						nodeLogger.Info("Node instance has no container to clean [" + id + "]")					
 					}
-
+				} else {
+					nodeLogger.Info("Node has no instances to clean")
 				}
 			}
 
@@ -107,6 +122,8 @@ func (operation *CleanOperation) Run(logger log.Log) bool {
 				nodeClient := node.Client()
 				nodeClient.Destroy(nodeLogger, operation.force)
 				nodeLogger.Message("Node build cleaned")
+			} else {
+				nodeLogger.Message("Node was not built, so will not be removed")
 			}
 
 		}

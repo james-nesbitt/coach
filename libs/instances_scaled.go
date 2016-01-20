@@ -58,8 +58,8 @@ func (instances *ScaledInstances) Prepare(logger log.Log, client Client, nodes *
 	for i := 0; i <= instances.settings.Maximum; i++ {
 		name := strconv.Itoa(int(i))
 		machineName := instances.MakeId(i)
-		instance := Instance(&ScaledInstance{})
 
+		instance := Instance(&ScaledInstance{})
 		if instance.Init(logger.MakeChild(name), name, machineName, client) {
 			instances.instancesMap[name] = instance
 			instances.instancesOrder = append(instances.instancesOrder, name)
@@ -75,7 +75,13 @@ func (instances *ScaledInstances) MakeId(index int) string {
 
 // Give a filterable instances for this instances object
 func (instances *ScaledInstances) FilterableInstances() (FilterableInstances, bool) {
-	filterableInstances := BaseFilterableInstances{Instances: Instances(instances), filters: []string{}}
+	defaults := []string{}
+	for i := 0; i <= instances.settings.Initial; i++ {
+		defaults = append(defaults, strconv.Itoa(int(i)))
+	}
+
+	filterableInstances := BaseFilterableInstances{}
+	filterableInstances.Init(Instances(instances), defaults)
 	return FilterableInstances(&filterableInstances), true
 }
 

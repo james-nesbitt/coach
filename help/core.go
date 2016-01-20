@@ -122,4 +122,4 @@ settings: |
   - .coach/secrets/secrets.yml => in the project secrets.yml.  This map is typically used to keep project specific ID and token values used as ENV variables in containers, but that should not be kept in any source repository.
 
 `)
-} 
+}

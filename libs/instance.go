@@ -11,6 +11,8 @@ type Instance interface {
 	MachineName() string
 
 	Can(action string) bool
+	IsRunning() bool
+	IsReady() bool
 
 	Log() log.Log
 	Client() InstanceClient
@@ -45,6 +47,13 @@ func (instance *BaseInstance) MachineName() string {
 func (instance *BaseInstance) Can(action string) bool {
 	return true
 }
+func (instance *BaseInstance) IsReady() bool {
+	return instance.Client().HasContainer()
+}
+func (instance *BaseInstance) IsRunning() bool {
+	return instance.Client().IsRunning()
+}
+
 func (instance *BaseInstance) Log() log.Log {
 	return instance.log
 }
