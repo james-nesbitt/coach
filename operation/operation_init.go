@@ -65,15 +65,7 @@ flagLoop:
 
 		switch handler {
 		case "demo":
-			// operation.handler = "yaml"
-			// if len(remainingFlags)>0 {
-			// 	operation.source = remainingFlags[0]
-			// 	remainingFlags = remainingFlags[1:]
-			// } else {
-			// 	operation.source = "wunder"
-			// }
-			// operation.source = COACH_DEMO_URLS[operation.source]
-
+			fallthrough
 		case "yaml":
 			fallthrough
 		case "remoteyaml":
@@ -207,11 +199,10 @@ func (operation *InitOperation) Run(logger log.Log) bool {
 	switch operation.handler {
 	case "user":
 		ok = tasks.Init_User_Run(logger, operation.source)
+	case "demo":
+		ok = tasks.Init_Demo_Run(logger, operation.source)
 	case "git":
 		ok = tasks.Init_Git_Run(logger, operation.source)
-	case "remoteyaml":
-		// deprecated as "yaml" now handles remote files as wells
-		fallthrough
 	case "yaml":
 		ok = tasks.Init_Yaml_Run(logger, operation.source)
 	case "default":
