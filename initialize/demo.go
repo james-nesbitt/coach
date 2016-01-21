@@ -7,12 +7,12 @@ import (
 var (
 	// coach demos are keyed remoteyamls
 	COACH_DEMO_URLS = map[string]string{
-		"complete":          "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/complete/.coach/coachinit.yml",
-		"drupal8":           "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/drupal8/.coach/coachinit.yml",
-		"lamp":              "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp/.coach/coachinit.yml",
-		"lamp_monolithic":   "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_monolithic/.coach/coachinit.yml",
-		"lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
-		"lamp_scaling":      "https://raw.githubusercontent.com/james-nesbitt/coach/master/templates/demo/lamp_scaling/.coach/coachinit.yml",
+		"complete":          "https://raw.githubusercontent.com/james-nesbitt/coach/master/coach-init/templates/demo/complete/.coach/coachinit.yml",
+		"drupal8":           "https://raw.githubusercontent.com/james-nesbitt/coach/master/coach-init/templates/demo/drupal8/.coach/coachinit.yml",
+		"lamp":              "https://raw.githubusercontent.com/james-nesbitt/coach/master/coach-init/templates/demo/lamp/.coach/coachinit.yml",
+		"lamp_monolithic":   "https://raw.githubusercontent.com/james-nesbitt/coach/master/coach-init/templates/demo/lamp_monolithic/.coach/coachinit.yml",
+		"lamp_multiplephps": "https://raw.githubusercontent.com/james-nesbitt/coach/master/coach-init/templates/demo/lamp_multiplephps/.coach/coachinit.yml",
+		"lamp_scaling":      "https://raw.githubusercontent.com/james-nesbitt/coach/master/coach-init/templates/demo/lamp_scaling/.coach/coachinit.yml",
 	}
 )
 
