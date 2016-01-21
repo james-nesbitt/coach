@@ -94,11 +94,12 @@
 source:
   Type: volume
 
-  Config:
-    Image: jamesnesbitt/wunder-base # RUn from a standard base image
-  Host:
-    Binds:
-      - "app/source:/app/www/active" # map the local source folder, into where the nginx/fpm expect the web root
+  Docker:
+    Config:
+      Image: jamesnesbitt/wunder-base # RUn from a standard base image
+    Host:
+      Binds:
+        - "app/source:/app/www/active" # map the local source folder, into where the nginx/fpm expect the web root
 
 ###
 # Database service
@@ -110,8 +111,9 @@ source:
 db:
   Type: service
 
-  Config:
-    Image: jamesnesbitt/wunder-mariadb  # this base db image has no running db, user, access yet
+  Docker:
+    Config:
+      Image: jamesnesbitt/wunder-mariadb  # this base db image has no running db, user, access yet
 
 ###
 # Alternative Custom Database service
@@ -147,16 +149,18 @@ db:
 fpm:
   Type: service
 
-  Config:
-    #Image: jamesnesbitt/wunder-hhvm      # The HHVM works
-    Image: jamesnesbitt/wunder-php56fpm     # The FPM works, and should have blackfire working
-    #Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+  Docker:
+    Config:
+      #Image: jamesnesbitt/wunder-hhvm      # The HHVM works
+      Image: jamesnesbitt/wunder-php56fpm     # The FPM works, and should have blackfire working
+      #Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
 
-  Host:
-    Links:
-      - db:db.app # make the db container available as db.app
-    VolumesFrom:
-      - source  # map in all volumes from the source container
+    Host:
+      Links:
+        - db:db.app # make the db container available as db.app
+      VolumesFrom:
+        - source  # map in all volumes from the source container
+
 ###
 # WWW service
 #
@@ -172,20 +176,21 @@ fpm:
 www:
   Type: service
 
-  Config:
-    Image: jamesnesbitt/wunder-nginx  # recent nginx build using nginx provided centos repo
-    Hostname: "%PROJECT" # Token derived from the project name in conf.yml
-    Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
-    Env:
-      - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
-    ExposedPorts:
-      80/tcp: {}
+  Docker:
+    Config:
+      Image: jamesnesbitt/wunder-nginx  # recent nginx build using nginx provided centos repo
+      Hostname: "%PROJECT" # Token derived from the project name in conf.yml
+      Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
+      Env:
+        - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
+      ExposedPorts:
+        80/tcp: {}
 
-  Host:
-    Links:
-      - fpm:fpm.app # make the fpm service available as fpm.app
-    VolumesFrom:
-      - source  # map in all volumes from the source container
-    PortBindings:
-      80/tcp:
-        - HostPort: 8080 # Port 80 applies to all Host IPs
+    Host:
+      Links:
+        - fpm:fpm.app # make the fpm service available as fpm.app
+      VolumesFrom:
+        - source  # map in all volumes from the source container
+      PortBindings:
+        80/tcp:
+          - HostPort: 8080 # Port 80 applies to all Host IPs
