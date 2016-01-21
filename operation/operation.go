@@ -57,6 +57,9 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 	case "help":
 		operation = Operation(&HelpOperation{log: opLogger, conf: project})
 
+	case "init":
+		operation = Operation(&InitOperation{log: opLogger, conf: project})
+
 	default:
 		operation = Operation(&UnknownOperation{id: name})
 	}
