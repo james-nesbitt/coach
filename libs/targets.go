@@ -5,7 +5,7 @@ import (
 
 	"github.com/twmb/algoimpl/go/graph"
 
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 )
 
 // Build a targets object for a nodes list, from a list of string identifiers

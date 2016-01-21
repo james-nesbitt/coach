@@ -112,21 +112,23 @@
     lampstack:
       Type: service
 
-      Config:
-        Image: jamesnesbitt/wunder-lampstackplus # RUn from a monolithic image
-        Hostname: "%PROJECT" # Token derived from the project name in conf.yml
-        Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
-        Env:
-          - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
-        ExposedPorts:
-          80/tcp: {}
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-lampstackplus # RUn from a monolithic image
+          Hostname: "%PROJECT" # Token derived from the project name in conf.yml
+          Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
+          Env:
+            - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
+          ExposedPorts:
+            80/tcp: {}
 
-      Host:
-        Binds:
-          - "app/source:/app/www" # map the local source folder, into where the nginx/fpm expect the web root
-    #     PortBindings:
-    #       80/tcp:
-    #         - HostPort: 8080 # Port 8080 applies to all Host IPs
+        Host:
+          Binds:
+            - "app/source:/app/www" # map the local source folder, into where the nginx/fpm expect the web root
+          PortBindings:
+            80/tcp:
+              - HostPort: 8080 # Port 8080 applies to all Host IPs
+
 
 - Type: File
   Path: app/README.md

@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"gopkg.in/yaml.v2"
 
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 )
 
 // Get tasks from remote YAML corresponding to a remote yaml file

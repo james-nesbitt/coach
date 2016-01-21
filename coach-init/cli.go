@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/james-nesbitt/coach-tools/conf"
-	"github.com/james-nesbitt/coach-tools/log"
-	"github.com/james-nesbitt/coach-tools/operation"
+	"github.com/james-nesbitt/coach/conf"
+	"github.com/james-nesbitt/coach/log"
+	"github.com/james-nesbitt/coach/operation"
 )
 
 var (

@@ -162,12 +162,13 @@
     source:
       Type: volume
 
-      Config:
-        Image: jamesnesbitt/wunder-base # RUn from a standard base image
-      Host:
-        Binds:
-          - app/drupal-project:/app/project
-          - app/settings/drupal/settings.local.php:/app/project/web/sites/default/settings.local.php
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-base # RUn from a standard base image
+        Host:
+          Binds:
+            - app/drupal-project:/app/project
+            - app/settings/drupal/settings.local.php:/app/project/web/sites/default/settings.local.php
 
     ###
     # A volume container to hold source which can be shared as Read-Write
@@ -179,12 +180,13 @@
     assets:
       Type: volume
 
-      Config:
-        Image: jamesnesbitt/wunder-base # RUn from a standard base image
-      Host:
-        Binds:
-          - app/assets/files/public:/app/project/web/sites/default/files
-          - app/assets/files/private:/app/project/web/sites/default/private
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-base # RUn from a standard base image
+        Host:
+          Binds:
+            - app/assets/files/public:/app/project/web/sites/default/files
+            - app/assets/files/private:/app/project/web/sites/default/private
 
     ###
     # Database service
@@ -198,11 +200,13 @@
     #
     db:
       Type: service
-      Build: /docker/db          # DB has a docker build so that we can create databases and set custom passwords.
 
-      Config:
-        RestartPolicy: on-failure
-        OpenStdin: true
+      Docker:
+        Build: docker/db          # DB has a docker build so that we can create databases and set custom passwords.
+
+        Config:
+          RestartPolicy: on-failure
+          OpenStdin: true
 
     ###
     # FPM service
@@ -219,15 +223,16 @@
     fpm:
       Type: service
 
-      Config:
-        Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
 
-      Host:
-        Links:
-          - db:db.app # make the db container available as db.app
-        VolumesFrom:
-          - source:ro
-          - assets
+        Host:
+          Links:
+            - db:db.app # make the db container available as db.app
+          VolumesFrom:
+            - source:ro
+            - assets
 
     ###
     # WWW service
@@ -243,25 +248,27 @@
     #
     www:
       Type: service
-      Build: docker/nginx  # we override the nginx.conf on the default nginx server
 
-      Config:
-        Hostname: "%PROJECT" # Token derived from the project name in conf.yml
-        Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
-        Env:
-          - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
-        ExposedPorts:
-          80/tcp: {}
+      Docker:
+        Build: docker/nginx  # we override the nginx.conf on the default nginx server
 
-      Host:
-        Links:
-          - fpm:fpm.app # make the fpm service available as fpm.app
-        VolumesFrom:
-          - source:ro
-          - assets
-        # PortBindings:
-        #   80/tcp:
-        #     - HostPort: 8080 # Port 80 applies to all Host IPs
+        Config:
+          Hostname: "%PROJECT" # Token derived from the project name in conf.yml
+          Domainname: "%CONTAINER_DOMAIN" # A token explicityl defined in conf,yml
+          Env:
+            - "DNSDOCK_ALIAS=%PROJECT.%CONTAINER_DOMAIN" # an optional ENV var to set, that works with DNSDOCK if you are using it.
+          ExposedPorts:
+            80/tcp: {}
+
+        Host:
+          Links:
+            - fpm:fpm.app # make the fpm service available as fpm.app
+          VolumesFrom:
+            - source:ro
+            - assets
+          # PortBindings: # Use this if you want nginx to respond to 8080 on the host
+          #   80/tcp:
+          #     - HostPort: 8080 # Port 80 applies to all Host IPs
 
     ###
     #
@@ -287,15 +294,16 @@
     commandconfig:
       Type: volume
 
-      Config:
-        Image: jamesnesbitt/wunder-base # RUn from a standard base image
-      Host:
-        Binds:
-          - ~/.ssh:/app/ssh
-          - ~/.gitconfig:/app/.gitconfig
-          - ~/.composer:/app/.composer  # for github tokens
-          - app/settings/drush:/app/.drush
-          - app/settings/console:/app/.console
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-base # RUn from a standard base image
+        Host:
+          Binds:
+            - ~/.ssh:/app/ssh
+            - ~/.gitconfig:/app/.gitconfig
+            - ~/.composer:/app/.composer  # for github tokens
+            - app/settings/drush:/app/.drush
+            - app/settings/console:/app/.console
 
     ####
     # Drush console
@@ -305,20 +313,21 @@
     console:
       Type: command
 
-      Config:
-        Image: jamesnesbitt/wunder-developershell
-        Entrypoint:
-          - /app/project/vendor/bin/console
-          - --ansi
-        WorkingDir: /app/project/web
-        Tty: true
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-developershell
+          Entrypoint:
+            - /app/project/vendor/bin/console
+            - --ansi
+          WorkingDir: /app/project/web
+          Tty: true
 
-      Host:
-        Links:
-          - db:db.app
-        VolumesFrom:
-          - source
-          - assets
+        Host:
+          Links:
+            - db:db.app
+          VolumesFrom:
+            - source
+            - assets
 
     ####
     # Drush command container
@@ -328,20 +337,21 @@
     drush:
       Type: command
 
-      Config:
-        Image: jamesnesbitt/wunder-developershell
-        Entrypoint:
-          - /app/project/vendor/bin/drush
-        WorkingDir: /app/project/web
-        Tty: true
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-developershell
+          Entrypoint:
+            - /app/project/vendor/bin/drush
+          WorkingDir: /app/project/web
+          Tty: true
 
-      Host:
-        Links:
-          - db:db.app
-        VolumesFrom:
-          - source
-          - assets
-          - commandconfig
+        Host:
+          Links:
+            - db:db.app
+          VolumesFrom:
+            - source
+            - assets
+            - commandconfig
 
     ####
     # composer
@@ -352,17 +362,21 @@
     composer:
       Type: command
 
-      Config:
-        Image: jamesnesbitt/wunder-developershell
-        WorkingDir: /app/project
-        Entrypoint:
-          - /usr/bin/composer
-        Tty: true
-      Host:
-        VolumesFrom:
-          - source
-          - assets
-          - commandconfig
+      Docker:
+        Config:
+          Image: jamesnesbitt/wunder-developershell
+          WorkingDir: /app/project
+          Entrypoint:
+            - /usr/bin/composer
+          Tty: true
+        Host:
+          Dns: 
+            - 8.8.8.8
+          VolumesFrom:
+            - source
+            - assets
+            - commandconfig
+
 
 - Type: File
   Path: .coach/docker/db/README.md

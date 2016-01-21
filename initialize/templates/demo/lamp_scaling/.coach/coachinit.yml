@@ -192,7 +192,9 @@
     fpm:
       Type: service
 
-      Instances: scaled 3 9
+      Scale:
+        Initial: 3
+        Maximum: 9
 
       Config:
         Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
@@ -218,7 +220,9 @@
     www:
       Type: service
 
-      Instances: scaled 3 9
+      Scale:
+        Initial: 3
+        Maximum: 9
 
       Config:
         Image: jamesnesbitt/wunder-nginx  # Recent nginx build using nginx provided centos repo
