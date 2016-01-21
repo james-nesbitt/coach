@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 )
 
 type InitTaskFileBase struct {

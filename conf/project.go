@@ -3,7 +3,7 @@ package conf
 import (
 	"os"
 
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 )
 
 // MakeCoachProject Project constructor for building a project based on a project path

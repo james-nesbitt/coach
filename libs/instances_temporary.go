@@ -1,7 +1,7 @@
 package libs
 
 import (
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 
 	"math/rand"
 	"time"

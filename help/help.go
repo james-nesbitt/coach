@@ -1,8 +1,8 @@
 package help
 
 import (
-	"github.com/james-nesbitt/coach-tools/conf"
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/conf"
+	"github.com/james-nesbitt/coach/log"
 )
 
 type Help struct {

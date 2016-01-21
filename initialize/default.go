@@ -1,7 +1,7 @@
 package initialize
 
 import (
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 )
 
 func (tasks *InitTasks) Init_Default_Run(logger log.Log, source string) bool {

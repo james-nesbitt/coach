@@ -4,7 +4,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/log"
 )
 
 func (tasks *InitTasks) Init_Git_Run(logger log.Log, source string) bool {

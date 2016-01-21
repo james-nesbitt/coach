@@ -1,8 +1,8 @@
 package operation
 
 import (
-	"github.com/james-nesbitt/coach-tools/libs"
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/libs"
+	"github.com/james-nesbitt/coach/log"
 )
 
 type RemoveOperation struct {

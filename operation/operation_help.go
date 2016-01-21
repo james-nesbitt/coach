@@ -3,10 +3,10 @@ package operation
 import (
 	"strings"
 
-	"github.com/james-nesbitt/coach-tools/conf"
-	"github.com/james-nesbitt/coach-tools/help"
-	"github.com/james-nesbitt/coach-tools/libs"
-	"github.com/james-nesbitt/coach-tools/log"
+	"github.com/james-nesbitt/coach/conf"
+	"github.com/james-nesbitt/coach/help"
+	"github.com/james-nesbitt/coach/libs"
+	"github.com/james-nesbitt/coach/log"
 )
 
 type HelpOperation struct {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/james-nesbitt/coach-tools/operation"
+	"github.com/james-nesbitt/coach/operation"
 )
 
 /**
