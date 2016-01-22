@@ -45,7 +45,6 @@ func (nodes *Nodes) from_NodesYamlBytes(logger log.Log, project *conf.Project, c
 		// token replace
 		tokens := &project.Tokens
 		yamlBytes = []byte(tokens.TokenReplace(string(yamlBytes)))
-		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Tokenized Bytes", string(yamlBytes))
 	}
 
 	var nodes_yaml map[string]node_yaml_v2
