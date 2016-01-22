@@ -1,6 +1,8 @@
 package libs
 
 import (
+	"os"
+
 	"github.com/james-nesbitt/coach/conf"
 	"github.com/james-nesbitt/coach/log"
 )
@@ -23,7 +25,8 @@ func MakeClientFactories(logger log.Log, project *conf.Project) *ClientFactories
 	 * local docker implementation
 	 */
 	if !factories.HasFactories() {
-		factories.from_Default(logger.MakeChild("default"))
+		logger.Debug(log.VERBOSITY_DEBUG, "No defined clients, retreiving default client")
+		factories.from_Default(logger.MakeChild("default"), project)
 	}
 
 	return factories
@@ -35,8 +38,30 @@ func MakeClientFactories(logger log.Log, project *conf.Project) *ClientFactories
  * FSouza Docker client, configured to use ENV settings, or
  * a local socket.
  */
-func (clientFactories *ClientFactories) from_Default(logger log.Log) {
+func (clientFactories *ClientFactories) from_Default(logger log.Log, project *conf.Project) {
+	clientFactorySettings := &FSouza_ClientFactorySettings{}
+	clientType := "fsouza"
 
+	if DockerHost := os.Getenv("DOCKER_HOST"); DockerHost == "" {
+		logger.Debug(log.VERBOSITY_DEBUG, "No local environment DOCKER settings found, assuming a locally running docker client will be found.")
+		clientFactorySettings.Host = "unix:///var/run/docker.sock"
+	} else {
+		clientFactorySettings.Host = DockerHost
+	}
+
+	// if we have no cert path, and we are going to use a TCP socket, test for a default cert path.
+	if DockerCertPath := os.Getenv("DOCKER_CERT_PATH"); DockerCertPath != "" {
+		clientFactorySettings.CertPath = DockerCertPath
+	}
+
+	factory := FSouza_ClientFactory{}
+	if !factory.Init(logger, project, ClientFactorySettings(clientFactorySettings)) {
+		logger.Error("Failed to initialize FSouza factory from client factory configuration")
+	}
+
+	// Add this factory to the factory list
+	logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Client Factory Created [Client_DockerFSouzaFactory]", factory)
+	clientFactories.AddClientFactory(clientType, ClientFactory(&factory))
 }
 
 // ClientFactories An ordered collection of NodeClient/InstanceCLient factories

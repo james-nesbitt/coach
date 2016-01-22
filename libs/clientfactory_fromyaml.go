@@ -49,7 +49,6 @@ func (clientFactories *ClientFactories) from_ClientFactoriesYamlBytes(logger log
 		// token replace
 		tokens := &project.Tokens
 		yamlBytes = []byte(tokens.TokenReplace(string(yamlBytes)))
-		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Tokenized Bytes", string(yamlBytes))
 	}
 
 	var yaml_clients map[string]map[string]interface{}
