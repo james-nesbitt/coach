@@ -118,6 +118,7 @@ func ListOperations() []string {
 	return []string{
 		"help",
 		"info",
+		"init",
 		"tool",
 		"pull",
 		"build",

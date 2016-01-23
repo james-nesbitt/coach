@@ -57,8 +57,8 @@ func init() {
 
 func main() {
 
-	if !project.IsValid(logger.MakeChild("Sanity Check")) {
-		logger.Error("Coach project configuration is not processable.  Execution halted.")
+	if !(operationName=="init" || project.IsValid(logger.MakeChild("Sanity Check"))) {
+		logger.Error("Coach project configuration is not processable.  Execution halted. ["+operationName+"]")
 		return
 	}
 
