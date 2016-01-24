@@ -39,7 +39,7 @@ func init() {
 		}
 	}
 
-	logger = log.MakeCoachLog("coach", os.Stdout, verbosity)
+	logger = log.MakeCliLog("coach", os.Stdout, verbosity)
 	logger.Debug(log.VERBOSITY_DEBUG, "Reporting initialization", logger.Verbosity())
 
 	workingDir, _ := os.Getwd()
