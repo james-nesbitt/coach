@@ -58,9 +58,10 @@ func (instances *ScaledInstances) Prepare(logger log.Log, client Client, nodes *
 	for i := 0; i <= instances.settings.Maximum; i++ {
 		name := strconv.Itoa(int(i))
 		machineName := instances.MakeId(i)
+		isDefault := (i <= instances.settings.Initial)
 
 		instance := Instance(&ScaledInstance{})
-		if instance.Init(logger.MakeChild(name), name, machineName, client) {
+		if instance.Init(logger.MakeChild(name), name, machineName, client, isDefault) {
 			instances.instancesMap[name] = instance
 			instances.instancesOrder = append(instances.instancesOrder, name)
 		}

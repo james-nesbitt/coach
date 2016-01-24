@@ -39,7 +39,7 @@ func (instances *FixedInstances) Prepare(logger log.Log, client Client, nodes *N
 		machineName := instances.MachineName() + "_" + name
 
 		instance := Instance(&FixedInstance{})
-		if instance.Init(logger.MakeChild(name), name, machineName, client) {
+		if instance.Init(logger.MakeChild(name), name, machineName, client, true) {
 			instances.instancesMap[name] = instance
 			instances.instancesOrder = append(instances.instancesOrder, name)
 		}

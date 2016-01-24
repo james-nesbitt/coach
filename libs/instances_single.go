@@ -45,7 +45,7 @@ func (instances *SingleInstances) Prepare(logger log.Log, client Client, nodes *
 	logger.Debug(log.VERBOSITY_DEBUG_WOAH, "Prepare: Single Instances")
 
 	instances.instance = SingleInstance{}
-	instances.instance.Init(logger, INSTANCE_SINGLE_ID, instances.MachineName(), client)
+	instances.instance.Init(logger, INSTANCE_SINGLE_ID, instances.MachineName(), client, true)
 
 	instances.log.Debug(log.VERBOSITY_DEBUG_WOAH, "Created single instance", instances.instance)
 
