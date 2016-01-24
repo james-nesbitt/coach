@@ -5,12 +5,13 @@ import (
 )
 
 type Instance interface {
-	Init(logger log.Log, id string, machineName string, client Client) bool
+	Init(logger log.Log, id string, machineName string, client Client, isDefault bool) bool
 
 	Id() string
 	MachineName() string
 
 	Can(action string) bool
+	IsDefault() bool
 	IsRunning() bool
 	IsReady() bool
 
@@ -24,13 +25,16 @@ type BaseInstance struct {
 
 	log    log.Log
 	client Client
+
+	isDefault bool
 }
 
-func (instance *BaseInstance) Init(logger log.Log, id string, machineName string, client Client) bool {
+func (instance *BaseInstance) Init(logger log.Log, id string, machineName string, client Client, isDefault bool) bool {
 	instance.id = id
 	instance.machineName = machineName
 	instance.log = logger
 	instance.client = client
+	instance.isDefault = isDefault
 
 	return true
 }
@@ -46,6 +50,9 @@ func (instance *BaseInstance) MachineName() string {
 }
 func (instance *BaseInstance) Can(action string) bool {
 	return true
+}
+func (instance *BaseInstance) IsDefault() bool {
+	return instance.isDefault
 }
 func (instance *BaseInstance) IsReady() bool {
 	return instance.Client().HasContainer()

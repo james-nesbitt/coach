@@ -56,7 +56,7 @@ func (instances *TemporaryInstances) Instance(id string) (instance Instance, ok 
 	machineName := instances.MachineName() + "_" + id
 
 	instance = Instance(&TemporaryInstance{})
-	instance.Init(instances.log.MakeChild(id), id, machineName, instances.client)
+	instance.Init(instances.log.MakeChild(id), id, machineName, instances.client, false)
 
 	instances.instancesMap[id] = instance
 	instances.instancesOrder = append(instances.instancesOrder, id)
