@@ -30,6 +30,16 @@ func (paths *Paths) Path(key string) (path string, ok bool) {
 	return
 }
 
+// return an ordered list of paths
+// (really the order doesn't matter, but this fits a pattern that we use a lot in coach)
+func (paths *Paths) PathOrder() []string {
+	pathOrder := []string{}
+	for path, _ := range paths.Paths {
+		pathOrder = append(pathOrder, path)
+	}
+	return pathOrder
+}
+
 // Add a new Path to the Paths
 func (paths *Paths) SetPath(key string, keyPath string, overwrite bool) bool {
 	if _, ok := paths.Paths[key]; overwrite || !ok {
