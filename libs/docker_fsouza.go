@@ -31,6 +31,14 @@ import (
 	"github.com/james-nesbitt/coach/log"
 )
 
+var (
+	actionCache map[string]bool
+)
+
+func init() {
+	actionCache = map[string]bool{}
+}
+
 /**
  * Coach: ClientFactory
  */
@@ -749,6 +757,12 @@ func (client *FSouza_NodeClient) Destroy(logger log.Log, force bool) bool {
 
 func (client *FSouza_NodeClient) Pull(logger log.Log, force bool) bool {
 	image, tag := client.GetImageName()
+	actionCacheTag := "pull:" + image + ":" + tag
+
+	if _, ok := actionCache[actionCacheTag]; ok {
+		logger.Message("Node image [" + image + ":" + tag + "] was just pulled, so not pulling it again.")
+		return true
+	}
 
 	if !force && client.HasImage() {
 		logger.Info("Node already has an image [" + image + ":" + tag + "], so not pulling it again.  You can force this operation if you want to pull this image.")
@@ -786,9 +800,11 @@ func (client *FSouza_NodeClient) Pull(logger log.Log, force bool) bool {
 
 	if err != nil {
 		logger.Error("Node image not pulled : " + image + " => " + err.Error())
+		actionCache[actionCacheTag] = false
 		return false
 	} else {
 		logger.Message("Node image pulled: " + image + ":" + tag)
+		actionCache[actionCacheTag] = false
 		return true
 	}
 }
