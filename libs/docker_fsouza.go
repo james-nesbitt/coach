@@ -577,6 +577,7 @@ func (client *FSouza_InstancesClient) InstancesInfo(logger log.Log) {
 			"|=",
 			"Name",
 			"Container",
+			"Default",
 			"Created",
 			"Running",
 			"Status",
@@ -595,6 +596,11 @@ func (client *FSouza_InstancesClient) InstancesInfo(logger log.Log) {
 				"|-",
 				name,
 				machineName,
+			}
+			if instance.IsDefault() {
+				row = append(row, "yes")
+			} else {
+				row = append(row, "no")
 			}
 			if instanceClient.HasContainer() {
 				row = append(row, "yes")
