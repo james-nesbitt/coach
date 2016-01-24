@@ -1,5 +1,13 @@
 package log
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+	"strings"
+	"unicode/utf8"
+)
+
 // Configuration struct for a CliLog
 type CliLogSettings struct {
 	writer    io.Writer // a log writing target

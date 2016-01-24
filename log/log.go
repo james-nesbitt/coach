@@ -1,13 +1,8 @@
 package log
 
 import (
-	"fmt"
 	"io"
-	"strconv"
-	"strings"
-	"unicode/utf8"
 )
-
 // Log verbosity enum
 const (
 	VERBOSITY_FATAL   = iota // STOP and DIE
@@ -42,14 +37,14 @@ type Log interface {
 	Info(messages ...string)                                    // Verbose gratuitous information messages for a user
 	Debug(verbosity int, message string, object ...interface{}) // Debugging output that should only be shown if requested
 
-	Write(message []byte) (int, error)
+	Write(message []byte) (int, error) // Used for compatibility with the io.Writer interface
 }
 
 /**
  * CliLog is the default coach logger
  */
 
-// Log factory method
+// CLI Log factory method
 func MakeCliLog(name string, writer io.Writer, verbosity int) Log {
 	return Log(&CliLog{
 		CliLogSettings: CliLogSettings{
