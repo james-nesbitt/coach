@@ -688,7 +688,7 @@ func (client *FSouza_NodeClient) Build(logger log.Log, force bool) bool {
 	}
 
 	if !force && client.HasImage() {
-		logger.Warning("Node image [" + image + ":" + tag + "] not built as an image already exists.  You can force this operation to build this image")
+		logger.Info("Node image [" + image + ":" + tag + "] not built as an image already exists.  You can force this operation to build this image")
 		return false
 	}
 
@@ -1048,6 +1048,7 @@ func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []
 			if !persistant {
 				// 5. [DEFERED] remove the container (if not instructed to keep it)
 				defer client.Remove(logger, true)
+				defer client.Stop(logger, true, 1)
 			}
 		} else {
 			logger.Error("Failed to create disposable run container")
