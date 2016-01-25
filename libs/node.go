@@ -90,6 +90,8 @@ func (node *BaseNode) Prepare(logger log.Log, nodes *Nodes) (success bool) {
 
 func (node *BaseNode) Can(action string) bool {
 	switch action {
+	case "run":
+		return false
 	default:
 		return node.client.Can(action)
 	}
