@@ -60,6 +60,9 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 	case "init":
 		operation = Operation(&InitOperation{log: opLogger, conf: project})
 
+	case "tool":
+		operation = Operation(&ToolOperation{log: opLogger, conf: project})
+
 	default:
 		operation = Operation(&UnknownOperation{id: name})
 	}
