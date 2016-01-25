@@ -721,6 +721,7 @@ func (client *FSouza_NodeClient) Build(logger log.Log, force bool) bool {
 		logger.Error("Node build failed [" + client.node.MachineName() + "] in build path [" + buildPath + "] => " + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(true, false)
 		logger.Message("Node succesfully built image [" + image + ":" + tag + "] From path [" + buildPath + "]")
 		return true
 	}
@@ -750,6 +751,7 @@ func (client *FSouza_NodeClient) Destroy(logger log.Log, force bool) bool {
 		logger.Error("Node image removal failed [" + image + "] => " + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(true, false)
 		logger.Message("Node image was removed [" + image + "]")
 		return true
 	}
@@ -803,6 +805,7 @@ func (client *FSouza_NodeClient) Pull(logger log.Log, force bool) bool {
 		actionCache[actionCacheTag] = false
 		return false
 	} else {
+		client.backend.Refresh(true, false)
 		logger.Message("Node image pulled: " + image + ":" + tag)
 		actionCache[actionCacheTag] = false
 		return true
@@ -894,7 +897,7 @@ func (client *FSouza_InstanceClient) Create(logger log.Log, overrideCmd []string
 		* container.  It is not clear if this failure occurs in the
 		* remote API, or in the dockerclient library.
 		 */
-
+		client.backend.Refresh(false, true)
 		if err.Error() == "no such image" && client.HasContainer() {
 			logger.Message("Created instance container [" + name + " FROM " + Config.Image + "] => " + container.ID[:12])
 			logger.Warning("Docker created the container, but reported an error due to a 'missing image'.  This is a known bug, that can be ignored")
@@ -904,6 +907,7 @@ func (client *FSouza_InstanceClient) Create(logger log.Log, overrideCmd []string
 		logger.Error("Failed to create instance container [" + name + " FROM " + Config.Image + "] => " + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(false, true)
 		logger.Message("Created instance container [" + name + "] => " + container.ID[:12])
 		return true
 	}
@@ -922,6 +926,7 @@ func (client *FSouza_InstanceClient) Remove(logger log.Log, force bool) bool {
 		logger.Error("Failed to remove instance container [" + name + "] =>" + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(false, true)
 		logger.Message("Removed instance container [" + name + "] ")
 		return true
 	}
@@ -954,6 +959,7 @@ func (client *FSouza_InstanceClient) Stop(logger log.Log, force bool, timeout ui
 		logger.Error("Failed to stop node container [" + id + "] => " + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(false, true)
 		logger.Message("Node instance stopped [" + id + "]")
 		return true
 	}
@@ -1020,6 +1026,9 @@ func (client *FSouza_InstanceClient) Commit(logger log.Log, tag string, message 
 }
 
 func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []string) bool {
+	hushedLogger := logger.MakeChild("RunSupport")
+	hushedLogger.Hush()
+
 	instance := client.instance
 
 	// Set up some additional settings for TTY commands
@@ -1043,12 +1052,16 @@ func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []
 	if !hasContainer {
 		logger.Info("Creating new disposable RUN container")
 
-		if hasContainer = client.Create(logger, cmd, false); hasContainer {
+		if hasContainer = client.Create(hushedLogger, cmd, false); hasContainer {
 			logger.Debug(log.VERBOSITY_DEBUG, "Created disposable run container")
 			if !persistant {
 				// 5. [DEFERED] remove the container (if not instructed to keep it)
-				defer client.Remove(logger, true)
-				defer client.Stop(logger, true, 1)
+				defer func(client *FSouza_InstanceClient, hushedLogger log.Log) {
+					if client.IsRunning() {
+						client.Remove(hushedLogger, true)
+					}
+					client.Stop(hushedLogger, true, 1)
+				}(client, hushedLogger)
 			}
 		} else {
 			logger.Error("Failed to create disposable run container")
@@ -1061,7 +1074,7 @@ func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []
 
 		// 3. start the container (set up a remove)
 		logger.Info("Starting RUN container")
-		ok := client.Start(logger, false)
+		ok := client.Start(hushedLogger, false)
 
 		// 4. attach to the container
 		if ok {
