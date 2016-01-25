@@ -68,7 +68,6 @@ func (operation *RunOperation) Run(logger log.Log) bool {
 		} else if !node.Can("run") {
 			nodeLogger.Info("Node doesn't Run [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Runing node")
 
 			instanceIds := instances.InstancesOrder()
 			if len(instanceIds) == 0 {
