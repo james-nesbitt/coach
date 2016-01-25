@@ -65,6 +65,7 @@ type conf_Yaml struct {
 // Make a Yaml Conf apply configuration to a project object
 func (conf *conf_Yaml) configureProject(logger log.Log, project *Project) bool {
 	// set a project name
+
 	if conf.Project != "" {
 		project.Name = conf.Project
 	}
@@ -95,7 +96,7 @@ func (conf *conf_Yaml) configureProject(logger log.Log, project *Project) bool {
 		}
 	}
 
-	logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Configured project from YAML conf")
+	logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Configured project from YAML conf", project)
 	return true
 }
 

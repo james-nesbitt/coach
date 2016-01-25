@@ -9,9 +9,9 @@ import (
 // MakeCoachProject Project constructor for building a project based on a project path
 func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
 	project = &Project{
-		Paths:        MakePaths(),        // empty typesafe paths object
-		Tokens:       MakeTokens(),       // empty tokens object
-		ProjectFlags: MakeProjectFlags(), // empty flags object
+		Paths:  MakePaths(),        // empty typesafe paths object
+		Tokens: MakeTokens(),       // empty tokens object
+		Flags:  MakeProjectFlags(), // empty flags object
 	}
 
 	/**
@@ -36,7 +36,14 @@ func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
 	 */
 	project.from_SecretsYaml(logger.MakeChild("secrets"))
 
-	return
+	/**
+	 * 4. Run the project prepare, which will validate the configuration
+	 */
+	if !project.Prepare(logger) {
+		logger.Warning("Coach configuration processing failed")
+	}
+
+	return project
 }
 
 // Project settings handler for coach, used to centralize and validate settings for a project
@@ -48,7 +55,23 @@ type Project struct {
 
 	Tokens
 
-	ProjectFlags
+	Flags
+}
+
+func (project *Project) Prepare(logger log.Log) bool {
+
+	/**
+	 * Add some default tokens
+	 */
+	project.Tokens["PROJECT"] = project.Name
+	project.Tokens["AUTHOR"] = project.Author
+
+	/**
+	 * Process configuration based on flags
+	 */
+	project.ProcessFlags(logger)
+
+	return true
 }
 
 // Is this project configured enough to run coach
