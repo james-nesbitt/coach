@@ -1,8 +1,8 @@
 package operation
 
 import (
-	"github.com/james-nesbitt/coach/log"
 	"github.com/james-nesbitt/coach/conf"
+	"github.com/james-nesbitt/coach/log"
 	"github.com/james-nesbitt/coach/tool"
 )
 
@@ -16,7 +16,7 @@ type ToolOperation struct {
 
 	toolPaths []string
 
-	tool string
+	tool  string
 	tools *tool.Tools
 }
 
@@ -27,7 +27,7 @@ func (operation *ToolOperation) Flags(flags []string) bool {
 	operation.tool = ""
 
 	// first flag is the tool name
-	if len(flags)>0 {
+	if len(flags) > 0 {
 		operation.tool = flags[0]
 		flags = flags[1:]
 	}
@@ -49,17 +49,17 @@ to worry about the path to the script.
 func (operation *ToolOperation) Run(logger log.Log) bool {
 	logger.Info("running tool operation")
 
-	if operation.tools==nil {
+	if operation.tools == nil {
 		operation.tools = &tool.Tools{}
 
 		// load tools from tool paths
 		operation.tools.Init(logger, operation.conf)
 	}
 
-	if operation.tool=="" {
+	if operation.tool == "" {
 		operation.log.Error("No tool specified")
 	} else if tool, ok := operation.tools.Tool(operation.tool); !ok {
-		operation.log.Error("Specified tool not found: "+operation.tool)
+		operation.log.Error("Specified tool not found: " + operation.tool)
 	} else {
 		tool.Run(operation.flags)
 	}

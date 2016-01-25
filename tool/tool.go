@@ -1,8 +1,8 @@
 package tool
 
 import (
-	"github.com/james-nesbitt/coach/log"
 	"github.com/james-nesbitt/coach/conf"
+	"github.com/james-nesbitt/coach/log"
 )
 
 // DB of Tools

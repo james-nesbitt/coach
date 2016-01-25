@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"gopkg.in/yaml.v2"
 
-	"github.com/james-nesbitt/coach/log"
 	"github.com/james-nesbitt/coach/conf"
+	"github.com/james-nesbitt/coach/log"
 )
 
 const (
@@ -48,19 +48,19 @@ func (tools *Tools) from_ToolYamlBytes(logger log.Log, project *conf.Project, ya
 
 	var yaml_tools map[string]map[string]interface{}
 	err := yaml.Unmarshal(yamlBytes, &yaml_tools)
-	if err!=nil {
+	if err != nil {
 		logger.Warning("Could not parse tool yaml:" + err.Error())
 		return false
 	}
 
 	for name, tool_struct := range yaml_tools {
 
-		switch (tool_struct["Type"]) {
+		switch tool_struct["Type"] {
 		case "script":
 			json_tool, _ := json.Marshal(tool_struct)
 			var scriptTool Tool_Script
 			err := json.Unmarshal(json_tool, &scriptTool)
-			if err!=nil {
+			if err != nil {
 				continue
 			}
 
