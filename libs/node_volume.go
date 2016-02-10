@@ -47,3 +47,22 @@ func (node *VolumeNode) Init(logger log.Log, name string, project *conf.Project,
 func (node *VolumeNode) defaultInstances(logger log.Log, client Client, instancesSettings InstancesSettings) {
 	node.instances = Instances(&SingleInstances{})
 }
+
+
+// Volume Nodes can only build and create, they can never start
+func (node *VolumeNode) Can(action string) bool {
+	switch action {
+	case "run":
+		fallthrough
+	case "unpause":
+		fallthrough
+	case "pause":
+		fallthrough
+	case "stop":
+		fallthrough
+	case "start":
+		return false
+	default:
+		return node.BaseNode.Can(action)
+	}
+}
