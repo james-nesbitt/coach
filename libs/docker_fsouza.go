@@ -479,7 +479,16 @@ func (wrapper *FSouza_Wrapper) MatchContainers(prefix string, running bool) ([]d
 	eachcontainer:
 
 		for _, containerName := range container.Names {
-			if strings.Contains(containerName, "/"+prefix) {
+			/**
+			 * Remember that container names also include names used for mapping/linking
+			 * into other containers.  A container example_db linked into a container
+			 * example_fpm as db.app will also have a name /example_fpm/db.app.
+			 * We test for link names by counting the number of "/" characters in the container
+			 * name.
+			 *
+			 * @TODO is this correct approach.
+			 */
+			if strings.Count(containerName, "/")<2 && strings.HasPrefix(containerName, "/"+prefix) {
 				filteredContainers = append(filteredContainers, container)
 				continue eachcontainer
 			}
@@ -1057,10 +1066,11 @@ func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []
 			if !persistant {
 				// 5. [DEFERED] remove the container (if not instructed to keep it)
 				defer func(client *FSouza_InstanceClient, hushedLogger log.Log) {
+					client.backend.Refresh(false, true)
 					if client.IsRunning() {
-						client.Remove(hushedLogger, true)
+						client.Stop(hushedLogger, true, 0)
 					}
-					client.Stop(hushedLogger, true, 1)
+					client.Remove(hushedLogger, true)
 				}(client, hushedLogger)
 			}
 		} else {
