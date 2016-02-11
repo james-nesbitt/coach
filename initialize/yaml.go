@@ -93,6 +93,12 @@ func (tasks *InitTasks) AddTasksFromYaml(logger log.Log, yamlSource []byte) erro
 			if err := json.Unmarshal(json_task, &task); err == nil {
 				taskAdder = TaskAdder(&task)
 			}
+		case "FileStringReplace":
+			json_task, _ := json.Marshal(task_struct)
+			var task InitTaskYaml_FileStringReplace
+			if err := json.Unmarshal(json_task, &task); err == nil {
+				taskAdder = TaskAdder(&task)
+			}
 		case "GitClone":
 			json_task, _ := json.Marshal(task_struct)
 			var task InitTaskYaml_GitClone
@@ -159,6 +165,17 @@ type InitTaskYaml_FileCopy struct {
 
 func (task *InitTaskYaml_FileCopy) AddTask(tasks *InitTasks) {
 	tasks.AddFileCopy(task.Path, task.Source)
+}
+
+type InitTaskYaml_FileStringReplace struct {
+	Path   string `json:"Path" yaml:"Path"`
+	OldString string `json:"Old" yaml:"Source"`
+	NewString string `json:"New" yaml:"Source"`
+	ReplaceCount int `json:"Limit" yaml:"Source"`
+}
+
+func (task *InitTaskYaml_FileStringReplace) AddTask(tasks *InitTasks) {
+	tasks.AddFileStringReplace(task.Path, task.OldString, task.NewString, task.ReplaceCount)
 }
 
 type InitTaskYaml_GitClone struct {

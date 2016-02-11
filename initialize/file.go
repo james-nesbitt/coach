@@ -100,7 +100,7 @@ func (task *InitTaskFileBase) CopyFile(logger log.Log, destinationPath string, s
 
 	sourcePath, ok := task.absolutePath(sourcePath, false)
 	if !ok {
-		logger.Warning("Invalid copy source path: " + destinationPath)
+		logger.Warning("Invalid copy source path: " + sourcePath)
 		return false
 	}
 	sourceFile, err := os.Open(sourcePath)
@@ -234,6 +234,28 @@ func (task *InitTaskFileBase) copyFileRecursive(logger log.Log, destinationRootP
 	}
 	return true
 }
+// perform a string replace on file contents
+func (task *InitTaskFileBase) FileStringReplace(logger log.Log, targetPath string, oldString string, newString string, replaceCount int) bool {
+
+	targetPath, ok := task.absolutePath(targetPath, false)
+	if !ok {
+		logger.Warning("Invalid string replace path: " + targetPath)
+		return false
+	}
+
+	contents, err := ioutil.ReadFile(targetPath)
+	if err != nil {
+        logger.Error(err.Error())
+	}
+
+	contents = []byte( strings.Replace(string(contents), oldString, newString, replaceCount) )
+
+	err = ioutil.WriteFile(targetPath, contents, 0644)
+	if err != nil {
+        logger.Error(err.Error())
+	}
+	return true
+}
 
 type InitTaskFile struct {
 	InitTaskFileBase
@@ -297,6 +319,33 @@ func (task *InitTaskFileCopy) RunTask(logger log.Log) bool {
 		return true
 	} else {
 		logger.Warning("--> Failed to copy file : " + task.source + " -> " + task.path)
+		return false
+	}
+}
+
+type InitTaskFileStringReplace struct {
+	InitTaskFileBase
+	root string
+
+	path string
+	oldString  string
+	newString	 string
+	replaceCount 	 int
+}
+
+func (task *InitTaskFileStringReplace) RunTask(logger log.Log) bool {
+	if task.path == "" || task.root == "" || task.oldString == "" || task.newString == "" {
+		return false
+	}
+	if task.replaceCount==0 {
+		task.replaceCount = -1
+	}
+
+	if task.FileStringReplace(logger, task.path, task.oldString, task.newString, task.replaceCount) {
+		logger.Message("--> performed string replace on file : " + task.path)
+		return true
+	} else {
+		logger.Warning("--> Failed to perform string replace on file : " + task.path)
 		return false
 	}
 }

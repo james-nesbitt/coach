@@ -51,6 +51,15 @@ func (tasks *InitTasks) AddFileCopy(path string, source string) {
 		source: source,
 	}))
 }
+func (tasks *InitTasks) AddFileStringReplace(path string, oldString string, newString string, replaceCount int) {
+	tasks.AddTask(InitTask(&InitTaskFileStringReplace{
+		root:   tasks.root,
+		path:   path,
+		oldString: oldString,
+		newString: newString,
+		replaceCount: replaceCount,
+	}))
+}
 func (tasks *InitTasks) AddGitClone(path string, url string) {
 	tasks.AddTask(InitTask(&InitTaskGitClone{
 		root: tasks.root,
