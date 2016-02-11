@@ -2,22 +2,36 @@
 
 /**
  * @file
- * Local development override configuration feature.
  *
- * To activate this feature, copy and rename it such that its path plus
- * filename is 'sites/example.com/settings.local.php', where example.com
- * is the name of your site. Then, go to the bottom of
- * 'sites/example.com/settings.php' and uncomment the commented lines that
- * mention 'settings.local.php'.
+ * Local development override configuration feature.
  */
+$databases['default']['default'] = [array (]
+  'database' => 'app',
+  'username' => 'app',
+  'password' => 'app',
+  'prefix' => '',
+  'host' => 'db.app',
+  'port' => '3306',
+  'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+  'driver' => 'mysql',
+];
 
-$databases['default']['default'] = array(
- 'driver' => 'mysql',
- 'database' => 'app',
- 'username' => 'app',
- 'password' => 'app',
- 'host' => 'db.app',
-); 
+/**
+ * Trusted Host settings
+ *
+ * Mark some domains as being in the acceptable host domains, for better
+ * system security.  This isn't necessary, but it will clear some system
+ * warnings that you may see in logs, or in the status report page.
+ *
+ * @see https://www.drupal.org/node/1992030
+ */
+$settings['trusted_host_patterns'] = [
+  'localhost',
+  '\.dev$',
+  '\.vm$',
+  '\.local$',
+  '\.docker$',
+];
 
 /**
  * Assertions.

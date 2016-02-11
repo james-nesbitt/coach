@@ -164,11 +164,11 @@
 
       Docker:
         Config:
-          Image: jamesnesbitt/wunder-base # RUn from a standard base image
+          Image: jamesnesbitt/wunder-base # Run from a standard base image
         Host:
           Binds:
             - app/drupal-project:/app/project
-            - app/settings/drupal/settings.local.php:/app/project/web/sites/default/settings.local.php
+            - app/settings/drupal:/app/project/web/sites/default/localconf
 
     ###
     # A volume container to hold source which can be shared as Read-Write
@@ -549,6 +549,11 @@
     An example for how to mount a local file over the source
     code, this keeps the local settings file out of the source code
 
+    # /app/settings/services.local.yml
+
+    An example for how to mount a local services file over the source
+    code, this keeps the local services file out of the source code
+
     # /app/backups
 
     Mounted into the containers as an optional destination for
@@ -562,8 +567,15 @@
   Path: app/assets/files/private/.gitkeep
   Contents: keep this folder
 - Type: File
+  Path: app/drupal-project/web/sites/default/private/.gitkeep
+  Contents: keep this folder. Coach will map over the app/assets/files/private folder at runtime
+
+- Type: File
   Path: app/assets/files/public/.gitkeep
   Contents: keep this folder
+- Type: File
+  Path: app/drupal-project/web/sites/default/files/.gitkeep
+  Contents: keep this folder. Coach will map over the app/assets/files/public folder at runtime
 
 - Type: File
   Path: app/settings/console/.gitkeep
@@ -571,6 +583,36 @@
 - Type: File
   Path: app/settings/drush/.gitkeep
   Contents: Keep this folder
+
+- Type: FileCopy
+  Path: app/drupal-project/web/sites/default/services.yml
+  Source: app/drupal-project/web/sites/default/default.services.yml
+
+- Type: FileCopy
+  Path: app/drupal-project/web/sites/default/settings.php
+  Source: app/drupal-project/web/sites/default/default.settings.php
+- Type: FileStringReplace
+  Path: app/drupal-project/web/sites/default/settings.php
+  Old: |
+    # if (file_exists(__DIR__ . '/settings.local.php')) {
+    #   include __DIR__ . '/settings.local.php';
+    # }
+  New: |
+    if (file_exists(__DIR__ . '/localconf/settings.local.php')) {
+      include __DIR__ . '/localconf/settings.local.php';
+    }
+    if (file_exists(__DIR__ . '/localconf/services.local.yml')) {
+      $settings['container_yamls'][] = __DIR__ . '/localconf/services.local.yml';
+    }
+
+- Type: File
+  Path: app/drupal-project/web/sites/default/localconf/.gitkeep
+  Contents: Keep this folder.  Coach will overlay app/settings/drupal on top at runtime
+
+- Type: File
+  Path: app/settings/drupal/services.local.yml
+  Contents: |
+    # Put local services configuration here
 - Type: File
   Path: app/settings/drupal/settings.local.php
   Contents: |
@@ -578,22 +620,36 @@
 
     /**
      * @file
-     * Local development override configuration feature.
      *
-     * To activate this feature, copy and rename it such that its path plus
-     * filename is 'sites/example.com/settings.local.php', where example.com
-     * is the name of your site. Then, go to the bottom of
-     * 'sites/example.com/settings.php' and uncomment the commented lines that
-     * mention 'settings.local.php'.
+     * Local development override configuration feature.
      */
+    $databases['default']['default'] = [array (]
+      'database' => 'app',
+      'username' => 'app',
+      'password' => 'app',
+      'prefix' => '',
+      'host' => 'db.app',
+      'port' => '3306',
+      'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+      'driver' => 'mysql',
+    ];
 
-    $databases['default']['default'] = array(
-     'driver' => 'mysql',
-     'database' => 'app',
-     'username' => 'app',
-     'password' => 'app',
-     'host' => 'db.app',
-    ); 
+    /**
+     * Trusted Host settings
+     *
+     * Mark some domains as being in the acceptable host domains, for better
+     * system security.  This isn't necessary, but it will clear some system
+     * warnings that you may see in logs, or in the status report page.
+     *
+     * @see https://www.drupal.org/node/1992030
+     */
+    $settings['trusted_host_patterns'] = [
+      'localhost',
+      '\.dev$',
+      '\.vm$',
+      '\.local$',
+      '\.docker$',
+    ];
 
     /**
      * Assertions.
@@ -668,9 +724,19 @@
     /**
      * Enable access to rebuild.php.
      *
-     * This setting can be enabled to allow Drupal php and database cached
+     * This setting can be enabled to allow Drupal's php and database cached
      * storage to be cleared via the rebuild.php page. Access to this page can also
      * be gained by generating a query string from rebuild_token_calculator.sh and
      * using these parameters in a request to rebuild.php.
      */
     $settings['rebuild_access'] = TRUE;
+- Type: File
+  Path: app/drupal-project/web/sites/default/settings.local.php
+  Contents: |
+    <?php
+    /** 
+     * keep this file. 
+     *
+     * Coach will map over the app/settings/drupal/settings.local.php file at runtime
+     */
+  
