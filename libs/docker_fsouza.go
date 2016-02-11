@@ -1068,7 +1068,6 @@ func (client *FSouza_InstanceClient) Run(logger log.Log, persistant bool, cmd []
 				defer func(client *FSouza_InstanceClient, hushedLogger log.Log) {
 					client.backend.Refresh(false, true)
 					if client.IsRunning() {
-						logger.Debug(log.VERBOSITY_DEBUG, "CONTAINERS", client.Containers(true))
 						client.Stop(hushedLogger, true, 0)
 					}
 					client.Remove(hushedLogger, true)
