@@ -40,6 +40,11 @@ Configurations and aliases for drush
 An example for how to mount a local file over the source
 code, this keeps the local settings file out of the source code
 
+# /app/settings/services.local.yml
+
+An example for how to mount a local services file over the source
+code, this keeps the local services file out of the source code
+
 # /app/backups
 
 Mounted into the containers as an optional destination for
