@@ -18,7 +18,7 @@ source:
     Host:
       Binds:
         - app/drupal-project:/app/project
-        - app/settings/drupal/settings.local.php:/app/project/web/sites/default/settings.local.php
+        - app/settings/drupal:/app/project/web/sites/default/localconf
 
 ###
 # A volume container to hold source which can be shared as Read-Write
@@ -32,7 +32,7 @@ assets:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-base # RUn from a standard base image
+      Image: jamesnesbitt/wunder-base # Run from a standard base image
     Host:
       Binds:
         - app/assets/files/public:/app/project/web/sites/default/files
