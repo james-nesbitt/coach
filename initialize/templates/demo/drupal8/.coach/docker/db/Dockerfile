@@ -1,4 +1,4 @@
-FROM        jamesnesbitt/wunder-mariadb
+FROM        docker.io/jamesnesbitt/wunder-mariadb
 MAINTAINER  james.nesbitt@wunderkraut.com
 
 ### ProjectDB --------------------------------------------------------------------

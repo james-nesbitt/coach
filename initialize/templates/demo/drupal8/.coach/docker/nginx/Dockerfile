@@ -1,4 +1,4 @@
-FROM        jamesnesbitt/wunder-nginx
+FROM        docker.io/jamesnesbitt/wunder-nginx
 MAINTAINER  james.nesbitt@wunderkraut.com
 
 ### NGINX --------------------------------------------------------------------

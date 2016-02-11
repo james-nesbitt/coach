@@ -567,14 +567,14 @@
   Path: app/assets/files/private/.gitkeep
   Contents: keep this folder
 - Type: File
-  Path: app/drupal-project/web/sites/default/files/private/.gitkeep
+  Path: app/drupal-project/web/sites/default/private/.gitkeep
   Contents: keep this folder. Coach will map over the app/assets/files/private folder at runtime
 
 - Type: File
   Path: app/assets/files/public/.gitkeep
   Contents: keep this folder
 - Type: File
-  Path: app/drupal-project/web/sites/default/files/public/.gitkeep
+  Path: app/drupal-project/web/sites/default/files/.gitkeep
   Contents: keep this folder. Coach will map over the app/assets/files/public folder at runtime
 
 - Type: File
@@ -739,4 +739,4 @@
      *
      * Coach will map over the app/settings/drupal/settings.local.php file at runtime
      */
-     
+  

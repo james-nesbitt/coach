@@ -14,7 +14,7 @@ source:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-base # RUn from a standard base image
+      Image: docker.io/jamesnesbitt/wunder-base # Run from a standard base image
     Host:
       Binds:
         - app/drupal-project:/app/project
@@ -32,7 +32,7 @@ assets:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-base # Run from a standard base image
+      Image: docker.io/jamesnesbitt/wunder-base # Run from a standard base image
     Host:
       Binds:
         - app/assets/files/public:/app/project/web/sites/default/files
@@ -75,7 +75,7 @@ fpm:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
+      Image: docker.io/jamesnesbitt/wunder-php7fpm     # The FPM delivers the latest PHP7
 
     Host:
       Links:
@@ -146,7 +146,7 @@ commandconfig:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-base # RUn from a standard base image
+      Image: docker.io/jamesnesbitt/wunder-base # Run from a standard base image
     Host:
       Binds:
         - ~/.ssh:/app/ssh
@@ -165,7 +165,7 @@ console:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-developershell
+      Image: docker.io/jamesnesbitt/wunder-developershell
       Entrypoint:
         - /app/project/vendor/bin/console
         - --ansi
@@ -189,7 +189,7 @@ drush:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-developershell
+      Image: docker.io/jamesnesbitt/wunder-developershell
       Entrypoint:
         - /app/project/vendor/bin/drush
       WorkingDir: /app/project/web
@@ -214,7 +214,7 @@ composer:
 
   Docker:
     Config:
-      Image: jamesnesbitt/wunder-developershell
+      Image: docker.io/jamesnesbitt/wunder-developershell
       WorkingDir: /app/project
       Entrypoint:
         - /usr/bin/composer
