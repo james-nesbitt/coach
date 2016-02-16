@@ -649,7 +649,22 @@ func (client *FSouza_InstancesClient) InstancesInfo(logger log.Log) {
 }
 
 func (client *FSouza_InstancesClient) InstancesFound(logger log.Log) []string {
+	instancesMachineNamePrefix := "/"+client.instances.MachineName()
+	instancesMachineNamePrefixLength := len(instancesMachineNamePrefix)+1 // the +1 comes from the underscore spacer
+
 	ids := []string{}
+	for _, container := range client.Containers(false) {
+		for _, name := range container.Names {
+			if strings.HasPrefix(name, instancesMachineNamePrefix) {
+				if len(name)>instancesMachineNamePrefixLength {
+					ids = append(ids, name[instancesMachineNamePrefixLength:])
+				} else {
+					ids = append(ids, "single")
+				}
+				break
+			}
+		}
+	}
 	return ids
 }
 
@@ -956,6 +971,7 @@ func (client *FSouza_InstanceClient) Start(logger log.Log, force bool) bool {
 		return false
 	} else {
 		logger.Message("Node instance started [" + id + "]")
+		client.backend.Refresh(false, true)
 		return true
 	}
 }
@@ -982,6 +998,7 @@ func (client *FSouza_InstanceClient) Pause(logger log.Log) bool {
 		logger.Error("Failed to pause intance [" + client.instance.Id() + "] Container [" + id + "] =>" + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(false, true)
 		logger.Message("Paused instance [" + client.instance.Id() + "] Container [" + id + "]")
 		return true
 	}
@@ -995,6 +1012,7 @@ func (client *FSouza_InstanceClient) Unpause(logger log.Log) bool {
 		logger.Error("Failed to unpause Instance [" + client.instance.Id() + "] Container [" + id + "] =>" + err.Error())
 		return false
 	} else {
+		client.backend.Refresh(false, true)
 		logger.Message("Unpaused Instance [" + client.instance.Id() + "] Container [" + id + "]")
 		return true
 	}
@@ -1029,6 +1047,7 @@ func (client *FSouza_InstanceClient) Commit(logger log.Log, tag string, message 
 		logger.Warning("Failed to commit container changes to an image [" + client.instance.Id() + ":" + id + "] : " + tag)
 		return false
 	} else {
+		client.backend.Refresh(true, false)
 		logger.Message("Committed container changes to an image [" + client.instance.Id() + ":" + id + "] : " + tag)
 		return true
 	}
