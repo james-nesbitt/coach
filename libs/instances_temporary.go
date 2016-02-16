@@ -42,6 +42,12 @@ func (instances *TemporaryInstances) Init(logger log.Log, machineName string, cl
 }
 func (instances *TemporaryInstances) Prepare(logger log.Log, client Client, nodes *Nodes, node Node) bool {
 	logger.Debug(log.VERBOSITY_DEBUG_WOAH, "Prepare: Temporary Instances")
+
+	// look for existing instances, which can come from persistant runs, or run breaks
+	for _, instanceId := range instances.client.InstancesClient(instances).InstancesFound(logger) {
+		instances.Instance(instanceId)
+	}
+
 	return true
 }
 func (instances *TemporaryInstances) Instance(id string) (instance Instance, ok bool) {
