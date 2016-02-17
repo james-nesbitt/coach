@@ -14,6 +14,8 @@ type Node interface {
 	Prepare(logger log.Log, nodes *Nodes) bool
 
 	Can(action string) bool
+
+	AddDependency(target string) bool
 	DependsOn(target string) bool
 
 	Client() NodeClient
@@ -27,6 +29,7 @@ type BaseNode struct {
 	machineName string
 	client      Client
 	instances   Instances
+	manualDependencies []string
 }
 
 // Declare node type
@@ -46,6 +49,7 @@ func (node *BaseNode) Init(logger log.Log, name string, project *conf.Project, c
 	node.conf = project
 	node.name = name
 	node.client = client
+	node.manualDependencies = []string{}
 
 	instancesMachineName := node.MachineName()
 
@@ -108,6 +112,20 @@ func (node *BaseNode) Instances() Instances {
 	return node.instances
 }
 
+func (node *BaseNode) AddDependency(target string) bool {
+	if !node.hasManualDependency(target) {
+		node.manualDependencies = append(node.manualDependencies, target)
+	}
+	return true
+}
 func (node *BaseNode) DependsOn(target string) bool {
-	return node.client.DependsOn(target)
+	return node.hasManualDependency(target) || node.client.DependsOn(target)
+}
+func (node *BaseNode) hasManualDependency(target string) bool {
+	for _, manualDependency := range node.manualDependencies {
+		if manualDependency==target {
+			return true
+		}
+	}
+	return false
 }

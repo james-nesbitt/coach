@@ -111,6 +111,11 @@ NodesListLoop:
 
 			// run the node initializaer with the collected obkjects
 			if node.Init(nodeLogger, name, project, client, instancesSettings) {
+				// add any manual dependencies specified
+				for _, dependency := range node_yaml.Requires {
+					node.AddDependency(dependency)
+				}
+
 				nodeLogger.Debug(log.VERBOSITY_DEBUG_LOTS, "Adding node to nodes list:", name, node)
 				nodes.SetNode(name, node, true)
 			}
@@ -148,7 +153,7 @@ type node_yaml_v2 struct {
 
 	Docker FSouza_ClientSettings `yaml:"Docker,omitempty"`
 
-	Requires map[string][]string `yaml:"Requires,omitempty"`
+	Requires []string `yaml:"Requires,omitempty"`
 }
 
 func (node *node_yaml_v2) Type() (string, bool) {
