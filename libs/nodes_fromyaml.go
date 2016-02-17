@@ -87,6 +87,8 @@ NodesListLoop:
 			node = Node(&BuildNode{})
 		case "volume":
 			node = Node(&VolumeNode{})
+		case "pull":
+			node = Node(&PullNode{})
 		case "service":
 			node = Node(&ServiceNode{})
 		default:
