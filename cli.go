@@ -90,6 +90,40 @@ func main() {
 	logger.Debug(log.VERBOSITY_DEBUG, "Sorted Targets", mainTargets, targets)
 
 	/**
+	 * Maybe we can come up with a better default operation?
+	 *
+	 * Various scenarios:
+	 *
+	 * A. all nodes are of the same type, then pick a decent default operation per node type.
+	 *
+	 */
+	if operationName==operation.DEFAULT_OPERATION {
+
+		// Check target node types
+		targetType := ""
+		for _, targetId := range targets.TargetOrder() {
+			target, _ := targets.Target(targetId)
+			node, _ := target.Node()
+			if targetType=="" {
+				targetType = node.Type()
+			} else if targetType==node.Type() {
+
+			} else {
+				targetType = ""
+				break
+			}
+		}
+		switch targetType {
+		case "command":
+			// Command containers default to run
+			operationName = "run"
+		default:
+			// default to info
+			operationName = "info"
+		}
+	}
+
+	/**
 	 * Create an operation set
 	 */
 	operations := operation.MakeOperation(logger.MakeChild("operations"), project, operationName, operationFlags, targets)
