@@ -20,6 +20,8 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 	switch name {
 	case "info":
 		operation = Operation(&InfoOperation{log: opLogger, targets: targets})
+	case "status":
+		operation = Operation(&StatusOperation{log: opLogger, targets: targets})
 
 	case "pull":
 		operation = Operation(&PullOperation{log: opLogger, targets: targets})
@@ -133,6 +135,7 @@ func ListOperations() []string {
 		"create",
 		"remove",
 		"start",
+		"status",
 		"stop",
 		"attach",
 		"pause",
@@ -168,6 +171,10 @@ func (operation *UnknownOperation) Help(flags []string) {
 	return
 }
 func (operation *UnknownOperation) Run(logger log.Log) bool {
-	logger.Error("Unknown operation: " + operation.id)
+	if operation.id==DEFAULT_OPERATION {
+		logger.Error("No operation specified")
+	} else {
+		logger.Error("Unknown operation: " + operation.id)			
+	}
 	return false
 }
