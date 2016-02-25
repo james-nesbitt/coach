@@ -58,3 +58,10 @@ func (node *CommandNode) Can(action string) bool {
 		return node.client.Can(action)
 	}
 }
+
+// Return some string status for the node
+func (node *CommandNode) Status(logger log.Log) []string {
+	status := []string{"COMMAND"}
+	status = append(status, node.BaseNode.Status(logger)...)
+	return status
+}

@@ -46,3 +46,8 @@ func (instances *NullInstances) InstancesOrder() []string {
 func (instances *NullInstances) FilterableInstances() (FilterableInstances, bool) {
 	return nil, false
 }
+
+// Status strings
+func (instances *NullInstances) Status(logger log.Log) []string {
+	return []string{}
+}

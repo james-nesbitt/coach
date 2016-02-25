@@ -62,6 +62,12 @@ func (instances *SingleInstances) InstancesOrder() []string {
 	return []string{INSTANCE_SINGLE_ID}
 }
 
+// Status strings
+func (instances *SingleInstances) Status(logger log.Log) []string {
+	instance, _ := instances.Instance(INSTANCE_SINGLE_ID)
+	return instance.Status(logger)
+}
+
 // Give a filterable instances for this instances object
 func (instances *SingleInstances) FilterableInstances() (FilterableInstances, bool) {
 	filterableInstances := BaseFilterableInstances{}

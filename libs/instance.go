@@ -17,6 +17,8 @@ type Instance interface {
 
 	Log() log.Log
 	Client() InstanceClient
+
+	Status(logger log.Log) []string
 }
 
 type BaseInstance struct {
@@ -66,4 +68,19 @@ func (instance *BaseInstance) Log() log.Log {
 }
 func (instance *BaseInstance) Client() InstanceClient {
 	return instance.client.InstanceClient(instance)
+}
+
+func (instance *BaseInstance) Status(logger log.Log) []string {
+	status := []string{}
+
+	instanceClient := instance.Client()
+	if instanceClient.IsRunning() {
+		status = append(status, "RUNNING")
+	} else if instanceClient.HasContainer() {
+		status = append(status, "READY")
+	} else {
+		status = append(status, "NOT-READY")
+	}
+
+	return status
 }

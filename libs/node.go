@@ -20,6 +20,8 @@ type Node interface {
 
 	Client() NodeClient
 	Instances() Instances
+
+	Status(logger log.Log) []string
 }
 
 type BaseNode struct {
@@ -128,4 +130,15 @@ func (node *BaseNode) hasManualDependency(target string) bool {
 		}
 	}
 	return false
+}
+
+// Return some string status for the node
+func (node *BaseNode) Status(logger log.Log) []string {
+	status := []string{}
+
+	if !node.Client().HasImage() {
+		status = append(status, "Image:NOT-AVAILABLE")
+	}
+
+	return status
 }

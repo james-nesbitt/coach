@@ -2,7 +2,6 @@ package operation
 
 import (
 	"strings"
-	"strconv"
 
 	"github.com/james-nesbitt/coach/libs"
 	"github.com/james-nesbitt/coach/log"
@@ -51,12 +50,12 @@ func (operation *StatusOperation) Run(logger log.Log) bool {
 
 
 		if hasNode {
-			status = append(status, operation.NodeStatus(nodeLogger, node)...)
+			status = append(status, node.Status(nodeLogger)...)
 		} else {
 			status = append(status, "No node for target")
 		}
 		if hasInstances {
-			status = append(status, operation.InstancesStatus(nodeLogger, instances)...)
+			status = append(status, instances.Status(nodeLogger)...)
 		} else {
 			status = append(status, "No instances for target")
 		}
@@ -65,42 +64,4 @@ func (operation *StatusOperation) Run(logger log.Log) bool {
 	}
 
 	return true
-}
-
-
-func (operation *StatusOperation) NodeStatus(logger log.Log, node libs.Node) []string {
-	status := []string{}
-
-	if node.Client().HasImage() {
-		status = append(status, "Image:good")
-	} else {
-		status = append(status, "Image:No Image")
-	}
-
-	return status
-}
-
-func (operation *StatusOperation) InstancesStatus(logger log.Log, instances libs.FilterableInstances) []string {
-	status := []string{}
-
-	allCount := 0
-	runningCount := 0
-	for _, id := range instances.InstancesOrder() {
-		instance, _ := instances.Instance(id)
-		instanceClient := instance.Client()
-		if instanceClient.IsRunning() {
-			allCount++
-			runningCount++
-		} else if instanceClient.HasContainer() {
-			allCount++
-		}
-	}
-
-	if allCount>0 {
-		status = append(status, "Containers:"+strconv.Itoa(runningCount)+"/"+strconv.Itoa(allCount))
-	} else {
-		status = append(status, "Containers:NONE")
-	}
-
-	return status
 }

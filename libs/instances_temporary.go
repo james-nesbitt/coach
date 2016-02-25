@@ -69,6 +69,23 @@ func (instances *TemporaryInstances) Instance(id string) (instance Instance, ok 
 	return instance, true
 }
 
+// Status strings
+func (instances *TemporaryInstances) Status(logger log.Log) []string {
+	status := []string{}
+
+	for _, id := range instances.InstancesOrder() {
+		instance, _ := instances.Instance(id)
+		instanceClient := instance.Client()
+		if instanceClient.IsRunning() {
+			status = append(status, "ACTIVE:"+instance.MachineName())
+		} else if instanceClient.HasContainer() {
+			status = append(status, "ORPHAN:"+instance.MachineName())
+		}
+	}
+
+	return status
+}
+
 // Give a filterable instances for this instances object
 func (instances *TemporaryInstances) FilterableInstances() (FilterableInstances, bool) {
 	filterableInstances := BaseFilterableInstances{}

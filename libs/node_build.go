@@ -64,3 +64,16 @@ func (node *BuildNode) Can(action string) bool {
 		return false
 	}
 }
+
+// Return some string status for the node
+func (node *BuildNode) Status(logger log.Log) []string {
+	status := []string{"BUILD"}
+
+	if node.Client().HasImage() {
+		status = append(status, "Image:BUILT")
+	} else {
+		status = append(status, "Image:NOT-BUILT")
+	}
+
+	return status
+}

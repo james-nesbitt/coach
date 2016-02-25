@@ -53,3 +53,10 @@ func (node *ServiceNode) Can(action string) bool {
 		return node.BaseNode.Can(action)
 	}
 }
+
+// Return some string status for the node
+func (node *ServiceNode) Status(logger log.Log) []string {
+	status := []string{"SERVICE"}
+	status = append(status, node.BaseNode.Status(logger)...)
+	return status
+}

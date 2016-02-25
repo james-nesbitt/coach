@@ -1,6 +1,8 @@
 package libs
 
 import (
+	"strconv"
+
 	"github.com/james-nesbitt/coach/log"
 )
 
@@ -19,6 +21,8 @@ type Instances interface {
 
 	Instance(id string) (Instance, bool)
 	InstancesOrder() []string
+
+	Status(logger log.Log) []string
 }
 
 // A Filterable set of instances from an Instances object
@@ -36,6 +40,8 @@ type FilterableInstances interface {
 
 	Instance(id string) (Instance, bool)
 	InstancesOrder() []string
+
+	Status(logger log.Log) []string
 }
 
 type BaseInstances struct {
@@ -83,6 +89,32 @@ func (instances *BaseInstances) InstancesOrder() []string {
 func (instances *BaseInstances) FilterableInstances() (FilterableInstances, bool) {
 	filterableInstances := BaseFilterableInstances{Instances: Instances(instances), filters: []string{}}
 	return FilterableInstances(&filterableInstances), true
+}
+
+// Status strings
+func (instances *BaseInstances) Status(logger log.Log) []string {
+	status := []string{}
+
+	allCount := 0
+	runningCount := 0
+	for _, id := range instances.InstancesOrder() {
+		instance, _ := instances.Instance(id)
+		instanceClient := instance.Client()
+		if instanceClient.IsRunning() {
+			allCount++
+			runningCount++
+		} else if instanceClient.HasContainer() {
+			allCount++
+		}
+	}
+
+	if allCount>0 {
+		status = append(status, "Containers:"+strconv.Itoa(runningCount)+"/"+strconv.Itoa(allCount))
+	} else {
+		status = append(status, "Containers:NONE")
+	}
+
+	return status
 }
 
 // Extend the BaseInstances with a set of filters
