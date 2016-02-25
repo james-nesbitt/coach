@@ -85,7 +85,7 @@ func (operation *CommitOperation) Run(logger log.Log) bool {
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Creating instance containers")
+			nodeLogger.Message("Committing instance container")
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)
 				instance.Client().Commit(logger, operation.tag, operation.message)
