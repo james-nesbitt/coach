@@ -81,15 +81,15 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 		} else if !node.Can("Up") {
 			nodeLogger.Info("Node doesn't Up [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Uping node")
+			nodeLogger.Message("Bringing node up")
 
-			if node.Can("build") {
-				nodeClient := node.Client()
+			nodeClient := node.Client()
+
+			if node.Can("build") && (operation.force || !nodeClient.HasImage()) {
 				nodeLogger.Message("Building node image")
 				nodeClient.Build(nodeLogger, operation.force)
 			}
-			if node.Can("pull") {
-				nodeClient := node.Client()
+			if node.Can("pull") && (operation.force || !nodeClient.HasImage()) {
 				nodeLogger.Message("Pulling node image")
 				nodeClient.Pull(nodeLogger, operation.force)
 			}
@@ -99,11 +99,11 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 					instance, _ := instances.Instance(id)
 					instanceClient := instance.Client()
 
-					if create {
+					if create && !instanceClient.HasContainer() {
 						nodeLogger.Message("Creating node instance container : " + id)
 						instanceClient.Create(nodeLogger, []string{}, operation.force)
 					}
-					if start {
+					if start && !instanceClient.IsRunning() {
 						nodeLogger.Message("Starting node instance container : " + id)
 						instanceClient.Start(nodeLogger, operation.force)
 					}
