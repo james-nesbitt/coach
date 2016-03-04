@@ -117,7 +117,7 @@ func (log *CliLog) writeLog(verbosity int, messages ...string) {
 
 	case VERBOSITY_MESSAGE:
 		prefix := log.stack[len(log.stack)-1] + ": "
-		if length := utf8.RuneCountInString(prefix); length < 25 {
+		if length := utf8.RuneCountInString(prefix); length < 15 {
 			prefix += strings.Repeat("-", 15-length)
 		}
 		elements = append(elements, prefix)

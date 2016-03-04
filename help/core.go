@@ -1,7 +1,7 @@
 package help
 
 func (help *Help) getCoreHelpYaml() []byte {
- 	return []byte(`
+	return []byte(`
 "cli": |
 
   The CLI is the primary means of running coach.  The goal is typically to run a coach operation, on a number of coach nodes, or coach node instances.
@@ -122,4 +122,4 @@ settings: |
   - .coach/secrets/secrets.yml => in the project secrets.yml.  This map is typically used to keep project specific ID and token values used as ENV variables in containers, but that should not be kept in any source repository.
 
 `)
-} 
+}

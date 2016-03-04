@@ -234,6 +234,7 @@ func (task *InitTaskFileBase) copyFileRecursive(logger log.Log, destinationRootP
 	}
 	return true
 }
+
 // perform a string replace on file contents
 func (task *InitTaskFileBase) FileStringReplace(logger log.Log, targetPath string, oldString string, newString string, replaceCount int) bool {
 
@@ -245,14 +246,14 @@ func (task *InitTaskFileBase) FileStringReplace(logger log.Log, targetPath strin
 
 	contents, err := ioutil.ReadFile(targetPath)
 	if err != nil {
-        logger.Error(err.Error())
+		logger.Error(err.Error())
 	}
 
-	contents = []byte( strings.Replace(string(contents), oldString, newString, replaceCount) )
+	contents = []byte(strings.Replace(string(contents), oldString, newString, replaceCount))
 
 	err = ioutil.WriteFile(targetPath, contents, 0644)
 	if err != nil {
-        logger.Error(err.Error())
+		logger.Error(err.Error())
 	}
 	return true
 }
@@ -327,17 +328,17 @@ type InitTaskFileStringReplace struct {
 	InitTaskFileBase
 	root string
 
-	path string
-	oldString  string
-	newString	 string
-	replaceCount 	 int
+	path         string
+	oldString    string
+	newString    string
+	replaceCount int
 }
 
 func (task *InitTaskFileStringReplace) RunTask(logger log.Log) bool {
 	if task.path == "" || task.root == "" || task.oldString == "" || task.newString == "" {
 		return false
 	}
-	if task.replaceCount==0 {
+	if task.replaceCount == 0 {
 		task.replaceCount = -1
 	}
 

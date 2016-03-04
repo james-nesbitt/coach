@@ -97,16 +97,16 @@ func main() {
 	 * A. all nodes are of the same type, then pick a decent default operation per node type.
 	 *
 	 */
-	if operationName==operation.DEFAULT_OPERATION {
+	if operationName == operation.DEFAULT_OPERATION {
 
 		// Check target node types
 		targetType := ""
 		for _, targetId := range targets.TargetOrder() {
 			target, _ := targets.Target(targetId)
 			node, _ := target.Node()
-			if targetType=="" {
+			if targetType == "" {
 				targetType = node.Type()
-			} else if targetType==node.Type() {
+			} else if targetType == node.Type() {
 
 			} else {
 				targetType = ""

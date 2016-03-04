@@ -3,6 +3,7 @@ package log
 import (
 	"io"
 )
+
 // Log verbosity enum
 const (
 	VERBOSITY_FATAL   = iota // STOP and DIE

@@ -23,12 +23,12 @@ type Node interface {
 }
 
 type BaseNode struct {
-	log         log.Log
-	conf        *conf.Project
-	name        string
-	machineName string
-	client      Client
-	instances   Instances
+	log                log.Log
+	conf               *conf.Project
+	name               string
+	machineName        string
+	client             Client
+	instances          Instances
 	manualDependencies []string
 }
 
@@ -123,7 +123,7 @@ func (node *BaseNode) DependsOn(target string) bool {
 }
 func (node *BaseNode) hasManualDependency(target string) bool {
 	for _, manualDependency := range node.manualDependencies {
-		if manualDependency==target {
+		if manualDependency == target {
 			return true
 		}
 	}
