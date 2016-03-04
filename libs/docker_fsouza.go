@@ -146,18 +146,30 @@ func (settings *FSouza_ClientSettings) Prepare(logger log.Log, nodes *Nodes) boo
 		var binds []string
 		for index, bind := range settings.Host.Binds {
 			binds = strings.SplitN(bind, ":", 3)
-			if path.IsAbs(binds[0]) {
+			bindRoot := binds[0] // this is the bind source
+
+			if path.IsAbs(bindRoot) {
 				continue
-			} else if binds[0][0:1] == "~" { // one would think that path can handle such terminology
+			} else if bindRoot[0:1] == "~" { // one would think that path can handle such terminology
 				if rootPath, ok := settings.conf.Paths.Path("user-home"); ok {
-					binds[0] = path.Join(rootPath, binds[0][1:])
+					bindRoot = path.Join(rootPath, bindRoot[1:])
 				}
 			} else {
 				if rootPath, ok := settings.conf.Paths.Path("project-root"); ok {
-					binds[0] = path.Join(rootPath, binds[0][:])
+					bindRoot = path.Join(rootPath, bindRoot[:])
 				}
 			}
-			settings.Host.Binds[index] = strings.Join(binds, ":")
+
+			// report a warning if the bind path does not exists.  
+			// This sometimes causes issues as Docker will try to create the 
+			// host bind path on the fly, as the root user
+            if _, err := os.Stat(binds[0]); os.IsNotExist(err) {
+                logger.Warning("Node settings included a bind path that does not exist.  Docker will try to create the local path as a file:" + binds[0] + " .Note that in some cases, related containers may report a missing image error")
+            }
+
+			if bindRoot!=binds[0] {
+				settings.Host.Binds[index] = strings.Join(binds, ":")
+			}
 		}
 	}
 
