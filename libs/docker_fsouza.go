@@ -163,11 +163,12 @@ func (settings *FSouza_ClientSettings) Prepare(logger log.Log, nodes *Nodes) boo
 			// report a warning if the bind path does not exists.  
 			// This sometimes causes issues as Docker will try to create the 
 			// host bind path on the fly, as the root user
-            if _, err := os.Stat(binds[0]); os.IsNotExist(err) {
+            if _, err := os.Stat(bindRoot); os.IsNotExist(err) {
                 logger.Warning("Node settings included a bind path that does not exist.  Docker will try to create the local path as a file:" + binds[0] + " .Note that in some cases, related containers may report a missing image error")
             }
 
-			if bindRoot!=binds[0] {
+			if bindRoot != binds[0] {
+				binds[0] = bindRoot
 				settings.Host.Binds[index] = strings.Join(binds, ":")
 			}
 		}
