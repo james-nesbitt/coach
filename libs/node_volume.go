@@ -48,7 +48,6 @@ func (node *VolumeNode) defaultInstances(logger log.Log, client Client, instance
 	node.instances = Instances(&SingleInstances{})
 }
 
-
 // Volume Nodes can only build and create, they can never start
 func (node *VolumeNode) Can(action string) bool {
 	switch action {

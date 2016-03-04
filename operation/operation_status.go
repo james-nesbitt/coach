@@ -1,8 +1,8 @@
 package operation
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/james-nesbitt/coach/libs"
 	"github.com/james-nesbitt/coach/log"
@@ -49,7 +49,6 @@ func (operation *StatusOperation) Run(logger log.Log) bool {
 		nodeLogger := logger.MakeChild(targetID)
 		status := []string{}
 
-
 		if hasNode {
 			status = append(status, operation.NodeStatus(nodeLogger, node)...)
 		} else {
@@ -61,12 +60,11 @@ func (operation *StatusOperation) Run(logger log.Log) bool {
 			status = append(status, "No instances for target")
 		}
 
-		nodeLogger.Message( "["+strings.Join(status, "][")+"]" )
+		nodeLogger.Message("[" + strings.Join(status, "][") + "]")
 	}
 
 	return true
 }
-
 
 func (operation *StatusOperation) NodeStatus(logger log.Log, node libs.Node) []string {
 	status := []string{}
@@ -96,7 +94,7 @@ func (operation *StatusOperation) InstancesStatus(logger log.Log, instances libs
 		}
 	}
 
-	if allCount>0 {
+	if allCount > 0 {
 		status = append(status, "Containers:"+strconv.Itoa(runningCount)+"/"+strconv.Itoa(allCount))
 	} else {
 		status = append(status, "Containers:NONE")

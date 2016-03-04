@@ -168,10 +168,10 @@ func (task *InitTaskYaml_FileCopy) AddTask(tasks *InitTasks) {
 }
 
 type InitTaskYaml_FileStringReplace struct {
-	Path   string `json:"Path" yaml:"Path"`
-	OldString string `json:"Old" yaml:"Source"`
-	NewString string `json:"New" yaml:"Source"`
-	ReplaceCount int `json:"Limit" yaml:"Source"`
+	Path         string `json:"Path" yaml:"Path"`
+	OldString    string `json:"Old" yaml:"Source"`
+	NewString    string `json:"New" yaml:"Source"`
+	ReplaceCount int    `json:"Limit" yaml:"Source"`
 }
 
 func (task *InitTaskYaml_FileStringReplace) AddTask(tasks *InitTasks) {

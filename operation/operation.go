@@ -171,10 +171,10 @@ func (operation *UnknownOperation) Help(flags []string) {
 	return
 }
 func (operation *UnknownOperation) Run(logger log.Log) bool {
-	if operation.id==DEFAULT_OPERATION {
+	if operation.id == DEFAULT_OPERATION {
 		logger.Error("No operation specified")
 	} else {
-		logger.Error("Unknown operation: " + operation.id)			
+		logger.Error("Unknown operation: " + operation.id)
 	}
 	return false
 }

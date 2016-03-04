@@ -53,10 +53,10 @@ func (tasks *InitTasks) AddFileCopy(path string, source string) {
 }
 func (tasks *InitTasks) AddFileStringReplace(path string, oldString string, newString string, replaceCount int) {
 	tasks.AddTask(InitTask(&InitTaskFileStringReplace{
-		root:   tasks.root,
-		path:   path,
-		oldString: oldString,
-		newString: newString,
+		root:         tasks.root,
+		path:         path,
+		oldString:    oldString,
+		newString:    newString,
 		replaceCount: replaceCount,
 	}))
 }
