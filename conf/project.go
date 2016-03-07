@@ -7,8 +7,9 @@ import (
 )
 
 // MakeCoachProject Project constructor for building a project based on a project path
-func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
+func MakeCoachProject(logger log.Log, workingDir string, environment string) (project *Project) {
 	project = &Project{
+		Environment: environment,   // base on the default environment
 		Paths:  MakePaths(),        // empty typesafe paths object
 		Tokens: MakeTokens(),       // empty tokens object
 		Flags:  MakeProjectFlags(), // empty flags object
@@ -34,10 +35,15 @@ func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
 	/**
 	 * 3. Try to load secrets from configuration paths
 	 */
+	project.from_EnvironmentsPath(logger.MakeChild("environment"))
+
+	/**
+	 * 4. Try to load secrets from configuration paths
+	 */
 	project.from_SecretsYaml(logger.MakeChild("secrets"))
 
 	/**
-	 * 4. Run the project prepare, which will validate the configuration
+	 * 5. Run the project prepare, which will validate the configuration
 	 */
 	if !project.Prepare(logger) {
 		logger.Warning("Coach configuration processing failed")
@@ -50,6 +56,8 @@ func MakeCoachProject(logger log.Log, workingDir string) (project *Project) {
 type Project struct {
 	Name   string
 	Author string
+
+	Environment string
 
 	Paths
 
