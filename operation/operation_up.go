@@ -73,6 +73,8 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 		instances, hasInstances := target.Instances()
 		nodeLogger := logger.MakeChild(targetID)
 
+		build := node.Can("build")
+		pull := node.Can("pull")
 		create := node.Can("create")
 		start := node.Can("start")
 
@@ -84,14 +86,21 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 			nodeLogger.Message("Bringing node up")
 
 			nodeClient := node.Client()
-
-			if node.Can("build") && (operation.force || !nodeClient.HasImage()) {
-				nodeLogger.Message("Building node image")
-				nodeClient.Build(nodeLogger, operation.force)
+			if build {
+				if operation.force || !nodeClient.HasImage() {
+					nodeLogger.Message("Building node image")
+					nodeClient.Build(nodeLogger, operation.force)
+				} else {
+					nodeLogger.Info("Node already has an image built")
+				}
 			}
-			if node.Can("pull") && (operation.force || !nodeClient.HasImage()) {
-				nodeLogger.Message("Pulling node image")
-				nodeClient.Pull(nodeLogger, operation.force)
+			if pull {
+				if operation.force || !nodeClient.HasImage() {
+					nodeLogger.Message("Pulling node image")
+					nodeClient.Pull(nodeLogger, operation.force)
+				} else {
+					nodeLogger.Info("Node already has an image pulled")
+				}
 			}
 
 			if hasInstances && (create || start) {
@@ -99,13 +108,21 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 					instance, _ := instances.Instance(id)
 					instanceClient := instance.Client()
 
-					if create && !instanceClient.HasContainer() {
-						nodeLogger.Message("Creating node instance container : " + id)
-						instanceClient.Create(nodeLogger, []string{}, operation.force)
+					if create {
+						if operation.force || !instanceClient.HasContainer() {
+							nodeLogger.Message("Creating node instance container : " + id)
+							instanceClient.Create(nodeLogger, []string{}, operation.force)
+						} else {
+							nodeLogger.Info("Instance already has an container created : "+id)
+						}
 					}
-					if start && !instanceClient.IsRunning() {
-						nodeLogger.Message("Starting node instance container : " + id)
-						instanceClient.Start(nodeLogger, operation.force)
+					if start {
+						if operation.force || !instanceClient.IsRunning() {
+							nodeLogger.Message("Starting node instance container : " + id)
+							instanceClient.Start(nodeLogger, operation.force)
+						} else {
+							nodeLogger.Info("Instance already has an container running : "+id)
+						}
 					}
 				}
 			}
