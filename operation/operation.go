@@ -38,6 +38,8 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 		operation = Operation(&StartOperation{log: opLogger, targets: targets})
 	case "stop":
 		operation = Operation(&StopOperation{log: opLogger, targets: targets})
+	case "restart":
+		operation = Operation(&RestartOperation{log: opLogger, targets: targets})
 	case "scale":
 		operation = Operation(&ScaleOperation{log: opLogger, targets: targets})
 	case "pause":
@@ -134,6 +136,7 @@ func ListOperations() []string {
 		"scale",
 		"create",
 		"remove",
+		"restart",
 		"start",
 		"status",
 		"stop",
