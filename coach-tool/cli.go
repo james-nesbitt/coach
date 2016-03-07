@@ -11,6 +11,7 @@ import (
 var (
 	globalFlags    map[string]string
 	operationFlags []string
+	environment    string
 
 	logger  log.Log       // Logger interface for tracking messages
 	project *conf.Project // project configuration
@@ -18,7 +19,7 @@ var (
 
 func init() {
 
-	globalFlags, operationFlags = parseGlobalFlags(os.Args)
+	globalFlags, operationFlags, environment = parseGlobalFlags(os.Args)
 
 	// verbosity
 	var verbosity int = log.VERBOSITY_MESSAGE
@@ -45,7 +46,7 @@ func init() {
 	workingDir, _ := os.Getwd()
 	logger.Debug(log.VERBOSITY_DEBUG, "Working Directory", workingDir)
 
-	project = conf.MakeCoachProject(logger.MakeChild("conf"), workingDir)
+	project = conf.MakeCoachProject(logger.MakeChild("conf"), workingDir, environment)
 	logger.Debug(log.VERBOSITY_DEBUG, "Project configuration", *project)
 
 	logger.Debug(log.VERBOSITY_DEBUG, "Finished initialization", nil)

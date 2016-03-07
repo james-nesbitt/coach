@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/james-nesbitt/coach/conf"
+)
+
 /**
  * Parse command flags to configure the operation
  *
@@ -8,9 +12,11 @@ package main
  * 3. OPERATION ARGUMENTS : anything left
  *
  */
-func parseGlobalFlags(flags []string) (globalFlags map[string]string, operationFlags []string) {
+func parseGlobalFlags(flags []string) (globalFlags map[string]string, operationFlags []string, environment string) {
 
 	globalFlags = map[string]string{} // start of with no flags
+
+	environment = conf.COACH_CONF_ENVIRONMENTS_DEFAULT
 
 	global := true // start of assuming everything is a global arg
 	for index := 1; index < len(flags); index++ {
@@ -35,7 +41,18 @@ func parseGlobalFlags(flags []string) (globalFlags map[string]string, operationF
 			globalFlags["verbosity"] = "staaap"
 
 		default:
-			global = false
+
+			/**
+			* The first flags that we don't recognize as global, fall into three cases:
+			*  :{flag} : indicates an environment
+			 */
+
+			switch arg[0:1] {
+			case ":": // environment
+				environment = arg[1:]
+			default:
+				global = false
+			}
 
 		}
 
