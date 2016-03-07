@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/james-nesbitt/coach/conf"
 	"github.com/james-nesbitt/coach/operation"
 )
 
@@ -12,11 +13,13 @@ import (
  * 3. OPERATION ARGUMENTS : anything left
  *
  */
-func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers []string, globalFlags map[string]string, operationFlags []string) {
+func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers []string, globalFlags map[string]string, operationFlags []string, environment string) {
 	operationName = operation.DEFAULT_OPERATION // default operation, to be interpreted later, if not set in this function
 
 	globalFlags = map[string]string{} // start of with no flags
 	targetIdentifiers = []string{}    //  ||
+
+	environment = conf.COACH_CONF_ENVIRONMENTS_DEFAULT
 
 	global := true // start of assuming everything is a global arg
 	for index := 1; index < len(flags); index++ {
@@ -47,6 +50,7 @@ func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers [
 
 			/**
 			* The first flags that we don't recognize as global, fall into three cases:
+			*  :{flag} : indicates an environment
 			*  @{flag} : indicates a node target, can be repeated
 			*  %{flag} : indicates a node type target, can be repeated
 			*  -{flag} : indicates the end of global flag targeting, and starts the collection of operationFlags
@@ -54,6 +58,9 @@ func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers [
 			 */
 
 			switch arg[0:1] {
+			case ":": // environment
+				environment = arg[1:]
+
 			case "@": // target
 				fallthrough
 			case "%": // type

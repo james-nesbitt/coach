@@ -15,7 +15,6 @@ const (
 
 // Ummarshaller interface : pass incoming yaml into the topics
 func (help *Help) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	help.log.Debug(log.VERBOSITY_MESSAGE, "UNMARSHALL:", help.topics)
 	return unmarshal(&help.topics)
 }
 

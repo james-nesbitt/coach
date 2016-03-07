@@ -82,5 +82,5 @@ func (paths *Paths) GetConfSubPaths(subPath string) []string {
 // @NOTE it's best not to check if a path exists.
 func (paths *Paths) CheckFileExists(filePath string) bool {
 	_, err := os.Stat(filePath)
-	return err == nil
+	return !os.IsNotExist(err)
 }

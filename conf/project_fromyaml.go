@@ -55,6 +55,8 @@ type conf_Yaml struct {
 	Project string `yaml:"Project,omitempty"`
 	Author  string `yaml:"Author,omitempty"`
 
+	Environment string `yaml:"Environment,omitempty"`
+
 	Paths map[string]string `yaml:"Paths,omitempty"`
 
 	Tokens map[string]string `yaml:"Tokens,omitempty"`
@@ -72,6 +74,11 @@ func (conf *conf_Yaml) configureProject(logger log.Log, project *Project) bool {
 	// set a author name
 	if conf.Author != "" {
 		project.Author = conf.Author
+	}
+
+	// set an environment string
+	if conf.Environment != "" {
+		project.Environment = conf.Environment
 	}
 
 	// set any paths

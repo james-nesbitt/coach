@@ -15,6 +15,7 @@ var (
 	mainTargets    []string
 	globalFlags    map[string]string
 	operationFlags []string
+	environment   string
 
 	logger  log.Log       // Logger interface for tracking messages
 	project *conf.Project // project configuration
@@ -22,7 +23,7 @@ var (
 
 func init() {
 
-	operationName, mainTargets, globalFlags, operationFlags = parseGlobalFlags(os.Args)
+	operationName, mainTargets, globalFlags, operationFlags, environment = parseGlobalFlags(os.Args)
 
 	// verbosity
 	var verbosity int = log.VERBOSITY_MESSAGE
@@ -49,7 +50,7 @@ func init() {
 	workingDir, _ := os.Getwd()
 	logger.Debug(log.VERBOSITY_DEBUG, "Working Directory", workingDir)
 
-	project = conf.MakeCoachProject(logger.MakeChild("conf"), workingDir)
+	project = conf.MakeCoachProject(logger.MakeChild("conf"), workingDir, environment)
 	logger.Debug(log.VERBOSITY_DEBUG, "Project configuration", *project)
 
 	logger.Debug(log.VERBOSITY_DEBUG, "Finished initialization", nil)
@@ -57,7 +58,7 @@ func init() {
 
 func main() {
 
-	if !(operationName == "init" || project.IsValid(logger.MakeChild("Sanity Check"))) {
+	if !(operationName == "init" || operationName == "help" || project.IsValid(logger.MakeChild("Sanity Check"))) {
 		logger.Error("Coach project configuration is not processable.  Execution halted. [" + operationName + "]")
 		return
 	}
