@@ -50,6 +50,7 @@ func parseGlobalFlags(flags []string) (operationName string, targetIdentifiers [
 
 			/**
 			* The first flags that we don't recognize as global, fall into three cases:
+			*  :{flag} : indicates an environment
 			*  @{flag} : indicates a node target, can be repeated
 			*  %{flag} : indicates a node type target, can be repeated
 			*  -{flag} : indicates the end of global flag targeting, and starts the collection of operationFlags
