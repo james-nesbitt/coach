@@ -58,16 +58,25 @@ func (nodes *Nodes) from_NodesYamlBytes(logger log.Log, project *conf.Project, c
 NodesListLoop:
 	for name, node_yaml := range nodes_yaml {
 
-		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Yaml Node:", name, node_yaml)
+		_, exists := nodes.Node(name)
 
+		logger.Debug(log.VERBOSITY_DEBUG_LOTS, "Yaml Node:", name, exists, node_yaml)
 		nodeLogger := logger.MakeChild(name)
 
-		if _, exists := nodes.Node(name); exists && !overwrite {
-			nodeLogger.Warning("YAML node key already exists")
+		// nodes can be marked as disabled (to keep settings, but not use them)
+		if node_yaml.Disabled {
+			if exists && overwrite {
+				nodeLogger.Info("new YAML node key ["+name+"] is marked as disabled but the key already exists. Disabling the previously defined node")
+				nodes.DisableNode(name)
+			} else if exists {
+				nodeLogger.Warning("new YAML node key ["+name+"] is marked as disabled, but the key already exists. Keeping original node as defined.")
+			} else {
+				nodeLogger.Info("new YAML node key ["+name+"] is marked as disabled")
+			}
 			continue NodesListLoop
 		}
-		if node_yaml.Disabled {
-			nodeLogger.Warning("YAML node key is marked as disabled")
+		if exists && !overwrite {
+			nodeLogger.Warning("new YAML node key ["+name+"] already exists")
 			continue NodesListLoop
 		}
 
