@@ -58,7 +58,6 @@ func (nodes *Nodes) SetNode(name string, node Node, overwrite bool) bool {
 // Disable a Node in the nodes list
 func (nodes *Nodes) DisableNode(name string) bool {
 	if _, exists := nodes.NodesMap[name]; !exists {
-		nodes.log.Warning("Tried to remove node ["+name+"] but it was not found")
 		return false
 	}
 	
@@ -80,7 +79,6 @@ func (nodes *Nodes) DisableNode(name string) bool {
 			return true
 		}
 	}
-	nodes.log.Warning("Tried to remove node ["+name+"] but it was not found in the nodes order")
 	return true
 }
 
