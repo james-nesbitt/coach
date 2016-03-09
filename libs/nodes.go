@@ -12,7 +12,7 @@ func MakeNodes(logger log.Log, project *conf.Project, clientFactories *ClientFac
 	nodes := &Nodes{}
 	nodes.Init(logger)
 
-	nodes.from_NodesYaml(logger.MakeChild("yaml"), project, clientFactories, false)
+	nodes.from_NodesYaml(logger.MakeChild("yaml"), project, clientFactories, true)
 
 	return nodes
 }
@@ -53,6 +53,34 @@ func (nodes *Nodes) SetNode(name string, node Node, overwrite bool) bool {
 	}
 	nodes.NodesOrder = append(nodes.NodesOrder, name)
 	nodes.NodesMap[name] = node
+	return true
+}
+// Disable a Node in the nodes list
+func (nodes *Nodes) DisableNode(name string) bool {
+	if _, exists := nodes.NodesMap[name]; !exists {
+		return false
+	}
+	
+	for index, orderName := range nodes.NodesOrder {
+		if name==orderName {
+			orderLen := len(nodes.NodesOrder)
+
+			if orderLen==1 {
+				nodes.NodesOrder = []string{}
+			} else if index==0 {
+				nodes.NodesOrder = nodes.NodesOrder[1:]
+			} else if orderLen==index+1 {
+				nodes.NodesOrder = nodes.NodesOrder[:index]
+			} else {
+				nodes.NodesOrder = append(nodes.NodesOrder[:index], nodes.NodesOrder[index+1:]...)
+			}
+
+			// should disabling a node remove it from the map, or just the order?
+			//delete(nodes.NodesMap, name)
+
+			return true
+		}
+	}
 	return true
 }
 
