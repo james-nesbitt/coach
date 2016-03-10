@@ -83,7 +83,7 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 		} else if !node.Can("Up") {
 			nodeLogger.Info("Node doesn't Up [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Bringing node up")
+			nodeLogger.Info("Bringing node up")
 
 			nodeClient := node.Client()
 			if build {

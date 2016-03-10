@@ -54,10 +54,10 @@ func (operation *UnpauseOperation) Run(logger log.Log) bool {
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("UnPausing instance containers")
+			nodeLogger.Info("UnPausing instance containers")
 
 			if !instances.IsFiltered() {
-				nodeLogger.Message("Switching to using all instances")
+				nodeLogger.Info("Switching to using all instances")
 				instances.UseAll()
 			}
 

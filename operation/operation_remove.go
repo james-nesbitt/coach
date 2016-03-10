@@ -65,7 +65,7 @@ func (operation *RemoveOperation) Run(logger log.Log) bool {
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Removing instance containers")
+			nodeLogger.Info("Removing instance containers")
 
 			if !instances.IsFiltered() {
 				nodeLogger.Info("Switching to using all instances")

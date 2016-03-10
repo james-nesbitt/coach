@@ -75,7 +75,7 @@ func (operation *RestartOperation) Run(logger log.Log) bool {
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Restarting instance containers")
+			nodeLogger.Info("Restarting instance containers")
 
 			for _, id := range instances.InstancesOrder() {
 				instance, _ := instances.Instance(id)

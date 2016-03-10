@@ -75,7 +75,7 @@ func (operation *ScaleOperation) Run(logger log.Log) bool {
 		} else if !node.Can("scale") {
 			nodeLogger.Info("Node doesn't Scale [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Scaling node " + node.Id())
+			nodeLogger.Info("Scaling node " + node.Id())
 
 			if operation.scale > 0 {
 				count := operation.ScaleUpNumber(nodeLogger, node.Instances(), operation.scale)

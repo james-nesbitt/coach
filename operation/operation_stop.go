@@ -76,7 +76,7 @@ func (operation *StopOperation) Run(logger log.Log) bool {
 		} else if !hasInstances {
 			nodeLogger.Info("No valid instances specified in target list [" + node.MachineName() + "]")
 		} else {
-			nodeLogger.Message("Stopping instance containers")
+			nodeLogger.Info("Stopping instance containers")
 
 			if !instances.IsFiltered() {
 				nodeLogger.Info("Switching to using all instances")
