@@ -21,6 +21,8 @@ func (operation *UpOperation) Id() string {
 	return "up"
 }
 func (operation *UpOperation) Flags(flags []string) bool {
+	operation.force = false
+	
 	for _, flag := range flags {
 		switch flag {
 		case "-f":
