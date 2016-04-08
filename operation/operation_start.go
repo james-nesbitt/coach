@@ -21,7 +21,7 @@ func (operation *StartOperation) Flags(flags []string) bool {
 		case "-f":
 			fallthrough
 		case "--force":
-			operation.force = true	
+			operation.force = true
 		}
 	}
 	return true

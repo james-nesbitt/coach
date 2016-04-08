@@ -9,7 +9,7 @@ type RestartOperation struct {
 	log     log.Log
 	targets *libs.Targets
 
-	force bool
+	force   bool
 	timeout uint
 }
 
@@ -24,12 +24,11 @@ func (operation *RestartOperation) Flags(flags []string) bool {
 		case "--force":
 			operation.force = true
 
-
 		case "-q":
 			fallthrough
 		case "--quick":
-			operation.timeout = 1	
-		}			
+			operation.timeout = 1
+		}
 	}
 	return true
 }
@@ -83,13 +82,13 @@ func (operation *RestartOperation) Run(logger log.Log) bool {
 
 				// Stop
 				if instanceClient.IsRunning() {
-					nodeLogger.Info("Stopping instance: "+id)
+					nodeLogger.Info("Stopping instance: " + id)
 					instanceClient.Stop(nodeLogger, operation.force, operation.timeout)
 				}
 
 				// Start
 				if !instanceClient.IsRunning() {
-					nodeLogger.Info("Starting instance: "+id)
+					nodeLogger.Info("Starting instance: " + id)
 					instanceClient.Start(nodeLogger, operation.force)
 				}
 

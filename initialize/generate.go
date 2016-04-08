@@ -8,7 +8,7 @@ import (
 	"github.com/james-nesbitt/coach/log"
 )
 
-func Init_Generate(logger log.Log, handler string, path string, skip []string, output io.Writer) bool {
+func Init_Generate(logger log.Log, handler string, path string, skip []string, sizeLimit int64, output io.Writer) bool {
 	logger.Message("GENERATING INIT")
 
 	var generator Generator
@@ -20,25 +20,46 @@ func Init_Generate(logger log.Log, handler string, path string, skip []string, o
 		return false
 	}
 
-	success := Init_Generate_Recursive(logger, generator, path, "", skip)
-	if success {
+	iterator := GenerateIterator{
+		logger:    logger,
+		output:    output,
+		skip:      skip,
+		sizeLimit: sizeLimit,
+		generator: generator,
+	}
+
+	if iterator.Generate(path) {
 		logger.Message("FINISHED GENERATING YML INIT")
+		return true
 	} else {
 		logger.Error("ERROR OCCURRED GENERATING YML INIT")
+		return false
 	}
-	return success
 }
 
-func Init_Generate_Recursive(logger log.Log, generator Generator, sourceRootPath string, sourcePath string, skip []string) bool {
+type GenerateIterator struct {
+	logger log.Log
+	output io.Writer
+
+	skip      []string
+	sizeLimit int64
+
+	generator Generator
+}
+
+func (iterator *GenerateIterator) Generate(path string) bool {
+	return iterator.generate_Recursive(path, "")
+}
+func (iterator *GenerateIterator) generate_Recursive(sourceRootPath string, sourcePath string) bool {
 	fullPath := sourceRootPath
 
 	if sourcePath != "" {
 		fullPath = path.Join(fullPath, sourcePath)
 	}
 
-	for _, skipEach := range skip {
+	for _, skipEach := range iterator.skip {
 		if skipEach == sourcePath {
-			logger.Info("Skipping marked skip file :" + sourcePath)
+			iterator.logger.Info("Skipping marked skip file :" + sourcePath)
 			return true
 		}
 	}
@@ -47,7 +68,7 @@ func Init_Generate_Recursive(logger log.Log, generator Generator, sourceRootPath
 	info, err := os.Stat(fullPath)
 	if err != nil {
 		// @TODO do something log : source doesn't exist
-		logger.Warning("File does not exist :" + fullPath)
+		iterator.logger.Warning("File does not exist :" + fullPath)
 		return false
 	}
 
@@ -56,11 +77,11 @@ func Init_Generate_Recursive(logger log.Log, generator Generator, sourceRootPath
 
 		// check for GIT folder
 		if _, err := os.Open(path.Join(fullPath, ".git")); err == nil {
-			if generator.generateGit(fullPath, sourcePath) {
-				logger.Info("Generated git file: " + sourcePath)
+			if iterator.generator.generateGit(fullPath, sourcePath) {
+				iterator.logger.Info("Generated git file: " + sourcePath)
 				return true
 			} else {
-				logger.Warning("Failed to generate git file: " + sourcePath)
+				iterator.logger.Warning("Failed to generate git file: " + sourcePath)
 			}
 		}
 
@@ -70,7 +91,7 @@ func Init_Generate_Recursive(logger log.Log, generator Generator, sourceRootPath
 
 		if err != nil {
 			// @TODO do something log : source doesn't exist
-			logger.Warning("Could not open directory")
+			iterator.logger.Warning("Could not open directory")
 			return false
 		}
 
@@ -78,24 +99,24 @@ func Init_Generate_Recursive(logger log.Log, generator Generator, sourceRootPath
 
 			//childSourcePath := source + "/" + obj.Name()
 			childSourcePath := path.Join(sourcePath, obj.Name())
-			if !Init_Generate_Recursive(logger, generator, sourceRootPath, childSourcePath, skip) {
-				logger.Warning("Resursive generate failed")
+			if !iterator.generate_Recursive(sourceRootPath, childSourcePath) {
+				iterator.logger.Warning("Resursive generate failed")
 			}
 
 		}
 
 	} else if mode.IsRegular() {
 		// add file copy
-		if generator.generateSingleFile(fullPath, sourcePath) {
-			logger.Info("Generated file (recursively): " + sourcePath)
+		if iterator.generator.generateSingleFile(fullPath, sourcePath) {
+			iterator.logger.Info("Generated file (recursively): " + sourcePath)
 			return true
 		} else {
-			logger.Warning("Failed to generate file: " + sourcePath)
+			iterator.logger.Warning("Failed to generate file: " + sourcePath)
 			return false
 		}
 		return true
 	} else {
-		logger.Warning("Skipped generation non-regular file: " + sourcePath)
+		iterator.logger.Warning("Skipped generation non-regular file: " + sourcePath)
 	}
 
 	return true
