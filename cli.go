@@ -15,7 +15,7 @@ var (
 	mainTargets    []string
 	globalFlags    map[string]string
 	operationFlags []string
-	environment   string
+	environment    string
 
 	logger  log.Log       // Logger interface for tracking messages
 	project *conf.Project // project configuration
@@ -58,7 +58,7 @@ func init() {
 
 func main() {
 
-	if !(operationName == "init" || operationName == "help" || project.IsValid(logger.MakeChild("Sanity Check"))) {
+	if !(operationName == "init" || operationName == "init-generate" || operationName == "help" || project.IsValid(logger.MakeChild("Sanity Check"))) {
 		logger.Error("Coach project configuration is not processable.  Execution halted. [" + operationName + "]")
 		return
 	}

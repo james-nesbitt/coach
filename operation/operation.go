@@ -63,6 +63,8 @@ func MakeOperation(logger log.Log, project *conf.Project, name string, flags []s
 
 	case "init":
 		operation = Operation(&InitOperation{log: opLogger, conf: project})
+	case "init-generate":
+		operation = Operation(&InitGenerateOperation{log: opLogger, conf: project})
 
 	case "tool":
 		operation = Operation(&ToolOperation{log: opLogger, conf: project})
@@ -126,6 +128,7 @@ func ListOperations() []string {
 		"help",
 		"info",
 		"init",
+		"init-generate",
 		"tool",
 		"pull",
 		"build",

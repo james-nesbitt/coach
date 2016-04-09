@@ -21,6 +21,8 @@ func (operation *UpOperation) Id() string {
 	return "up"
 }
 func (operation *UpOperation) Flags(flags []string) bool {
+	operation.force = false
+
 	for _, flag := range flags {
 		switch flag {
 		case "-f":
@@ -113,7 +115,7 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 							nodeLogger.Message("Creating node instance container : " + id)
 							instanceClient.Create(nodeLogger, []string{}, operation.force)
 						} else {
-							nodeLogger.Info("Instance already has an container created : "+id)
+							nodeLogger.Info("Instance already has an container created : " + id)
 						}
 					}
 					if start {
@@ -121,7 +123,7 @@ func (operation *UpOperation) Run(logger log.Log) bool {
 							nodeLogger.Message("Starting node instance container : " + id)
 							instanceClient.Start(nodeLogger, operation.force)
 						} else {
-							nodeLogger.Info("Instance already has an container running : "+id)
+							nodeLogger.Info("Instance already has an container running : " + id)
 						}
 					}
 				}

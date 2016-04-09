@@ -16,6 +16,8 @@ func (operation *BuildOperation) Id() string {
 	return "build"
 }
 func (operation *BuildOperation) Flags(flags []string) bool {
+	operation.force = false
+
 	for _, flag := range flags {
 		switch flag {
 		case "-f":
