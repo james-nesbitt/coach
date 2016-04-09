@@ -109,7 +109,7 @@ func (operation *HelpOperation) Run(logger log.Log) bool {
 	} else {
 
 		for _, operationName := range ListOperations() {
-			if strings.HasPrefix(helpTopicName, operationName) {
+			if helpTopicName == operationName || strings.HasPrefix(helpTopicName, operationName+":") {
 				if helpOperations := MakeOperation(logger, operation.conf, operationName, operation.flags, &libs.Targets{}); len(helpOperations.operationsList) > 0 {
 					for _, helpOperation := range helpOperations.operationsList {
 						helpOperation.Help(append([]string{helpTopicName}, helpTopicFlags...))
