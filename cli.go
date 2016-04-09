@@ -15,7 +15,7 @@ var (
 	mainTargets    []string
 	globalFlags    map[string]string
 	operationFlags []string
-	environment   string
+	environment    string
 
 	logger  log.Log       // Logger interface for tracking messages
 	project *conf.Project // project configuration

@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"regexp"
 
 	"github.com/james-nesbitt/coach/log"
 )
@@ -13,6 +14,8 @@ func Init_Generate(logger log.Log, handler string, path string, skip []string, s
 
 	var generator Generator
 	switch handler {
+	case "test":
+		generator = Generator(&TestInitGenerator{logger: logger, output: output})
 	case "yaml":
 		generator = Generator(&YMLInitGenerator{logger: logger, output: output})
 	default:
@@ -58,7 +61,7 @@ func (iterator *GenerateIterator) generate_Recursive(sourceRootPath string, sour
 	}
 
 	for _, skipEach := range iterator.skip {
-		if skipEach == sourcePath {
+		if match, _ := regexp.MatchString(skipEach, sourcePath); match {
 			iterator.logger.Info("Skipping marked skip file :" + sourcePath)
 			return true
 		}
@@ -106,7 +109,13 @@ func (iterator *GenerateIterator) generate_Recursive(sourceRootPath string, sour
 		}
 
 	} else if mode.IsRegular() {
-		// add file copy
+
+		if info.Size() > iterator.sizeLimit {
+			iterator.logger.Info("Skipped file that is larger than our limit: " + sourcePath)
+			return true
+		}
+
+		// generate single file from contents
 		if iterator.generator.generateSingleFile(fullPath, sourcePath) {
 			iterator.logger.Info("Generated file (recursively): " + sourcePath)
 			return true
@@ -125,4 +134,23 @@ func (iterator *GenerateIterator) generate_Recursive(sourceRootPath string, sour
 type Generator interface {
 	generateSingleFile(fullPath string, sourcePath string) bool
 	generateGit(fullPath string, sourcePath string) bool
+}
+
+type TestInitGenerator struct {
+	output io.Writer
+	logger log.Log
+}
+
+func (generator *TestInitGenerator) generateSingleFile(fullPath string, sourcePath string) bool {
+	singleFile, _ := os.Open(fullPath)
+	defer singleFile.Close()
+
+	generator.logger.Debug(log.VERBOSITY_DEBUG_LOTS, "GENERATE SINGLE FILE: ", singleFile.Name())
+	generator.output.Write([]byte("GENERATE SINGLE FILE: " + sourcePath + "\n"))
+	return true
+}
+func (generator *TestInitGenerator) generateGit(fullPath string, sourcePath string) bool {
+	generator.logger.Debug(log.VERBOSITY_DEBUG_LOTS, "GENERATE GIT FILE: ", sourcePath)
+	generator.output.Write([]byte("GENERATE GIT FILE: " + sourcePath + "\n"))
+	return true
 }

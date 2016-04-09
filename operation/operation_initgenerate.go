@@ -16,10 +16,10 @@ type InitGenerateOperation struct {
 
 	force bool
 
-	handler string
-	root    string   // Path to root
-	skip    []string // skip some files
-	sizeLimit 	int64
+	handler   string
+	root      string   // Path to root
+	skip      []string // skip some files
+	sizeLimit int64
 
 	output string // output file (or use logger to output to logger)
 }
@@ -32,11 +32,14 @@ func (operation *InitGenerateOperation) Flags(flags []string) bool {
 	operation.handler = "yaml"
 	operation.output = "logger"
 	operation.skip = []string{}
-	operation.sizeLimit = int64{1024*1024}
+	operation.sizeLimit = 1024
 
 	for index := 0; index < len(flags); index++ {
 		flag := flags[index]
 		switch flag {
+		case "--test":
+			operation.handler = "test"
+			operation.output = "logger"
 		case "-f":
 			fallthrough
 		case "--file":
