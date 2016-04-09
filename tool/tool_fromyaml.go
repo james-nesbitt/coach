@@ -54,13 +54,13 @@ func (tools *Tools) from_ToolYamlBytes(logger log.Log, project *conf.Project, ya
 	}
 
 	for name, tool_struct := range yaml_tools {
-
 		switch tool_struct["Type"] {
 		case "script":
 			json_tool, _ := json.Marshal(tool_struct)
 			var scriptTool Tool_Script
 			err := json.Unmarshal(json_tool, &scriptTool)
 			if err != nil {
+				logger.Warning("Couldn't process tool [" + name + "] :" + err.Error())
 				continue
 			}
 
